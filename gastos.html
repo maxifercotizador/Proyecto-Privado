@@ -194,6 +194,20 @@
   .kpi-card.pendiente::before { background: var(--bad); }
   .kpi-card.mes::before { background: var(--info); }
   .kpi-card.proximo::before { background: var(--warn); }
+  .kpi-card {
+    transition: all 0.15s;
+  }
+  .kpi-card.clickable {
+    cursor: pointer;
+  }
+  .kpi-card.clickable:hover {
+    border-color: var(--border-strong);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 14px rgba(0,0,0,0.35);
+  }
+  .kpi-card.clickable:hover::before {
+    height: 3px;
+  }
 
   .kpi-label {
     font-family: 'JetBrains Mono', monospace;
@@ -993,22 +1007,43 @@ function renderDashboard() {
   const pctPagado = totalMes > 0 ? (sumaPagado / totalMes * 100) : 0;
 
   document.getElementById('kpi-dash').innerHTML = `
-    <div class="kpi-card pagado">
+    <div class="kpi-card pagado clickable" data-action="pagado" data-mes="${mes}" title="Ver movimientos pagados del mes">
       <div class="kpi-label">Ya pago (ejecutado)</div>
       <div class="kpi-value" style="color:var(--good)">${fmt$(sumaPagado)}</div>
       <div class="kpi-sub">${pagadosMes.length} movimientos · <span class="pct">${fmtPct(pctPagado)}</span> del mes</div>
     </div>
-    <div class="kpi-card pendiente">
+    <div class="kpi-card pendiente clickable" data-action="pendiente" data-mes="${mes}" title="Ver movimientos pendientes del mes">
       <div class="kpi-label">Pendiente del mes</div>
       <div class="kpi-value" style="color:${sumaPendiente > 0 ? 'var(--bad)' : 'var(--good)'}">${fmt$(sumaPendiente)}</div>
       <div class="kpi-sub">${pendientesMes.length} pagos por hacer</div>
     </div>
-    <div class="kpi-card mes">
+    <div class="kpi-card mes clickable" data-action="todos" data-mes="${mes}" title="Ver todos los movimientos del mes">
       <div class="kpi-label">Total del mes (proyectado)</div>
       <div class="kpi-value">${fmt$(totalMes)}</div>
       <div class="kpi-sub">${movsMes.length} movimientos totales</div>
     </div>
   `;
+
+  // Listeners para las 3 KPI cards del mes
+  document.querySelectorAll('#kpi-dash .kpi-card.clickable').forEach(el => {
+    el.addEventListener('click', () => {
+      const action = el.dataset.action; // 'pagado' | 'pendiente' | 'todos'
+      const mesKey = el.dataset.mes;
+      // Setear filtros
+      state.filters.categoria = '';
+      state.filters.rango = 'todos';
+      state.filters.mes = mesKey;
+      state.filters.estado = action === 'todos' ? '' : action;
+      state.filters.search = '';
+      document.getElementById('f-categoria').value = '';
+      document.getElementById('f-rango').value = 'todos';
+      document.getElementById('f-mes').style.display = '';
+      document.getElementById('f-mes').value = mesKey;
+      document.getElementById('f-estado').value = action === 'todos' ? '' : action;
+      document.getElementById('f-search').value = '';
+      switchTab('movimientos');
+    });
+  });
 
   // Desglose por categoría
   const cats = agruparPorCategoria(movsMes);
