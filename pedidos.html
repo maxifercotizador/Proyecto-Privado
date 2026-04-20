@@ -642,6 +642,7 @@ const HOJAS_ESPECIALES = ['ALNAT', 'CARBONES', 'PERILLAS DE COCINA', 'RESORTES',
                           'ALCIDES', 'REGATONES', 'CASERGOM', 'INSERTOS', 'ELINEK'];
 
 const STORAGE_KEY_URL = 'maxifer_pedidos_url';
+const HARDCODED_URL = 'https://drive.google.com/file/d/19ItyMRvmTJdQrWhVR114jN4oc4DRcK55/view?usp=sharing';
 const STORAGE_KEY_CACHE = 'maxifer_pedidos_cache';
 const STORAGE_KEY_TIME = 'maxifer_pedidos_time';
 
@@ -684,8 +685,53 @@ function convertirDriveUrl(url) {
 }
 
 // ============ CARGA ============
+
+// ============ DESCARGA ROBUSTA (múltiples fallbacks) ============
+function extraerIdDrive(url) {
+  if (!url) return null;
+  const m = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
+  if (m) return m[1];
+  const m2 = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+  if (m2) return m2[1];
+  return null;
+}
+
+async function descargarArchivoMultiple(url, forzar = false) {
+  const id = extraerIdDrive(url);
+  const attempts = [];
+  if (id) {
+    attempts.push({ name: 'Drive directo', url: `https://drive.google.com/uc?export=download&id=${id}` });
+    attempts.push({ name: 'Drive alt', url: `https://drive.usercontent.google.com/download?id=${id}&export=download` });
+    attempts.push({ name: 'corsproxy.io', url: `https://corsproxy.io/?${encodeURIComponent('https://drive.google.com/uc?export=download&id=' + id)}` });
+    attempts.push({ name: 'allorigins', url: `https://api.allorigins.win/raw?url=${encodeURIComponent('https://drive.google.com/uc?export=download&id=' + id)}` });
+  } else {
+    attempts.push({ name: 'Directo', url });
+    attempts.push({ name: 'corsproxy.io', url: `https://corsproxy.io/?${encodeURIComponent(url)}` });
+  }
+
+  let lastError = '';
+  for (const att of attempts) {
+    try {
+      const resp = await fetch(att.url, { cache: forzar ? 'reload' : 'default' });
+      if (!resp.ok) { lastError = `${att.name}: HTTP ${resp.status}`; continue; }
+      const buffer = await resp.arrayBuffer();
+      const u8 = new Uint8Array(buffer.slice(0, 2));
+      if (u8[0] !== 0x50 || u8[1] !== 0x4B) {
+        lastError = `${att.name}: no es Excel (login/error page)`;
+        continue;
+      }
+      console.log('✓ Descarga OK vía:', att.name);
+      return buffer;
+    } catch (e) {
+      lastError = `${att.name}: ${e.message}`;
+      console.warn('✗', att.name, 'falló:', e.message);
+    }
+  }
+  throw new Error(lastError);
+}
+
 async function cargarArchivo(forzar = false) {
-  const url = localStorage.getItem(STORAGE_KEY_URL);
+  const url = HARDCODED_URL;
   if (!url) {
     mostrarStatus('⚠ Falta configurar el link. Click en "Link" arriba.', 'warn');
     document.getElementById('modal-config').classList.add('active');
@@ -693,35 +739,14 @@ async function cargarArchivo(forzar = false) {
   }
 
   mostrarStatus('Descargando archivo…', 'loading');
-  const urlDirecto = convertirDriveUrl(url);
 
   let buffer = null;
-  let errorDirecto = null;
-
   try {
-    const resp = await fetch(urlDirecto, { cache: forzar ? 'reload' : 'default' });
-    if (!resp.ok) throw new Error('HTTP ' + resp.status);
-    buffer = await resp.arrayBuffer();
-    const u8 = new Uint8Array(buffer.slice(0, 2));
-    if (u8[0] !== 0x50 || u8[1] !== 0x4B) throw new Error('No es Excel válido');
+    buffer = await descargarArchivoMultiple(url, forzar);
   } catch (e) {
-    errorDirecto = e.message;
-  }
-
-  if (!buffer) {
-    mostrarStatus('Probando proxy CORS… (' + errorDirecto + ')', 'loading');
-    try {
-      const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(urlDirecto);
-      const resp = await fetch(proxyUrl);
-      if (!resp.ok) throw new Error('HTTP ' + resp.status);
-      buffer = await resp.arrayBuffer();
-      const u8 = new Uint8Array(buffer.slice(0, 2));
-      if (u8[0] !== 0x50 || u8[1] !== 0x4B) throw new Error('Proxy no devolvió Excel');
-    } catch (e2) {
-      mostrarStatus('❌ No se pudo descargar. ' + errorDirecto + ' / ' + e2.message, 'error');
-      cargarDesdeCache();
-      return;
-    }
+    mostrarStatus('❌ No se pudo descargar: ' + e.message, 'error');
+    cargarDesdeCache();
+    return;
   }
 
   mostrarStatus('Parseando…', 'loading');
