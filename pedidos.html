@@ -632,14 +632,93 @@ const PROVEEDORES_LIMPIOS = {
   'ALEMITES':      { codigo: 1, cantidad: 2, precio: 5, total: 6, desc: null, data_start: 3 },
   'DAHE DIESEL':   { codigo: 1, cantidad: 2, precio: 6, total: 7, desc: 3, data_start: 3 },
   'KLOSTER':       { codigo: 1, cantidad: 4, precio: 7, total: 8, desc: 3, data_start: 3 },
-  'CHAPAS':        { codigo: 1, cantidad: 2, precio: 5, total: 6, desc: null, data_start: 3 },
   'TUDANCA':       { codigo: 1, cantidad: 2, precio: 3, total: 5, desc: null, data_start: 3 },
   'SKOTNICA':      { codigo: 1, cantidad: 3, precio: 7, total: 8, desc: 2, data_start: 4 },
 };
 
-const HOJAS_ESPECIALES = ['ALNAT', 'CARBONES', 'PERILLAS DE COCINA', 'RESORTES', 'Res. Generales',
-                          'ORING', 'CECATTO', 'ROPA', 'EMELI', 'Gavetas', 'KAZ', 'CILIO',
-                          'ALCIDES', 'REGATONES', 'CASERGOM', 'INSERTOS', 'ELINEK'];
+// Hojas a excluir totalmente del módulo (no aparecen en listados ni se parsean)
+const HOJAS_EXCLUIR = new Set(['CHAPAS', 'RESORTES', 'EMELI', 'ROPA', 'ELINEK']);
+
+// Mapeo para hojas con formato especial (cada una tiene su propia estructura)
+// Se usa cuando NO están en PROVEEDORES_LIMPIOS
+const PROVEEDORES_ESPECIALES = {
+  'ALNAT': {
+    // Tabla17: J2:P72 → CODIGO(J) CANTIDAD(K) DESCRIPCIÓN(L) PRECIO(M) FINAL(N) N°(O) TIPO(P)
+    rango: { r1: 3, r2: 72, c1: 10, c2: 16 },  // 1-indexed
+    cols: { num: 15, codigo: 10, cantidad: 11, descripcion: 12, precio: 13, total: 14, tipo: 16 },
+  },
+  'ORING': {
+    // F4:M53 → N°(F=6) Cant(G) Precio s/desc(I=9) Desc.=precio c/desc(K=11) Cant.(L=12) Total(M=13)
+    rango: { r1: 5, r2: 53, c1: 6, c2: 13 },
+    cols: { num: 6, cantidad: 12, precio: 11, total: 13 },
+  },
+  'CECATTO': {
+    // CECATTO_1: A2:H11 → Plancha(A) Cantidad(B) Largo(C) Ancho(D) Cortes(E) TOTAL(F) P.Unit(G) P.Final(H)
+    rango: { r1: 3, r2: 11, c1: 1, c2: 8 },
+    cols: { num: 1, cantidad: 2, precio: 7, total: 8 },
+    // Descripción compuesta: "Largo x Ancho"
+    descFn: (cell, row) => {
+      const largo = cell(row, 3);
+      const ancho = cell(row, 4);
+      return (largo != null && ancho != null) ? `${largo} × ${ancho}` : '';
+    }
+  },
+  'ALCIDES': {
+    // B52:H75 → A(num1) B(num2) C(Codigo) D(Descripción) F(Cantidad) G(P.Unit) H(Total)
+    rango: { r1: 53, r2: 75, c1: 1, c2: 8 },
+    cols: { num: 1, codigo: 3, descripcion: 4, cantidad: 6, precio: 7, total: 8 },
+  },
+  'CARBONES': {
+    // A1:N19 → Formato de 5 pedidos en paralelo: (N°, CANT) cada 3 columnas
+    // Pedido 1: A,B · Pedido 2: D,E · Pedido 3: G,H · Pedido 4: J,K · Pedido 5: M,N
+    esFormatoMultiple: true,
+    rango: { r1: 3, r2: 19 },
+    subPedidos: [
+      { num: 1, cantidad: 2, label: 'Pedido 1' },
+      { num: 4, cantidad: 5, label: 'Pedido 2' },
+      { num: 7, cantidad: 8, label: 'Pedido 3' },
+      { num: 10, cantidad: 11, label: 'Pedido 4' },
+      { num: 13, cantidad: 14, label: 'Pedido 5' },
+    ],
+  },
+  'PERILLAS DE COCINA': {
+    // AJ3:AZ36 → Tiene 2 tablas lado a lado:
+    //   Tabla 1: AL=Cod(38) AM=Cant(39) AN=Color(40) AO=Desc(41) AQ=P.Unit(43) AR=TOTAL(44)
+    //   Tabla 2: AT=Cod(46) AU=Cant(47) AV=Color(48) AW=Desc(49) AY=P.Unit(51) AZ=TOTAL(52)
+    esFormatoMultiple: true,
+    rango: { r1: 4, r2: 36 },
+    subPedidos: [
+      { num: 38, cantidad: 39, codigo: 38, color: 40, descripcion: 41, precio: 43, total: 44, label: 'Tabla 1' },
+      { num: 46, cantidad: 47, codigo: 46, color: 48, descripcion: 49, precio: 51, total: 52, label: 'Tabla 2' },
+    ],
+  },
+  'KAZ': {
+    // AM1:AX22 → 2 tablas:
+    //   Tabla 1 (Chavetas con precio): AM=Medida(39) AN=Tipo(40) AO=Cant(41) AP=P.Unit(42) AQ=P.Total(43)
+    //   Tabla 2 (Chavetas Partidas sin precio): AS=Medida(45) AT=Cant(46)
+    esFormatoMultiple: true,
+    rango: { r1: 3, r2: 22 },
+    subPedidos: [
+      { num: 39, codigo: 39, tipo: 40, cantidad: 41, precio: 42, total: 43, label: 'Chavetas' },
+      { num: 45, codigo: 45, cantidad: 46, label: 'Partidas' },
+    ],
+  },
+  'REGATONES': {
+    // M71:V93 → Pedido(M=13) Cantidad(N=14) Elijo a:(O=15) REGAPLAS(P=16) Juan(Q=17) O Y R(S=19) SURPLAS(U=21) CARCCIONE(V=22)
+    rango: { r1: 72, r2: 93, c1: 13, c2: 22 },
+    cols: { num: 13, cantidad: 14, elijoA: 15 },
+    // Columnas de proveedores elegibles
+    proveedoresCols: {
+      'REGAPLAS': 16, 'Juan': 17, 'O Y R': 19, 'SURPLAS': 21, 'CARCCIONE': 22,
+    },
+  },
+  'INSERTOS': {
+    // B1:E7 → Numero(B=2) Medida(C=3) Cantidad(D=4) LARGO(E=5)
+    rango: { r1: 2, r2: 7, c1: 2, c2: 5 },
+    cols: { codigo: 2, cantidad: 4, descripcion: 3, largo: 5 },
+  },
+};
+const HOJAS_ESPECIALES = ['Res. Generales', 'Gavetas', 'CILIO', 'CASERGOM'];
 
 const STORAGE_KEY_URL = 'maxifer_pedidos_url';
 const HARDCODED_URL = './03%20Pedidos%20Fabricas.xlsm';
@@ -673,6 +752,139 @@ function mostrarStatus(msg, tipo) {
 }
 
 // ============ GOOGLE DRIVE URL ============
+
+// ============================================================================
+// PARSEADOR DE HOJAS ESPECIALES MAPEADAS
+// Convierte una hoja (según su config en PROVEEDORES_ESPECIALES) en una lista
+// de items {codigo, cantidad, descripcion, precio, total, extra}.
+// Filtra filas sin datos útiles (sin código ni cantidad válida).
+// ============================================================================
+function parsearHojaEspecial(wb, nombre) {
+  const config = PROVEEDORES_ESPECIALES[nombre];
+  if (!config) return null;
+  const sheet = wb.Sheets[nombre];
+  if (!sheet) return null;
+
+  const items = [];
+
+  const leerCelda = (r, c) => {
+    const addr = XLSX.utils.encode_cell({ r: r - 1, c: c - 1 });
+    const cc = sheet[addr];
+    return cc ? cc.v : null;
+  };
+
+  // ========== FORMATO MÚLTIPLE (CARBONES, PERILLAS, KAZ) ==========
+  if (config.esFormatoMultiple) {
+    for (const sub of config.subPedidos) {
+      for (let r = config.rango.r1; r <= config.rango.r2; r++) {
+        const codCol = sub.codigo || sub.num;
+        const cod = codCol ? leerCelda(r, codCol) : null;
+        const cant = sub.cantidad ? leerCelda(r, sub.cantidad) : null;
+        // Filtrar: requiere cantidad válida siempre
+        if (typeof cant !== 'number' || cant <= 0) continue;
+        // Y si el bloque tiene columna de código, exigir que haya código
+        if (codCol && (cod == null || String(cod).trim() === '')) continue;
+
+        let descripcion = '';
+        if (sub.descripcion) {
+          const d = leerCelda(r, sub.descripcion);
+          descripcion = d != null ? String(d) : '';
+        }
+
+        let extra = sub.label || '';
+        if (sub.tipo) {
+          const v = leerCelda(r, sub.tipo);
+          if (v != null && String(v).trim()) extra = String(v) + (sub.label ? ` · ${sub.label}` : '');
+        } else if (sub.color) {
+          const v = leerCelda(r, sub.color);
+          if (v != null && String(v).trim()) extra = String(v) + (sub.label ? ` · ${sub.label}` : '');
+        }
+
+        items.push({
+          codigo: cod != null ? String(cod) : '',
+          cantidad: cant,
+          descripcion,
+          precio: sub.precio ? leerCelda(r, sub.precio) : null,
+          total: sub.total ? leerCelda(r, sub.total) : null,
+          extra,
+        });
+      }
+    }
+    return items;
+  }
+
+  // ========== FORMATO REGATONES (multi-proveedor) ==========
+  if (config.proveedoresCols) {
+    for (let r = config.rango.r1; r <= config.rango.r2; r++) {
+      const num = leerCelda(r, config.cols.num);
+      const cant = leerCelda(r, config.cols.cantidad);
+      if (num == null && (cant == null || cant === 0)) continue;
+      if (typeof cant !== 'number' || cant <= 0) continue;
+
+      const elegido = leerCelda(r, config.cols.elijoA);
+      const elegidoStr = elegido != null ? String(elegido).trim() : '';
+      let total = null;
+      let provUsado = elegidoStr;
+      if (elegidoStr && config.proveedoresCols[elegidoStr] != null) {
+        total = leerCelda(r, config.proveedoresCols[elegidoStr]);
+      }
+      // Fallback: primer proveedor con precio
+      if (total == null || typeof total !== 'number') {
+        for (const [pn, pc] of Object.entries(config.proveedoresCols)) {
+          const v = leerCelda(r, pc);
+          if (typeof v === 'number' && v > 0) { total = v; provUsado = pn; break; }
+        }
+      }
+      const precio = (total && cant) ? (total / cant) : null;
+      items.push({
+        codigo: num != null ? String(num) : '',
+        cantidad: cant,
+        descripcion: '',
+        precio: typeof precio === 'number' ? precio : null,
+        total: typeof total === 'number' ? total : null,
+        extra: provUsado || '',
+      });
+    }
+    return items;
+  }
+
+  // ========== FORMATO SIMPLE ==========
+  const { cols, rango } = config;
+  for (let r = rango.r1; r <= rango.r2; r++) {
+    const codCol = cols.codigo || cols.num;
+    const cod = codCol ? leerCelda(r, codCol) : null;
+    const cant = cols.cantidad ? leerCelda(r, cols.cantidad) : null;
+    // Requiere cantidad válida
+    if (typeof cant !== 'number' || cant <= 0) continue;
+    // Y si hay columna de código, exigir código no vacío
+    if (codCol && (cod == null || String(cod).trim() === '')) continue;
+
+    let descripcion = '';
+    if (config.descFn) {
+      descripcion = config.descFn(leerCelda, r) || '';
+    } else if (cols.descripcion) {
+      const d = leerCelda(r, cols.descripcion);
+      descripcion = d != null ? String(d) : '';
+    }
+
+    // Extra: tipo, color, largo, lo que sea
+    let extra = '';
+    if (cols.tipo) { const v = leerCelda(r, cols.tipo); extra = v != null ? String(v) : ''; }
+    else if (cols.color) { const v = leerCelda(r, cols.color); extra = v != null ? String(v) : ''; }
+    else if (cols.largo) { const v = leerCelda(r, cols.largo); extra = v != null ? String(v) : ''; }
+
+    items.push({
+      codigo: cod != null ? String(cod) : '',
+      cantidad: cant,
+      descripcion,
+      precio: cols.precio ? leerCelda(r, cols.precio) : null,
+      total: cols.total ? leerCelda(r, cols.total) : null,
+      extra,
+    });
+  }
+  return items;
+}
+
 function convertirDriveUrl(url) {
   if (!url) return null;
   // Formato típico: https://drive.google.com/file/d/FILE_ID/view?usp=sharing
@@ -793,13 +1005,23 @@ function procesarWorkbook(wb) {
       };
     };
 
+    // Helper: ignora proveedores cuyo nombre está en HOJAS_EXCLUIR
+    const esExcluido = (nombre) => {
+      if (!nombre) return false;
+      const up = String(nombre).toUpperCase().trim();
+      for (const ex of HOJAS_EXCLUIR) {
+        if (up === ex.toUpperCase()) return true;
+      }
+      return false;
+    };
+
     for (let r = 3; r <= 19; r++) {
       const p = parseProvFromBlock(r, 2, 3, 5, 6);
-      if (p) out.proveedores.push(p);
+      if (p && !esExcluido(p.nombre)) out.proveedores.push(p);
     }
     for (let r = 3; r <= 19; r++) {
       const p = parseProvFromBlock(r, 8, 9, 11, 12);
-      if (!p) continue;
+      if (!p || esExcluido(p.nombre)) continue;
       const existente = out.proveedores.find(x => x.nombre.toUpperCase() === p.nombre.toUpperCase());
       if (existente) {
         if (p.ok) existente.ok = true;
@@ -911,6 +1133,119 @@ function procesarWorkbook(wb) {
       });
     }
     out.hojas_raw[nombre] = items;
+  }
+
+  // HOJAS ESPECIALES CON FORMATO CUSTOM (Tabla17, CECATTO_1, rangos específicos)
+  for (const [nombre, conf] of Object.entries(PROVEEDORES_ESPECIALES)) {
+    const sh = wb.Sheets[nombre];
+    if (!sh) continue;
+
+    const items = [];
+
+    if (conf.esFormatoMultiple) {
+      // Para CARBONES: 5 sub-pedidos en paralelo, cada par (N°, CANT)
+      for (const sub of conf.subPedidos) {
+        for (let r = conf.rango.r1; r <= conf.rango.r2; r++) {
+          const codigo = cell(sh, r, sub.num);
+          const cantidad = cell(sh, r, sub.cantidad);
+          if (codigo == null || codigo === '' || codigo === 0) continue;
+          if (typeof cantidad !== 'number' || cantidad === 0) continue;
+          items.push({
+            codigo: String(codigo).trim(),
+            cantidad,
+            precio: null,
+            total: null,
+            descripcion: sub.label,
+          });
+        }
+      }
+    } else if (conf.proveedoresCols) {
+      // Para REGATONES: hay una columna "Elijo a:" y varias columnas de proveedor
+      for (let r = conf.rango.r1; r <= conf.rango.r2; r++) {
+        const codigo = cell(sh, r, conf.cols.num);
+        const cantidad = cell(sh, r, conf.cols.cantidad);
+        const elegido = cell(sh, r, conf.cols.elijoA);
+        if (codigo == null || codigo === '' || codigo === 0) continue;
+        if (typeof cantidad !== 'number' || cantidad === 0) continue;
+        // Buscar el importe en la columna del proveedor elegido
+        let importe = null;
+        if (elegido && conf.proveedoresCols[elegido]) {
+          const v = cell(sh, r, conf.proveedoresCols[elegido]);
+          if (typeof v === 'number') importe = v;
+        }
+        items.push({
+          codigo: String(codigo).trim(),
+          cantidad,
+          precio: importe && cantidad ? importe / cantidad : null,
+          total: importe,
+          descripcion: elegido ? `→ ${elegido}` : '',
+        });
+      }
+    } else {
+      // Formato estándar: leer columnas definidas
+      for (let r = conf.rango.r1; r <= conf.rango.r2; r++) {
+        let codigo = null;
+        if (conf.cols.codigo) codigo = cell(sh, r, conf.cols.codigo);
+        if (codigo == null && conf.cols.num) codigo = cell(sh, r, conf.cols.num);
+
+        // Skip filas vacías
+        if (codigo == null || codigo === '' || String(codigo).trim() === '0') continue;
+
+        const cantidad = conf.cols.cantidad ? cell(sh, r, conf.cols.cantidad) : null;
+        const precio = conf.cols.precio ? cell(sh, r, conf.cols.precio) : null;
+        const total = conf.cols.total ? cell(sh, r, conf.cols.total) : null;
+
+        // Descripción: puede ser función o columna
+        let descripcion = '';
+        if (conf.descFn) {
+          descripcion = conf.descFn((row, col) => cell(sh, row || r, col), r) || '';
+        } else if (conf.cols.descripcion) {
+          const d = cell(sh, r, conf.cols.descripcion);
+          descripcion = d != null ? String(d).trim() : '';
+        }
+        // Agregar extras (tipo, color, largo, etc.)
+        const extras = [];
+        if (conf.cols.tipo) {
+          const v = cell(sh, r, conf.cols.tipo);
+          if (v) extras.push(String(v).trim());
+        }
+        if (conf.cols.color) {
+          const v = cell(sh, r, conf.cols.color);
+          if (v) extras.push(String(v).trim());
+        }
+        if (conf.cols.largo) {
+          const v = cell(sh, r, conf.cols.largo);
+          if (v) extras.push(String(v).trim());
+        }
+        if (extras.length > 0) {
+          descripcion = descripcion ? `${descripcion} · ${extras.join(' · ')}` : extras.join(' · ');
+        }
+
+        // Skip si no hay ni cantidad ni total ni precio
+        if ((typeof cantidad !== 'number' || cantidad === 0) &&
+            (typeof total !== 'number' || total === 0) &&
+            (typeof precio !== 'number' || precio === 0)) continue;
+
+        items.push({
+          codigo: String(codigo).trim(),
+          cantidad: typeof cantidad === 'number' ? cantidad : null,
+          precio: typeof precio === 'number' ? precio : null,
+          total: typeof total === 'number' ? total : null,
+          descripcion,
+        });
+      }
+    }
+
+    out.hojas_raw[nombre] = items;
+  }
+
+  // ====== PARSEO DE HOJAS MAPEADAS (PROVEEDORES_ESPECIALES) ======
+  for (const nombre of Object.keys(PROVEEDORES_ESPECIALES)) {
+    if (HOJAS_EXCLUIR.has(nombre)) continue;
+    const items = parsearHojaEspecial(wb, nombre);
+    if (items && items.length > 0) {
+      out.hojas_raw[nombre] = items;
+    }
   }
 
   return out;
@@ -1096,6 +1431,9 @@ function abrirProveedor(nombre) {
     const totalItems = items.length;
     const totalPiezas = items.reduce((a, i) => a + (i.cantidad || 0), 0);
 
+    // Detectar si hay columna extra (tipo/color/tipo proveedor)
+    const tieneExtra = items.some(i => i.extra && i.extra !== '');
+    const extraHeader = tieneExtra ? '<th>Detalle</th>' : '';
     contenido = `
       <button class="modal-close" onclick="document.getElementById('modal-prov').classList.remove('active')">✕</button>
       <h3>${escapeHtml(nombre)}</h3>
@@ -1109,6 +1447,7 @@ function abrirProveedor(nombre) {
             <tr>
               <th>Código</th>
               <th>Descripción</th>
+              ${extraHeader}
               <th class="num">Cant.</th>
               <th class="num">Precio U.</th>
               <th class="num">Total</th>
@@ -1118,6 +1457,7 @@ function abrirProveedor(nombre) {
             ${items.map(i => `<tr>
               <td class="mono">${escapeHtml(i.codigo)}</td>
               <td>${escapeHtml(i.descripcion || '—')}</td>
+              ${tieneExtra ? `<td style="color:var(--text-dim); font-size:12px;">${escapeHtml(i.extra || '')}</td>` : ''}
               <td class="num">${fmtN(i.cantidad)}</td>
               <td class="num" style="color:var(--text-dim)">${fmt$d(i.precio)}</td>
               <td class="num" style="font-weight:600">${fmt$(i.total)}</td>
