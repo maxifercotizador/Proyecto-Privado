@@ -576,11 +576,12 @@
   /* Scrollbar */
   
   .status-bar {
-    position: fixed; top: 70px; right: 20px; z-index: 200;
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 200;
     padding: 10px 16px; border-radius: 6px;
     font-family: 'JetBrains Mono', monospace; font-size: 12px;
-    max-width: 500px; display: none;
+    max-width: calc(100vw - 40px); display: none;
     box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+    text-align: center;
   }
   .status-bar.loading { background: var(--info-dim); border:1px solid var(--info); color: var(--info); }
   .status-bar.ok { background: var(--good-dim); border:1px solid var(--good); color: var(--good); }
@@ -641,8 +642,13 @@
 
   /* Responsive */
   @media (max-width: 640px) {
-    header { padding: 12px 14px; flex-wrap: wrap; }
+    header { padding: 12px 14px; flex-wrap: wrap; gap: 8px; }
     .logo { font-size: 18px; }
+    .subtitle { font-size: 10px; }
+    .header-right { width: 100%; margin-left: 0; justify-content: flex-start; flex-wrap: wrap; gap: 6px; }
+    .header-right > * { font-size: 10px !important; }
+    .btn-header { padding: 5px 9px !important; font-size: 10px !important; }
+    .scenario-toggle button { padding: 5px 9px !important; font-size: 9px !important; }
     main { padding: 14px; }
     .tabs { padding: 0 14px; }
     .tab { padding: 10px 12px; font-size: 10px; }
@@ -662,10 +668,10 @@
   <div class="subtitle">Costos · Ganancias · Fábricas</div>
   <div class="header-right">
     
-    <a href="./index.html" class="btn-header" style="text-decoration:none;" title="Volver al panel">← Panel</a>
+    <a href="../index.html" class="btn-header" style="text-decoration:none;" title="Volver al panel">← Panel</a>
     <span id="last-sync"></span>
-    <button class="btn-header" id="btn-refresh" title="Actualizar desde OneDrive">↻ Actualizar</button>
-    <button class="btn-header" id="btn-config" title="Configurar link de OneDrive">⚙ Link</button>
+    <button class="btn-header" id="btn-refresh" title="Actualizar desde Drive">↻ Actualizar</button>
+    <button class="btn-header" id="btn-config" title="Configurar link de Drive">⚙ Link</button>
 
     <span style="color:var(--text-mute); font-family:'JetBrains Mono',monospace; font-size:11px;">Vendedor:</span>
     <div class="scenario-toggle">
@@ -883,15 +889,49 @@
   <div class="modal" id="modal"></div>
 </div>
 
+
+<div class="status-bar" id="status-bar"></div>
+
+<!-- MODAL CONFIG ONEDRIVE -->
+<div class="modal-bg" id="modal-config">
+  <div class="modal">
+    <button class="modal-close" onclick="document.getElementById('modal-config').classList.remove('active')">✕</button>
+    <h3>Link de Google Drive</h3>
+    <div class="modal-sub">Configurar desde dónde bajar el archivo <strong>01_COMPRAS_-_COSTOS_-_FABRICAS.xlsm</strong></div>
+
+    <div class="help-steps">
+      <strong>Cómo obtener el link:</strong>
+      <ol>
+        <li>En OneDrive, click derecho sobre el archivo → <strong>Compartir</strong></li>
+        <li>Cambiá permisos a <strong>"Cualquier persona con el enlace"</strong></li>
+        <li>Click en <strong>Copiar vínculo</strong></li>
+        <li>Pegalo abajo y dale Guardar</li>
+      </ol>
+    </div>
+
+    <div style="font-size:11px; color:var(--text-mute); text-transform:uppercase; letter-spacing:0.1em; font-family:'JetBrains Mono',monospace; margin-bottom:6px;">Link de Google Drive</div>
+    <textarea id="config-url" placeholder="https://1drv.ms/... o https://onedrive.live.com/..."></textarea>
+
+    <div style="display:flex; gap:8px; margin-top:14px; justify-content:flex-end;">
+      <button class="btn-reset" onclick="document.getElementById('modal-config').classList.remove('active')">Cancelar</button>
+      <button class="btn-header primary" id="btn-save-url">Guardar y cargar</button>
+    </div>
+
+    <div style="margin-top:16px; padding:10px 12px; background:var(--bad-dim); border:1px solid var(--bad); border-radius:5px; font-size:11px; color:var(--bad); line-height:1.6;">
+      <strong>⚠ Atención:</strong> Cualquiera que tenga este link ve tus costos y proveedores. No lo compartas ni lo publiques en ningún lado.
+    </div>
+  </div>
+</div>
+
 <script>
 // ============ CONFIG ============
-// URL de OneDrive con el archivo xlsm. Formato de descarga directa.
-// Para generarlo desde un link de OneDrive "compartir":
+// URL de Drive con el archivo xlsm. Formato de descarga directa.
+// Para generarlo desde un link de Drive "compartir":
 //   1. Compartí el archivo "Cualquiera con el enlace"
 //   2. Reemplazá ese URL en ONEDRIVE_URL abajo
 //   3. Convertirlo a descarga directa: el código de abajo lo intenta automáticamente
 
-const ONEDRIVE_URL = localStorage.getItem('maxifer_url') || '';  // pegar link de OneDrive acá o usar el input
+const ONEDRIVE_URL = localStorage.getItem('maxifer_url') || '';  // pegar link de Drive acá o usar el input
 
 // Fábricas/categorías a excluir (definidas al armar la app)
 const EXCLUIR_CATEGORIAS = new Set([
@@ -944,7 +984,7 @@ function convertirOneDriveUrl(url) {
 }
 
 async function cargarDesdeOneDrive(url, forzar = false) {
-  mostrarStatus('Descargando archivo desde OneDrive…', 'loading');
+  mostrarStatus('Descargando archivo desde Drive…', 'loading');
   const urlDirecto = convertirOneDriveUrl(url);
 
   // Intentar fetch directo primero
@@ -1071,7 +1111,7 @@ function mostrarStatus(msg, tipo) {
 async function inicializarDatos(forzar = false) {
   const url = localStorage.getItem('maxifer_url') || ONEDRIVE_URL;
   if (!url) {
-    mostrarStatus('⚠ Falta configurar el link de OneDrive. Click en "Configurar link" arriba.', 'warn');
+    mostrarStatus('⚠ Falta configurar el link de Drive. Click en "Configurar link" arriba.', 'warn');
     document.getElementById('modal-config').classList.add('active');
     return;
   }
@@ -1099,7 +1139,7 @@ async function inicializarDatos(forzar = false) {
         document.getElementById('tab-count-sin').textContent = '· ' + DATA.sin_costo.length;
         populateFilters();
         switchTab(state.tab || 'dashboard');
-        mostrarStatus('⚠ Usando datos en caché (no se pudo actualizar desde OneDrive)', 'warn');
+        mostrarStatus('⚠ Usando datos en caché (no se pudo actualizar desde Drive)', 'warn');
         actualizarHoraCache();
       } catch (e) { /* corrupto */ }
     }
@@ -1156,7 +1196,7 @@ function renderDashboard() {
   const ds = DATA.con_costo;
   const totalProd = ds.length;
   if (totalProd === 0) {
-    document.getElementById('kpi-grid').innerHTML = '<div class="kpi info" style="grid-column:1/-1; text-align:center;"><div class="kpi-label">Sin datos cargados</div><div class="kpi-value" style="font-size:16px;">Configurá el link de OneDrive</div></div>';
+    document.getElementById('kpi-grid').innerHTML = '<div class="kpi info" style="grid-column:1/-1; text-align:center;"><div class="kpi-label">Sin datos cargados</div><div class="kpi-value" style="font-size:16px;">Configurá el link de Drive</div></div>';
     ['top-margen','peor-margen','perdida-list','top-ganancia'].forEach(id => {
       const el = document.getElementById(id); if (el) el.innerHTML = '';
     });
@@ -1548,7 +1588,7 @@ function init() {
   // Guardar URL
   document.getElementById('btn-save-url').addEventListener('click', () => {
     const url = document.getElementById('config-url').value.trim();
-    if (!url) { alert('Pegá el link de OneDrive antes de guardar.'); return; }
+    if (!url) { alert('Pegá el link de Drive antes de guardar.'); return; }
     localStorage.setItem('maxifer_url', url);
     document.getElementById('modal-config').classList.remove('active');
     inicializarDatos(true);
@@ -1608,41 +1648,8 @@ function init() {
 }
 
 init();
-inicializarDatos(false);  // Cargar datos desde OneDrive al inicio
+inicializarDatos(false);  // Cargar datos desde Drive al inicio
 </script>
-
-<div class="status-bar" id="status-bar"></div>
-
-<!-- MODAL CONFIG ONEDRIVE -->
-<div class="modal-bg" id="modal-config">
-  <div class="modal">
-    <button class="modal-close" onclick="document.getElementById('modal-config').classList.remove('active')">✕</button>
-    <h3>Link de OneDrive</h3>
-    <div class="modal-sub">Configurar desde dónde bajar el archivo <strong>01_COMPRAS_-_COSTOS_-_FABRICAS.xlsm</strong></div>
-
-    <div class="help-steps">
-      <strong>Cómo obtener el link:</strong>
-      <ol>
-        <li>En OneDrive, click derecho sobre el archivo → <strong>Compartir</strong></li>
-        <li>Cambiá permisos a <strong>"Cualquier persona con el enlace"</strong></li>
-        <li>Click en <strong>Copiar vínculo</strong></li>
-        <li>Pegalo abajo y dale Guardar</li>
-      </ol>
-    </div>
-
-    <div style="font-size:11px; color:var(--text-mute); text-transform:uppercase; letter-spacing:0.1em; font-family:'JetBrains Mono',monospace; margin-bottom:6px;">Link de OneDrive</div>
-    <textarea id="config-url" placeholder="https://1drv.ms/... o https://onedrive.live.com/..."></textarea>
-
-    <div style="display:flex; gap:8px; margin-top:14px; justify-content:flex-end;">
-      <button class="btn-reset" onclick="document.getElementById('modal-config').classList.remove('active')">Cancelar</button>
-      <button class="btn-header primary" id="btn-save-url">Guardar y cargar</button>
-    </div>
-
-    <div style="margin-top:16px; padding:10px 12px; background:var(--bad-dim); border:1px solid var(--bad); border-radius:5px; font-size:11px; color:var(--bad); line-height:1.6;">
-      <strong>⚠ Atención:</strong> Cualquiera que tenga este link ve tus costos y proveedores. No lo compartas ni lo publiques en ningún lado.
-    </div>
-  </div>
-</div>
 
 </body>
 </html>

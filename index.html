@@ -330,11 +330,12 @@
 
   /* STATUS BAR */
   .status-bar {
-    position: fixed; top: 20px; right: 20px; z-index: 200;
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 200;
     padding: 10px 16px; border-radius: 6px;
     font-family: 'JetBrains Mono', monospace; font-size: 12px;
-    max-width: 500px; display: none;
+    max-width: calc(100vw - 40px); display: none;
     box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+    text-align: center;
   }
   .status-bar.loading { background: var(--info-dim); border:1px solid var(--info); color: var(--info); }
   .status-bar.ok { background: var(--good-dim); border:1px solid var(--good); color: var(--good); }
@@ -634,9 +635,9 @@
 // ============ CONFIG ============
 // Paths de los módulos (relativos)
 const MODULE_PATHS = {
-  costos: './costos.html',
-  pedidos: './pedidos.html',
-  gastos: './gastos.html',
+  costos: './costos/index.html',
+  pedidos: './pedidos/index.html',
+  gastos: './gastos/index.html',
 };
 
 // Storage keys compartidos con los módulos

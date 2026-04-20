@@ -379,11 +379,12 @@
 
   /* STATUS BAR */
   .status-bar {
-    position: fixed; top: 70px; right: 20px; z-index: 200;
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 200;
     padding: 10px 16px; border-radius: 6px;
     font-family: 'JetBrains Mono', monospace; font-size: 12px;
-    max-width: 500px; display: none;
+    max-width: calc(100vw - 40px); display: none;
     box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+    text-align: center;
   }
   .status-bar.loading { background: var(--info-dim); border:1px solid var(--info); color: var(--info); }
   .status-bar.ok { background: var(--good-dim); border:1px solid var(--good); color: var(--good); }
@@ -475,8 +476,12 @@
 
   /* RESPONSIVE */
   @media (max-width: 640px) {
-    header { padding: 12px 14px; }
+    header { padding: 12px 14px; gap: 8px; }
     .logo { font-size: 17px; }
+    .subtitle { font-size: 10px; }
+    .header-right { width: 100%; margin-left: 0; justify-content: flex-start; flex-wrap: wrap; gap: 6px; }
+    .header-right > * { font-size: 10px !important; }
+    .btn-header { padding: 5px 9px !important; font-size: 10px !important; }
     main { padding: 14px; }
     nav.tabs { padding: 0 14px; }
     .tab { padding: 10px 12px; font-size: 10px; }
@@ -497,7 +502,7 @@
   <div class="logo"><span class="dot"></span> MAXIFER</div>
   <div class="subtitle">Pedidos a Fábrica</div>
   <div class="header-right">
-    <a href="./index.html" class="btn-header" style="text-decoration:none;" title="Volver al panel">← Panel</a>
+    <a href="../index.html" class="btn-header" style="text-decoration:none;" title="Volver al panel">← Panel</a>
     <span id="last-sync"></span>
     <button class="btn-header" id="btn-refresh" title="Actualizar desde Drive">↻ Actualizar</button>
     <button class="btn-header" id="btn-config" title="Configurar link">⚙ Link</button>
@@ -607,6 +612,9 @@
 <div class="modal-bg" id="modal-prov">
   <div class="modal" id="modal-prov-content"></div>
 </div>
+
+
+
 
 <script>
 // ============ CONFIG ============
