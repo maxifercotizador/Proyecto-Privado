@@ -550,27 +550,27 @@
     </a>
 
     <!-- GASTOS -->
-    <a href="#" class="module gastos disabled" data-module="gastos" id="mod-gastos">
+    <a href="#" class="module gastos" data-module="gastos" id="mod-gastos">
       <div class="module-head">
         <div>
           <div class="module-title">Gastos y Proyección</div>
         </div>
         <div class="module-icon">%</div>
       </div>
-      <div class="module-desc">Gastos fijos, variables y proyección de vencimientos del mes.</div>
+      <div class="module-desc">Gastos fijos, sueldos, mercadería y proyección de vencimientos del mes.</div>
       <div class="module-kpis">
         <div class="module-kpi">
-          <div class="kpi-label">Estado</div>
-          <div class="kpi-value"><span class="module-coming">Próximamente</span></div>
+          <div class="kpi-label">Gasto mes</div>
+          <div class="kpi-value loading" data-kpi="gastos-mes">cargando…</div>
         </div>
         <div class="module-kpi">
-          <div class="kpi-label">&nbsp;</div>
-          <div class="kpi-value" style="color:var(--text-mute); font-size:11px;">—</div>
+          <div class="kpi-label">Por pagar</div>
+          <div class="kpi-value loading" data-kpi="gastos-pendiente">cargando…</div>
         </div>
       </div>
       <div class="module-footer">
-        <span>No disponible</span>
-        <span class="arrow" style="opacity:0.4">—</span>
+        <span>Abrir módulo</span>
+        <span class="arrow">→</span>
       </div>
     </a>
 
@@ -654,7 +654,7 @@ const STORAGE_KEYS = {
 const HARDCODED_URLS = {
   costos: './01%20COMPRAS%20-%20COSTOS%20-%20FABRICAS.xlsm',
   pedidos: './03%20Pedidos%20Fabricas.xlsm',
-  gastos: null,
+  gastos: './Gastos_Fijos.xlsx',
 };
 
 // Categorías excluidas (mismas que en módulo costos)
@@ -830,6 +830,78 @@ function setKPINoConfig(el) {
   el.className = 'kpi-value loading';
 }
 
+async function calcularKPIsGastos(url) {
+  const buffer = await descargarArchivo(url, false);
+  const wb = XLSX.read(new Uint8Array(buffer), { type: 'array', cellDates: true });
+
+  function cellv(sheet, r, c) {
+    if (!sheet) return null;
+    const addr = XLSX.utils.encode_cell({ r: r - 1, c: c - 1 });
+    const cc = sheet[addr];
+    return cc ? cc.v : null;
+  }
+  function pd(v) {
+    if (!v) return null;
+    if (v instanceof Date) return isNaN(v) ? null : v;
+    const d = new Date(v);
+    return isNaN(d) ? null : d;
+  }
+
+  const hoy = new Date(); hoy.setHours(0,0,0,0);
+  const esteMes = `${hoy.getFullYear()}-${String(hoy.getMonth()+1).padStart(2,'0')}`;
+
+  let gastoMes = 0;
+  let pendienteFuturo = 0;
+
+  // GFijos (hoja GFijos, HF:HK)
+  const gf = wb.Sheets['GFijos'];
+  if (gf) {
+    for (let r = 3; r <= 517; r++) {
+      const f = pd(cellv(gf, r, 214));
+      const imp = cellv(gf, r, 217);
+      const desc = cellv(gf, r, 215);
+      const pagado = String(cellv(gf, r, 219) || '').toUpperCase().trim() === 'SI';
+      if (!f || typeof imp !== 'number' || imp === 0 || !desc) continue;
+      const k = `${f.getFullYear()}-${String(f.getMonth()+1).padStart(2,'0')}`;
+      if (k === esteMes) gastoMes += imp;
+      if (!pagado && f >= hoy) pendienteFuturo += imp;
+    }
+  }
+
+  // Sueldos
+  const su = wb.Sheets['SUEL'];
+  if (su) {
+    for (let r = 3; r <= 400; r++) {
+      const f = pd(cellv(su, r, 1));
+      const v = cellv(su, r, 3);
+      if (!f || typeof v !== 'number' || v === 0) continue;
+      const k = `${f.getFullYear()}-${String(f.getMonth()+1).padStart(2,'0')}`;
+      if (k === esteMes) gastoMes += v;
+    }
+  }
+
+  // Mercadería y GVarios
+  const gr = wb.Sheets['Gastos Reales'];
+  if (gr) {
+    for (let r = 3; r <= 700; r++) {
+      const fm = pd(cellv(gr, r, 11));
+      const im = cellv(gr, r, 14);
+      if (fm && typeof im === 'number' && im !== 0) {
+        const k = `${fm.getFullYear()}-${String(fm.getMonth()+1).padStart(2,'0')}`;
+        if (k === esteMes) gastoMes += im;
+      }
+      const fv = pd(cellv(gr, r, 16));
+      const iv = cellv(gr, r, 19);
+      if (fv && typeof iv === 'number' && iv !== 0) {
+        const k = `${fv.getFullYear()}-${String(fv.getMonth()+1).padStart(2,'0')}`;
+        if (k === esteMes) gastoMes += iv;
+      }
+    }
+  }
+
+  return { gasto_mes: gastoMes, pendiente: pendienteFuturo };
+}
+
 async function cargarKPIsModulo(modulo, kpis) {
   const url = HARDCODED_URLS[modulo] || localStorage.getItem(STORAGE_KEYS[modulo + '_url']);
   if (!url) {
@@ -847,6 +919,10 @@ async function cargarKPIsModulo(modulo, kpis) {
       const r = await calcularKPIsPedidos(url);
       setKPI(kpis.porpasar, fmtN(r.por_pasar), r.por_pasar > 0 ? 'warn' : 'good');
       setKPI(kpis.deuda, fmt$(r.deuda_total), r.deuda_total > 0 ? 'bad' : 'good');
+    } else if (modulo === 'gastos') {
+      const r = await calcularKPIsGastos(url);
+      setKPI(kpis.mes, fmt$(r.gasto_mes), 'warn');
+      setKPI(kpis.pendiente, fmt$(r.pendiente), r.pendiente > 0 ? 'bad' : 'good');
     }
     return { ok: true };
   } catch (e) {
@@ -870,16 +946,22 @@ async function cargarTodosKPIs() {
     porpasar: document.querySelector('[data-kpi="pedidos-porpasar"]'),
     deuda: document.querySelector('[data-kpi="pedidos-deuda"]'),
   };
+  // Módulo gastos
+  const kpisGastos = {
+    mes: document.querySelector('[data-kpi="gastos-mes"]'),
+    pendiente: document.querySelector('[data-kpi="gastos-pendiente"]'),
+  };
 
-  const [rCostos, rPedidos] = await Promise.allSettled([
+  const [rCostos, rPedidos, rGastos] = await Promise.allSettled([
     cargarKPIsModulo('costos', kpisCostos),
     cargarKPIsModulo('pedidos', kpisPedidos),
+    cargarKPIsModulo('gastos', kpisGastos),
   ]);
 
   actualizarConfigStatus();
 
   const okCount = [rCostos, rPedidos].filter(r => r.value && r.value.ok).length;
-  const totalConfig = 2; // hardcoded: siempre hay 2 URLs configuradas
+  const totalConfig = 3; // hardcoded: siempre hay 3 URLs configuradas
 
   if (totalConfig === 0) {
     mostrarStatus('⚠ Configurá los links de Drive para ver los datos', 'warn');
