@@ -652,8 +652,8 @@ const STORAGE_KEYS = {
 
 // URLs hardcoded (Google Drive)
 const HARDCODED_URLS = {
-  costos: 'https://drive.google.com/file/d/1oiX0i7o9Y8ChKGq5sKEDVHib5MGyGn1n/view?usp=sharing',
-  pedidos: 'https://drive.google.com/file/d/19ItyMRvmTJdQrWhVR114jN4oc4DRcK55/view?usp=sharing',
+  costos: './costos.xlsm',
+  pedidos: './pedidos.xlsm',
   gastos: null,
 };
 
@@ -694,75 +694,15 @@ function convertirDriveUrl(url) {
 }
 
 async function descargarArchivo(url, forzar = false) {
-  // Estrategia de fallbacks: probamos varias formas de bajar el archivo
-  const id = extraerIdDrive(url);
-  const attempts = [];
-
-  if (id) {
-    // 1) URL directa de descarga de Drive
-    attempts.push({
-      name: 'Drive directo (uc?export=download)',
-      url: `https://drive.google.com/uc?export=download&id=${id}`,
-      useProxy: false
-    });
-    // 2) URL alternativa de Drive
-    attempts.push({
-      name: 'Drive directo (alt)',
-      url: `https://drive.usercontent.google.com/download?id=${id}&export=download`,
-      useProxy: false
-    });
-    // 3) Vía proxy corsproxy.io
-    attempts.push({
-      name: 'Proxy corsproxy.io',
-      url: `https://corsproxy.io/?${encodeURIComponent('https://drive.google.com/uc?export=download&id=' + id)}`,
-      useProxy: true
-    });
-    // 4) Vía proxy allorigins
-    attempts.push({
-      name: 'Proxy allorigins',
-      url: `https://api.allorigins.win/raw?url=${encodeURIComponent('https://drive.google.com/uc?export=download&id=' + id)}`,
-      useProxy: true
-    });
-    // 5) Vía proxy cors.sh
-    attempts.push({
-      name: 'Proxy cors.sh',
-      url: `https://proxy.cors.sh/https://drive.google.com/uc?export=download&id=${id}`,
-      useProxy: true
-    });
-  } else {
-    // URL no es de Drive, probar directo y con proxy
-    attempts.push({ name: 'Directo', url, useProxy: false });
-    attempts.push({ name: 'Proxy corsproxy.io', url: `https://corsproxy.io/?${encodeURIComponent(url)}`, useProxy: true });
+  // Archivo local del mismo repo: sin CORS, instantáneo
+  const resp = await fetch(url, { cache: forzar ? 'reload' : 'default' });
+  if (!resp.ok) throw new Error('HTTP ' + resp.status + ' al bajar ' + url);
+  const buffer = await resp.arrayBuffer();
+  const u8 = new Uint8Array(buffer.slice(0, 2));
+  if (u8[0] !== 0x50 || u8[1] !== 0x4B) {
+    throw new Error('El archivo ' + url + ' no es un Excel válido (¿falta subir al repo?)');
   }
-
-  let lastError = '';
-  for (const att of attempts) {
-    try {
-      const resp = await fetch(att.url, { cache: forzar ? 'reload' : 'default' });
-      if (!resp.ok) { lastError = `${att.name}: HTTP ${resp.status}`; continue; }
-      const buffer = await resp.arrayBuffer();
-      const u8 = new Uint8Array(buffer.slice(0, 2));
-      if (u8[0] !== 0x50 || u8[1] !== 0x4B) {
-        lastError = `${att.name}: no es Excel (puede ser HTML de login/error)`;
-        continue;
-      }
-      console.log(`✓ Descarga exitosa vía: ${att.name}`);
-      return buffer;
-    } catch (e) {
-      lastError = `${att.name}: ${e.message}`;
-      console.warn(`✗ ${att.name} falló:`, e.message);
-    }
-  }
-  throw new Error('Todos los métodos fallaron. Último error: ' + lastError);
-}
-
-function extraerIdDrive(url) {
-  if (!url) return null;
-  const m = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
-  if (m) return m[1];
-  const m2 = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
-  if (m2) return m2[1];
-  return null;
+  return buffer;
 }
 
 // ============ KPIs POR MÓDULO ============

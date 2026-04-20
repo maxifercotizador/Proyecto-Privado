@@ -931,7 +931,7 @@
 //   2. Reemplazá ese URL en ONEDRIVE_URL abajo
 //   3. Convertirlo a descarga directa: el código de abajo lo intenta automáticamente
 
-const HARDCODED_URL = 'https://drive.google.com/file/d/1oiX0i7o9Y8ChKGq5sKEDVHib5MGyGn1n/view?usp=sharing';
+const HARDCODED_URL = './costos.xlsm';
 const ONEDRIVE_URL = HARDCODED_URL;  // pegar link de Drive acá o usar el input
 
 // Fábricas/categorías a excluir (definidas al armar la app)
@@ -985,48 +985,21 @@ function convertirOneDriveUrl(url) {
 }
 
 
-// ============ DESCARGA ROBUSTA (múltiples fallbacks) ============
+// ============ DESCARGA LOCAL ============
 function extraerIdDrive(url) {
-  if (!url) return null;
-  const m = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
-  if (m) return m[1];
-  const m2 = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
-  if (m2) return m2[1];
+  // Mantenida por compat, ya no se usa
   return null;
 }
 
 async function descargarArchivoMultiple(url, forzar = false) {
-  const id = extraerIdDrive(url);
-  const attempts = [];
-  if (id) {
-    attempts.push({ name: 'Drive directo', url: `https://drive.google.com/uc?export=download&id=${id}` });
-    attempts.push({ name: 'Drive alt', url: `https://drive.usercontent.google.com/download?id=${id}&export=download` });
-    attempts.push({ name: 'corsproxy.io', url: `https://corsproxy.io/?${encodeURIComponent('https://drive.google.com/uc?export=download&id=' + id)}` });
-    attempts.push({ name: 'allorigins', url: `https://api.allorigins.win/raw?url=${encodeURIComponent('https://drive.google.com/uc?export=download&id=' + id)}` });
-  } else {
-    attempts.push({ name: 'Directo', url });
-    attempts.push({ name: 'corsproxy.io', url: `https://corsproxy.io/?${encodeURIComponent(url)}` });
+  const resp = await fetch(url, { cache: forzar ? 'reload' : 'default' });
+  if (!resp.ok) throw new Error('HTTP ' + resp.status + ' al bajar ' + url);
+  const buffer = await resp.arrayBuffer();
+  const u8 = new Uint8Array(buffer.slice(0, 2));
+  if (u8[0] !== 0x50 || u8[1] !== 0x4B) {
+    throw new Error('El archivo no es un Excel válido (¿falta subir al repo?)');
   }
-
-  let lastError = '';
-  for (const att of attempts) {
-    try {
-      const resp = await fetch(att.url, { cache: forzar ? 'reload' : 'default' });
-      if (!resp.ok) { lastError = `${att.name}: HTTP ${resp.status}`; continue; }
-      const buffer = await resp.arrayBuffer();
-      const u8 = new Uint8Array(buffer.slice(0, 2));
-      if (u8[0] !== 0x50 || u8[1] !== 0x4B) {
-        lastError = `${att.name}: no es Excel (login/error page)`;
-        continue;
-      }
-      console.log('✓ Descarga OK vía:', att.name);
-      return buffer;
-    } catch (e) {
-      lastError = `${att.name}: ${e.message}`;
-      console.warn('✗', att.name, 'falló:', e.message);
-    }
-  }
-  throw new Error(lastError);
+  return buffer;
 }
 
 async function cargarDesdeOneDrive(url, forzar = false) {
