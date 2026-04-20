@@ -268,6 +268,21 @@
   }
   .module:hover .module-footer .arrow { transform: translateX(4px); color: var(--accent); }
 
+  .last-update {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    color: var(--text-mute);
+    text-transform: none;
+    letter-spacing: 0;
+    margin-top: 3px;
+    font-weight: 400;
+  }
+  .last-update.reciente { color: var(--good); }
+  .last-update.medio { color: var(--warn); }
+  .last-update.viejo { color: var(--bad); }
+  .last-update .days {
+    font-weight: 600;
+  }
   .module-coming {
     display: inline-flex;
     align-items: center;
@@ -486,8 +501,8 @@
     <div class="brand-subtitle">panel de control</div>
   </div>
   <div class="header-actions">
-    <button class="btn-header" id="btn-refresh">↻ Actualizar</button>
-    <button class="btn-header" id="btn-config">⚙ Configuración</button>
+    
+    
   </div>
 </header>
 
@@ -519,7 +534,10 @@
         </div>
       </div>
       <div class="module-footer">
-        <span>Abrir módulo</span>
+        <div>
+          <div>Abrir módulo</div>
+          <div class="last-update" data-update="costos">cargando…</div>
+        </div>
         <span class="arrow">→</span>
       </div>
     </a>
@@ -544,7 +562,10 @@
         </div>
       </div>
       <div class="module-footer">
-        <span>Abrir módulo</span>
+        <div>
+          <div>Abrir módulo</div>
+          <div class="last-update" data-update="pedidos">cargando…</div>
+        </div>
         <span class="arrow">→</span>
       </div>
     </a>
@@ -569,7 +590,10 @@
         </div>
       </div>
       <div class="module-footer">
-        <span>Abrir módulo</span>
+        <div>
+          <div>Abrir módulo</div>
+          <div class="last-update" data-update="gastos">cargando…</div>
+        </div>
         <span class="arrow">→</span>
       </div>
     </a>
@@ -591,44 +615,7 @@
 
 <div class="status-bar" id="status-bar"></div>
 
-<!-- MODAL CONFIG -->
-<div class="modal-bg" id="modal-config">
-  <div class="modal">
-    <button class="modal-close" onclick="cerrarModal('modal-config')">✕</button>
-    <h3>Configuración de enlaces</h3>
-    <div class="modal-sub">Pegá los links de Google Drive de cada archivo</div>
 
-    <div class="help-box">
-      <strong>Cómo obtener cada link:</strong>
-      <ol>
-        <li>En Google Drive, click derecho sobre el archivo → <strong>Compartir</strong></li>
-        <li>Acceso general: <strong>"Cualquier usuario con el vínculo"</strong> + Lector</li>
-        <li><strong>Copiar vínculo</strong> y pegarlo abajo</li>
-      </ol>
-    </div>
-
-    <div class="link-field">
-      <label>Costos y Fábricas (01_COMPRAS - COSTOS - FABRICAS.xlsm)</label>
-      <input type="text" id="url-costos" placeholder="https://drive.google.com/file/d/...">
-    </div>
-    <div class="link-field">
-      <label>Pedidos a Fábrica (03_Pedidos_Fabricas.xlsm)</label>
-      <input type="text" id="url-pedidos" placeholder="https://drive.google.com/file/d/...">
-    </div>
-    <div class="link-field">
-      <label>Gastos y Proyección (próximamente)</label>
-      <input type="text" id="url-gastos" placeholder="pendiente" disabled>
-    </div>
-
-    <div class="modal-buttons">
-      <button class="btn" onclick="cerrarModal('modal-config')">Cancelar</button>
-      <button class="btn primary" id="btn-save-config">Guardar y cargar</button>
-    </div>
-
-    <div style="margin-top:16px; padding:10px 12px; background:var(--bad-dim); border:1px solid var(--bad); border-radius:5px; font-size:11px; color:var(--bad); line-height:1.6;">
-      <strong>⚠</strong> Los links son públicos: cualquiera con ellos ve tus datos. No los publiques.
-    </div>
-  </div>
 </div>
 
 <script>
@@ -975,6 +962,73 @@ async function cargarTodosKPIs() {
   actualizarUltimoSync();
 }
 
+
+
+// ============ ÚLTIMAS ACTUALIZACIONES (GitHub API) ============
+const GITHUB_OWNER = 'maxifercotizador';
+const GITHUB_REPO = 'Proyecto-Privado';
+const FILE_NAMES = {
+  costos: '01 COMPRAS - COSTOS - FABRICAS.xlsm',
+  pedidos: '03 Pedidos Fabricas.xlsm',
+  gastos: 'Gastos Fijos.xlsx',
+};
+
+async function cargarUltimaActualizacion(modulo) {
+  const el = document.querySelector(`.last-update[data-update="${modulo}"]`);
+  if (!el) return;
+  try {
+    const filename = FILE_NAMES[modulo];
+    const url = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/commits?path=${encodeURIComponent(filename)}&per_page=1`;
+    const resp = await fetch(url);
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    const data = await resp.json();
+    if (!data || data.length === 0) {
+      el.textContent = 'sin historial';
+      return;
+    }
+    const fechaStr = data[0].commit.author.date; // ISO
+    const fecha = new Date(fechaStr);
+    const hoy = new Date();
+    const diffMs = hoy - fecha;
+    const diffDias = Math.floor(diffMs / (1000*60*60*24));
+
+    // Formato de fecha en local
+    const f = fecha.toLocaleString('es-AR', {
+      day: '2-digit', month: '2-digit', year: '2-digit',
+      hour: '2-digit', minute: '2-digit',
+    });
+
+    let diasTxt;
+    if (diffDias === 0) {
+      const horas = Math.floor(diffMs / (1000*60*60));
+      diasTxt = horas === 0 ? 'hace minutos' : `hace ${horas}h`;
+    } else if (diffDias === 1) {
+      diasTxt = 'hace 1 día';
+    } else {
+      diasTxt = `hace ${diffDias} días`;
+    }
+
+    el.innerHTML = `Última act: ${f} · <span class="days">${diasTxt}</span>`;
+
+    // Color según antigüedad
+    el.classList.remove('reciente', 'medio', 'viejo');
+    if (diffDias <= 3) el.classList.add('reciente');
+    else if (diffDias <= 14) el.classList.add('medio');
+    else el.classList.add('viejo');
+  } catch (e) {
+    console.warn(`Error obteniendo última actualización de ${modulo}:`, e.message);
+    el.textContent = 'sin info';
+  }
+}
+
+async function cargarTodasLasActualizaciones() {
+  await Promise.allSettled([
+    cargarUltimaActualizacion('costos'),
+    cargarUltimaActualizacion('pedidos'),
+    cargarUltimaActualizacion('gastos'),
+  ]);
+}
+
 function actualizarUltimoSync() {
   const t = localStorage.getItem(STORAGE_KEYS.last_sync);
   if (!t) return;
@@ -1011,15 +1065,7 @@ function abrirModulo(modulo) {
   const mod = document.getElementById('mod-' + modulo);
   if (!mod || mod.classList.contains('disabled')) return;
 
-  // Verificar que hay URL configurada
-  const url = HARDCODED_URLS[modulo] || localStorage.getItem(STORAGE_KEYS[modulo + '_url']);
-  if (!url) {
-    if (!confirm('No hay link de Drive configurado para este módulo.\n\n¿Querés abrirlo igualmente? (Podés configurarlo desde ahí también)')) {
-      document.getElementById('modal-config').classList.add('active');
-      return;
-    }
-  }
-  // Navegar
+  // Navegar al módulo
   window.location.href = MODULE_PATHS[modulo];
 }
 
@@ -1041,29 +1087,6 @@ function actualizarSaludo() {
 }
 
 // ============ MODAL CONFIG ============
-function abrirConfig() {
-  document.getElementById('url-costos').value = localStorage.getItem(STORAGE_KEYS.costos_url) || '';
-  document.getElementById('url-pedidos').value = localStorage.getItem(STORAGE_KEYS.pedidos_url) || '';
-  document.getElementById('modal-config').classList.add('active');
-}
-function cerrarModal(id) {
-  document.getElementById(id).classList.remove('active');
-}
-
-function guardarConfig() {
-  const costos = document.getElementById('url-costos').value.trim();
-  const pedidos = document.getElementById('url-pedidos').value.trim();
-
-  if (costos) localStorage.setItem(STORAGE_KEYS.costos_url, costos);
-  else localStorage.removeItem(STORAGE_KEYS.costos_url);
-
-  if (pedidos) localStorage.setItem(STORAGE_KEYS.pedidos_url, pedidos);
-  else localStorage.removeItem(STORAGE_KEYS.pedidos_url);
-
-  cerrarModal('modal-config');
-  cargarTodosKPIs();
-}
-
 // ============ INIT ============
 function init() {
   actualizarSaludo();
@@ -1079,20 +1102,15 @@ function init() {
   });
 
   // Botones header
-  document.getElementById('btn-config').addEventListener('click', abrirConfig);
-  document.getElementById('btn-refresh').addEventListener('click', () => cargarTodosKPIs());
-  document.getElementById('btn-save-config').addEventListener('click', guardarConfig);
 
-  // Cerrar modal con click fuera o ESC
-  document.getElementById('modal-config').addEventListener('click', e => {
-    if (e.target.id === 'modal-config') cerrarModal('modal-config');
-  });
-  document.addEventListener('keydown', e => {
-    if (e.key === 'Escape') cerrarModal('modal-config');
-  });
 
-  // Cargar KPIs
+
+
+
+
+  // Cargar KPIs y fechas de actualización
   cargarTodosKPIs();
+  cargarTodasLasActualizaciones();
 
   // Actualizar reloj cada minuto
   setInterval(actualizarSaludo, 60000);
