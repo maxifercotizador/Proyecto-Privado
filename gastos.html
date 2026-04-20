@@ -646,6 +646,11 @@
       </div>
       <div class="filters">
         <input type="search" id="f-search" placeholder="Buscar concepto, proveedor…">
+        <select id="f-rango">
+          <option value="mes-10">Mes actual + 10 días del próximo</option>
+          <option value="mes-actual">Solo mes actual</option>
+          <option value="todos">Todos los meses</option>
+        </select>
         <select id="f-categoria">
           <option value="">Todas las categorías</option>
           <option value="Sueldos">Sueldos</option>
@@ -653,8 +658,13 @@
           <option value="Mercaderia">Mercadería</option>
           <option value="GVarios">GVarios</option>
         </select>
-        <select id="f-mes">
-          <option value="">Todos los meses</option>
+        <select id="f-estado">
+          <option value="">Todos los estados</option>
+          <option value="pagado">Pagados</option>
+          <option value="pendiente">Pendientes</option>
+        </select>
+        <select id="f-mes" style="display:none">
+          <option value="">Mes específico…</option>
         </select>
       </div>
       <div class="result-count" id="mov-count"></div>
@@ -747,7 +757,7 @@ const state = {
   mesSeleccionado: null, // 'YYYY-MM'
   sortKey: 'fecha',
   sortDir: 'desc',
-  filters: { search: '', categoria: '', mes: '' },
+  filters: { search: '', categoria: '', mes: '', rango: 'mes-10', estado: '' },
 };
 
 // ============================= UTILS =============================
@@ -962,28 +972,29 @@ function renderDashboard() {
   const mes = state.mesSeleccionado;
   const movsMes = filtrarPorMes(mes);
 
-  // KPIs
-  const total = sumaMovs(movsMes);
-  const pagado = sumaMovs(movsMes, 'pagado');
-  const pendiente = sumaMovs(movsMes, 'pendiente');
-  const pctPagado = total > 0 ? (pagado / total * 100) : 0;
-  const cuenta = movsMes.length;
+  // KPIs - separar pagado vs pendiente
+  const pagadosMes = movsMes.filter(m => m.estado === 'pagado');
+  const pendientesMes = movsMes.filter(m => m.estado === 'pendiente');
+  const sumaPagado = pagadosMes.reduce((s,m) => s + m.importe, 0);
+  const sumaPendiente = pendientesMes.reduce((s,m) => s + m.importe, 0);
+  const totalMes = sumaPagado + sumaPendiente;
+  const pctPagado = totalMes > 0 ? (sumaPagado / totalMes * 100) : 0;
 
   document.getElementById('kpi-dash').innerHTML = `
-    <div class="kpi-card mes">
-      <div class="kpi-label">Total del mes</div>
-      <div class="kpi-value">${fmt$(total)}</div>
-      <div class="kpi-sub">${cuenta} movimientos</div>
-    </div>
     <div class="kpi-card pagado">
-      <div class="kpi-label">Pagado</div>
-      <div class="kpi-value" style="color:var(--good)">${fmt$(pagado)}</div>
-      <div class="kpi-sub"><span class="pct">${fmtPct(pctPagado)}</span> del total</div>
+      <div class="kpi-label">Ya pago (ejecutado)</div>
+      <div class="kpi-value" style="color:var(--good)">${fmt$(sumaPagado)}</div>
+      <div class="kpi-sub">${pagadosMes.length} movimientos · <span class="pct">${fmtPct(pctPagado)}</span> del mes</div>
     </div>
     <div class="kpi-card pendiente">
-      <div class="kpi-label">Pendiente</div>
-      <div class="kpi-value" style="color:${pendiente > 0 ? 'var(--bad)' : 'var(--good)'}">${fmt$(pendiente)}</div>
-      <div class="kpi-sub">${pendiente > 0 ? 'Gastos fijos sin pagar' : 'Todo pagado'}</div>
+      <div class="kpi-label">Pendiente del mes</div>
+      <div class="kpi-value" style="color:${sumaPendiente > 0 ? 'var(--bad)' : 'var(--good)'}">${fmt$(sumaPendiente)}</div>
+      <div class="kpi-sub">${pendientesMes.length} pagos por hacer</div>
+    </div>
+    <div class="kpi-card mes">
+      <div class="kpi-label">Total del mes (proyectado)</div>
+      <div class="kpi-value">${fmt$(totalMes)}</div>
+      <div class="kpi-sub">${movsMes.length} movimientos totales</div>
     </div>
   `;
 
@@ -1062,9 +1073,25 @@ function renderMovimientos() {
   if (state.filters.categoria) {
     filtrados = filtrados.filter(m => m.categoria === state.filters.categoria);
   }
-  if (state.filters.mes) {
-    filtrados = filtrados.filter(m => mesKey(m.fecha) === state.filters.mes);
+  if (state.filters.estado) {
+    filtrados = filtrados.filter(m => m.estado === state.filters.estado);
   }
+  if (state.filters.mes) {
+    // Si hay mes específico, ignora el rango
+    filtrados = filtrados.filter(m => mesKey(m.fecha) === state.filters.mes);
+  } else if (state.filters.rango === 'mes-10') {
+    // Mes actual + primeros 10 días del siguiente
+    const hoy = new Date();
+    const desde = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
+    const hasta = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 11); // día 11 del mes siguiente (exclusivo)
+    filtrados = filtrados.filter(m => m.fecha >= desde && m.fecha < hasta);
+  } else if (state.filters.rango === 'mes-actual') {
+    const hoy = new Date();
+    const desde = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
+    const hasta = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 1);
+    filtrados = filtrados.filter(m => m.fecha >= desde && m.fecha < hasta);
+  }
+  // rango === 'todos' no aplica filtro
 
   // Sort
   filtrados.sort((a,b) => {
@@ -1317,6 +1344,20 @@ function setupEvents() {
   });
   document.getElementById('f-mes').addEventListener('change', e => {
     state.filters.mes = e.target.value;
+    renderMovimientos();
+  });
+  document.getElementById('f-rango').addEventListener('change', e => {
+    state.filters.rango = e.target.value;
+    // Mostrar/ocultar selector de mes específico según rango
+    document.getElementById('f-mes').style.display = e.target.value === 'todos' ? '' : 'none';
+    if (e.target.value !== 'todos') {
+      state.filters.mes = '';
+      document.getElementById('f-mes').value = '';
+    }
+    renderMovimientos();
+  });
+  document.getElementById('f-estado').addEventListener('change', e => {
+    state.filters.estado = e.target.value;
     renderMovimientos();
   });
 
