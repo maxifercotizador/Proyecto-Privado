@@ -1,0 +1,1034 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MAXIFER — Panel</title>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Instrument+Serif&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0a0a0a;
+    --panel: #141414;
+    --panel-2: #1c1c1c;
+    --border: #2a2a2a;
+    --border-strong: #3a3a3a;
+    --text: #eaeaea;
+    --text-dim: #9a9a9a;
+    --text-mute: #6a6a6a;
+    --accent: #ff6a00;
+    --accent-dim: rgba(255,106,0,0.15);
+    --good: #3bd671;
+    --good-dim: rgba(59,214,113,0.12);
+    --warn: #f5b400;
+    --warn-dim: rgba(245,180,0,0.12);
+    --bad: #ff4747;
+    --bad-dim: rgba(255,71,71,0.12);
+    --info: #5aa8ff;
+    --info-dim: rgba(90,168,255,0.12);
+  }
+  html, body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 14px;
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+    background-image:
+      radial-gradient(circle at 20% 10%, rgba(255,106,0,0.06) 0%, transparent 50%),
+      radial-gradient(circle at 80% 90%, rgba(90,168,255,0.04) 0%, transparent 50%);
+  }
+  .mono { font-family: 'JetBrains Mono', monospace; }
+  .serif { font-family: 'Instrument Serif', serif; font-style: italic; }
+
+  /* HEADER */
+  header {
+    padding: 28px 24px 20px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    max-width: 1200px;
+    margin: 0 auto;
+    flex-wrap: wrap;
+  }
+  .brand {
+    display: flex; align-items: baseline; gap: 14px;
+    flex-wrap: wrap;
+  }
+  .brand-name {
+    font-size: 32px;
+    font-weight: 700;
+    letter-spacing: -0.04em;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .brand-name .dot {
+    width: 14px; height: 14px;
+    background: var(--accent);
+    border-radius: 50%;
+    box-shadow: 0 0 16px var(--accent);
+    animation: pulse 2.5s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+  }
+  .brand-subtitle {
+    color: var(--text-dim);
+    font-family: 'Instrument Serif', serif;
+    font-style: italic;
+    font-size: 22px;
+    letter-spacing: -0.01em;
+  }
+  .header-actions {
+    display: flex; gap: 10px; align-items: center;
+    flex-wrap: wrap;
+  }
+  .btn-header {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 8px 14px;
+    border-radius: 6px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    cursor: pointer;
+    transition: all 0.15s;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .btn-header:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* SALUDO */
+  .greeting {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 24px 24px;
+    color: var(--text-dim);
+    font-size: 15px;
+  }
+  .greeting .hello {
+    color: var(--text);
+    font-weight: 500;
+  }
+  .greeting .date {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-mute);
+    margin-top: 4px;
+  }
+
+  /* MODULES */
+  main {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 24px 40px;
+  }
+  .modules-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 16px;
+  }
+
+  .module {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    min-height: 220px;
+    text-decoration: none;
+    color: inherit;
+  }
+  .module::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: var(--accent);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.3s;
+  }
+  .module:hover {
+    border-color: var(--border-strong);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+  }
+  .module:hover::before { transform: scaleX(1); }
+  .module.costos::before { background: var(--info); }
+  .module.pedidos::before { background: var(--accent); }
+  .module.gastos::before { background: var(--warn); }
+  .module.disabled { cursor: not-allowed; opacity: 0.55; }
+  .module.disabled:hover { transform: none; box-shadow: none; }
+
+  .module-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  .module-title {
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+  }
+  .module-icon {
+    width: 36px; height: 36px;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+  .module.costos .module-icon { background: var(--info-dim); color: var(--info); }
+  .module.pedidos .module-icon { background: var(--accent-dim); color: var(--accent); }
+  .module.gastos .module-icon { background: var(--warn-dim); color: var(--warn); }
+
+  .module-desc {
+    color: var(--text-dim);
+    font-size: 12px;
+    line-height: 1.5;
+    margin-bottom: 20px;
+    min-height: 36px;
+  }
+
+  .module-kpis {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-top: auto;
+  }
+  .module-kpi {
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px 12px;
+  }
+  .kpi-label {
+    font-size: 9px;
+    color: var(--text-mute);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-family: 'JetBrains Mono', monospace;
+    margin-bottom: 4px;
+  }
+  .kpi-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    font-size: 16px;
+    letter-spacing: -0.01em;
+  }
+  .kpi-value.loading {
+    color: var(--text-mute);
+    font-weight: 400;
+    font-size: 12px;
+    font-style: italic;
+  }
+  .kpi-value.error {
+    color: var(--bad);
+    font-size: 11px;
+  }
+  .kpi-value.good { color: var(--good); }
+  .kpi-value.warn { color: var(--warn); }
+  .kpi-value.bad { color: var(--bad); }
+  .kpi-value.info { color: var(--info); }
+  .kpi-value.accent { color: var(--accent); }
+
+  .module-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 16px;
+    padding-top: 14px;
+    border-top: 1px solid var(--border);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--text-mute);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+  .module-footer .arrow {
+    font-size: 16px;
+    color: var(--text-dim);
+    transition: transform 0.2s, color 0.2s;
+  }
+  .module:hover .module-footer .arrow { transform: translateX(4px); color: var(--accent); }
+
+  .module-coming {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 8px;
+    background: var(--warn-dim);
+    color: var(--warn);
+    border-radius: 4px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-weight: 600;
+  }
+
+  /* CONFIG STATUS */
+  .config-status {
+    max-width: 1200px;
+    margin: 24px auto 0;
+    padding: 0 24px;
+  }
+  .config-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 18px 20px;
+  }
+  .config-card h3 {
+    font-size: 11px;
+    color: var(--text-mute);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-family: 'JetBrains Mono', monospace;
+    margin-bottom: 14px;
+  }
+  .config-rows {
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  .config-row {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 12px;
+    align-items: center;
+    padding: 8px 0;
+    font-size: 12px;
+  }
+  .config-indicator {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+  }
+  .config-indicator.ok { background: var(--good); box-shadow: 0 0 6px var(--good); }
+  .config-indicator.miss { background: var(--text-mute); }
+  .config-name { font-family: 'JetBrains Mono', monospace; font-size: 11px; }
+  .config-status-txt {
+    font-size: 11px;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--text-mute);
+  }
+  .config-status-txt.ok { color: var(--good); }
+
+  /* STATUS BAR */
+  .status-bar {
+    position: fixed; top: 20px; right: 20px; z-index: 200;
+    padding: 10px 16px; border-radius: 6px;
+    font-family: 'JetBrains Mono', monospace; font-size: 12px;
+    max-width: 500px; display: none;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+  }
+  .status-bar.loading { background: var(--info-dim); border:1px solid var(--info); color: var(--info); }
+  .status-bar.ok { background: var(--good-dim); border:1px solid var(--good); color: var(--good); }
+  .status-bar.warn { background: var(--warn-dim); border:1px solid var(--warn); color: var(--warn); }
+  .status-bar.error { background: var(--bad-dim); border:1px solid var(--bad); color: var(--bad); }
+
+  /* MODAL */
+  .modal-bg {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.75);
+    backdrop-filter: blur(4px);
+    z-index: 100;
+    display: none;
+    align-items: center; justify-content: center;
+    padding: 20px;
+    overflow-y: auto;
+  }
+  .modal-bg.active { display: flex; }
+  .modal {
+    background: var(--panel);
+    border: 1px solid var(--border-strong);
+    border-radius: 10px;
+    max-width: 640px;
+    width: 100%;
+    padding: 24px;
+    position: relative;
+    margin: auto;
+  }
+  .modal-close {
+    position: absolute; top: 14px; right: 16px;
+    background: transparent; border: none; color: var(--text-dim);
+    cursor: pointer; font-size: 22px;
+  }
+  .modal h3 {
+    font-size: 18px;
+    letter-spacing: -0.02em;
+    margin-bottom: 6px;
+  }
+  .modal .modal-sub {
+    color: var(--text-dim);
+    font-size: 12px;
+    margin-bottom: 18px;
+  }
+  .link-field {
+    display: flex; flex-direction: column; gap: 6px;
+    margin-bottom: 14px;
+  }
+  .link-field label {
+    font-size: 10px;
+    color: var(--text-mute);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .link-field input {
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 10px 12px;
+    border-radius: 5px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    outline: none;
+    width: 100%;
+  }
+  .link-field input:focus { border-color: var(--accent); }
+  .help-box {
+    background: var(--panel-2);
+    padding: 12px;
+    border-radius: 6px;
+    border-left: 3px solid var(--accent);
+    font-size: 12px;
+    line-height: 1.7;
+    margin: 14px 0;
+    color: var(--text-dim);
+  }
+  .help-box ol { padding-left: 20px; }
+  .help-box strong { color: var(--text); }
+  .modal-buttons {
+    display: flex; gap: 8px; justify-content: flex-end;
+    margin-top: 16px;
+  }
+  .btn {
+    padding: 9px 16px;
+    border-radius: 5px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-dim);
+    transition: all 0.15s;
+  }
+  .btn:hover { border-color: var(--accent); color: var(--accent); }
+  .btn.primary {
+    background: var(--accent);
+    color: #000;
+    border-color: var(--accent);
+    font-weight: 700;
+  }
+  .btn.primary:hover { background: #ff8533; color: #000; border-color: #ff8533; }
+
+  /* FOOTER */
+  footer {
+    max-width: 1200px;
+    margin: 40px auto 20px;
+    padding: 20px 24px;
+    border-top: 1px solid var(--border);
+    color: var(--text-mute);
+    font-size: 10px;
+    font-family: 'JetBrains Mono', monospace;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 5px; }
+
+  /* RESPONSIVE */
+  @media (max-width: 640px) {
+    header { padding: 20px 16px 16px; }
+    .brand-name { font-size: 26px; }
+    .brand-subtitle { font-size: 17px; }
+    main { padding: 0 16px 40px; }
+    .greeting { padding: 0 16px 20px; }
+    .modules-grid { grid-template-columns: 1fr; gap: 12px; }
+    .module { padding: 20px; min-height: 200px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <div class="brand-name">
+      <span class="dot"></span>
+      MAXIFER
+    </div>
+    <div class="brand-subtitle">panel de control</div>
+  </div>
+  <div class="header-actions">
+    <button class="btn-header" id="btn-refresh">↻ Actualizar</button>
+    <button class="btn-header" id="btn-config">⚙ Configuración</button>
+  </div>
+</header>
+
+<div class="greeting">
+  <div class="hello" id="hello">Hola Maxi</div>
+  <div class="date" id="date"></div>
+</div>
+
+<main>
+  <div class="modules-grid">
+
+    <!-- COSTOS Y FÁBRICAS -->
+    <a href="#" class="module costos" data-module="costos" id="mod-costos">
+      <div class="module-head">
+        <div>
+          <div class="module-title">Costos y Fábricas</div>
+        </div>
+        <div class="module-icon">$</div>
+      </div>
+      <div class="module-desc">Catálogo completo con costos, ganancias y análisis por fábrica. Escenarios Max y Micky.</div>
+      <div class="module-kpis">
+        <div class="module-kpi">
+          <div class="kpi-label">Productos</div>
+          <div class="kpi-value loading" data-kpi="costos-productos">cargando…</div>
+        </div>
+        <div class="module-kpi">
+          <div class="kpi-label">Margen prom.</div>
+          <div class="kpi-value loading" data-kpi="costos-margen">cargando…</div>
+        </div>
+      </div>
+      <div class="module-footer">
+        <span>Abrir módulo</span>
+        <span class="arrow">→</span>
+      </div>
+    </a>
+
+    <!-- PEDIDOS A FÁBRICA -->
+    <a href="#" class="module pedidos" data-module="pedidos" id="mod-pedidos">
+      <div class="module-head">
+        <div>
+          <div class="module-title">Pedidos a Fábrica</div>
+        </div>
+        <div class="module-icon">☰</div>
+      </div>
+      <div class="module-desc">Estado de pedidos por proveedor, deudas pendientes y cheques endosados.</div>
+      <div class="module-kpis">
+        <div class="module-kpi">
+          <div class="kpi-label">Por pasar</div>
+          <div class="kpi-value loading" data-kpi="pedidos-porpasar">cargando…</div>
+        </div>
+        <div class="module-kpi">
+          <div class="kpi-label">Deuda total</div>
+          <div class="kpi-value loading" data-kpi="pedidos-deuda">cargando…</div>
+        </div>
+      </div>
+      <div class="module-footer">
+        <span>Abrir módulo</span>
+        <span class="arrow">→</span>
+      </div>
+    </a>
+
+    <!-- GASTOS -->
+    <a href="#" class="module gastos disabled" data-module="gastos" id="mod-gastos">
+      <div class="module-head">
+        <div>
+          <div class="module-title">Gastos y Proyección</div>
+        </div>
+        <div class="module-icon">%</div>
+      </div>
+      <div class="module-desc">Gastos fijos, variables y proyección de vencimientos del mes.</div>
+      <div class="module-kpis">
+        <div class="module-kpi">
+          <div class="kpi-label">Estado</div>
+          <div class="kpi-value"><span class="module-coming">Próximamente</span></div>
+        </div>
+        <div class="module-kpi">
+          <div class="kpi-label">&nbsp;</div>
+          <div class="kpi-value" style="color:var(--text-mute); font-size:11px;">—</div>
+        </div>
+      </div>
+      <div class="module-footer">
+        <span>No disponible</span>
+        <span class="arrow" style="opacity:0.4">—</span>
+      </div>
+    </a>
+
+  </div>
+
+  <div class="config-status" id="config-status-block" style="display:none;">
+    <div class="config-card">
+      <h3>Estado de conexión</h3>
+      <div class="config-rows" id="config-rows"></div>
+    </div>
+  </div>
+</main>
+
+<footer>
+  <div>MAXIFER · Panel v1</div>
+  <div id="last-sync-foot">—</div>
+</footer>
+
+<div class="status-bar" id="status-bar"></div>
+
+<!-- MODAL CONFIG -->
+<div class="modal-bg" id="modal-config">
+  <div class="modal">
+    <button class="modal-close" onclick="cerrarModal('modal-config')">✕</button>
+    <h3>Configuración de enlaces</h3>
+    <div class="modal-sub">Pegá los links de Google Drive de cada archivo</div>
+
+    <div class="help-box">
+      <strong>Cómo obtener cada link:</strong>
+      <ol>
+        <li>En Google Drive, click derecho sobre el archivo → <strong>Compartir</strong></li>
+        <li>Acceso general: <strong>"Cualquier usuario con el vínculo"</strong> + Lector</li>
+        <li><strong>Copiar vínculo</strong> y pegarlo abajo</li>
+      </ol>
+    </div>
+
+    <div class="link-field">
+      <label>Costos y Fábricas (01_COMPRAS - COSTOS - FABRICAS.xlsm)</label>
+      <input type="text" id="url-costos" placeholder="https://drive.google.com/file/d/...">
+    </div>
+    <div class="link-field">
+      <label>Pedidos a Fábrica (03_Pedidos_Fabricas.xlsm)</label>
+      <input type="text" id="url-pedidos" placeholder="https://drive.google.com/file/d/...">
+    </div>
+    <div class="link-field">
+      <label>Gastos y Proyección (próximamente)</label>
+      <input type="text" id="url-gastos" placeholder="pendiente" disabled>
+    </div>
+
+    <div class="modal-buttons">
+      <button class="btn" onclick="cerrarModal('modal-config')">Cancelar</button>
+      <button class="btn primary" id="btn-save-config">Guardar y cargar</button>
+    </div>
+
+    <div style="margin-top:16px; padding:10px 12px; background:var(--bad-dim); border:1px solid var(--bad); border-radius:5px; font-size:11px; color:var(--bad); line-height:1.6;">
+      <strong>⚠</strong> Los links son públicos: cualquiera con ellos ve tus datos. No los publiques.
+    </div>
+  </div>
+</div>
+
+<script>
+// ============ CONFIG ============
+// Paths de los módulos (relativos)
+const MODULE_PATHS = {
+  costos: './costos/index.html',
+  pedidos: './pedidos/index.html',
+  gastos: './gastos/index.html',
+};
+
+// Storage keys compartidos con los módulos
+// El hub guarda las URLs en claves que cada módulo lee
+const STORAGE_KEYS = {
+  costos_url: 'maxifer_url',            // el módulo costos usa esta clave
+  pedidos_url: 'maxifer_pedidos_url',   // el módulo pedidos usa esta clave
+  gastos_url: 'maxifer_gastos_url',     // pendiente
+  last_sync: 'maxifer_hub_lastsync',
+  kpi_cache: 'maxifer_hub_kpis',
+};
+
+// Categorías excluidas (mismas que en módulo costos)
+const EXCLUIR_CATEGORIAS = new Set([
+  'ARANDELAS DE AMORTIGUACIÓN Y SUSPENSIÓN', 'RESORTES LINEA HORNO', 'BORNES PARA BATERIA',
+  'ABRAZADERAS GRAMPAS U', 'TORNILLOS ALLEN', 'JUNTAS MILIMÉTRICAS DE ALUMINIO', 'KIT RIFLE',
+  'AMORTIGUACIÓN Y SUSPENSIÓN', 'ARANDELAS PUNTA EJE CAMIÓN', 'ARANDELAS Y SEGURO DE CAÑONERA',
+  'LIBRERÍA', 'PLUS PERFORADO', 'PUNTA EJE Y SEMIEJE -COCHE Y CAMIÓN', 'SUELDO', 'VARIOS',
+  'CONEXIÓN DE CHAPA', 'Ordenar Por:', 'Producto'
+]);
+
+// ============ HELPERS ============
+const fmt$ = v => v == null || isNaN(v) ? '—' : '$' + Math.round(v).toLocaleString('es-AR');
+const fmtN = v => v == null || isNaN(v) ? '—' : v.toLocaleString('es-AR');
+const fmtPct = v => v == null || isNaN(v) ? '—' : v.toFixed(0) + '%';
+
+function escapeHtml(s) {
+  if (s == null) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function mostrarStatus(msg, tipo) {
+  const el = document.getElementById('status-bar');
+  el.textContent = msg;
+  el.className = 'status-bar ' + tipo;
+  el.style.display = 'block';
+  if (tipo === 'ok') setTimeout(() => { el.style.display = 'none'; }, 3000);
+}
+
+function convertirDriveUrl(url) {
+  if (!url) return null;
+  const m = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
+  if (m) return 'https://drive.google.com/uc?export=download&id=' + m[1];
+  const m2 = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+  if (m2) return 'https://drive.google.com/uc?export=download&id=' + m2[1];
+  return url;
+}
+
+async function descargarArchivo(url, forzar = false) {
+  const urlDirecto = convertirDriveUrl(url);
+  let buffer = null;
+  let errorDirecto = null;
+
+  try {
+    const resp = await fetch(urlDirecto, { cache: forzar ? 'reload' : 'default' });
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    buffer = await resp.arrayBuffer();
+    const u8 = new Uint8Array(buffer.slice(0, 2));
+    if (u8[0] !== 0x50 || u8[1] !== 0x4B) throw new Error('No es Excel válido');
+  } catch (e) {
+    errorDirecto = e.message;
+  }
+
+  if (!buffer) {
+    try {
+      const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(urlDirecto);
+      const resp = await fetch(proxyUrl);
+      if (!resp.ok) throw new Error('HTTP ' + resp.status);
+      buffer = await resp.arrayBuffer();
+      const u8 = new Uint8Array(buffer.slice(0, 2));
+      if (u8[0] !== 0x50 || u8[1] !== 0x4B) throw new Error('Proxy: no es Excel');
+    } catch (e2) {
+      throw new Error((errorDirecto || '') + ' | ' + e2.message);
+    }
+  }
+
+  return buffer;
+}
+
+// ============ KPIs POR MÓDULO ============
+
+// Helper para acceder a celdas directas (igual que en módulo pedidos)
+function cell(sheet, row, col) {
+  if (!sheet) return null;
+  const addr = XLSX.utils.encode_cell({ r: row - 1, c: col - 1 });
+  const c = sheet[addr];
+  return c ? c.v : null;
+}
+function cellStr(sheet, row, col) {
+  const v = cell(sheet, row, col);
+  return v != null ? String(v).trim() : '';
+}
+function cellNum(sheet, row, col) {
+  const v = cell(sheet, row, col);
+  return typeof v === 'number' ? v : null;
+}
+
+async function calcularKPIsCostos(url) {
+  const buffer = await descargarArchivo(url, false);
+  const wb = XLSX.read(new Uint8Array(buffer), { type: 'array' });
+  const sheetName = wb.SheetNames.find(n => n.toLowerCase().includes('costos fab')) || wb.SheetNames[0];
+  const sheet = wb.Sheets[sheetName];
+  const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: null, blankrows: false });
+
+  // header row 0: ID, Producto, Numero, Descripción, Precio, Fabrica, VENTA NETA, COSTO, % GANANCIA, Codigo
+  const header = rows[0];
+  const col = (name) => header.findIndex(h => String(h || '').trim() === name);
+  const idxProd = col('Producto');
+  const idxVenta = col('VENTA NETA');
+  const idxCosto = col('COSTO');
+
+  let totalProd = 0;
+  let marginSum = 0;
+  let marginCount = 0;
+
+  for (let r = 1; r < rows.length; r++) {
+    const row = rows[r];
+    if (!row) continue;
+    const cat = String(row[idxProd] || '').trim();
+    if (!cat || EXCLUIR_CATEGORIAS.has(cat)) continue;
+
+    const venta = parseFloat(row[idxVenta]);
+    const costo = parseFloat(row[idxCosto]);
+    if (isNaN(costo) || costo <= 0) continue;
+    if (isNaN(venta)) continue;
+
+    totalProd++;
+    marginSum += ((venta - costo) / costo) * 100;
+    marginCount++;
+  }
+
+  return {
+    productos: totalProd,
+    margen: marginCount > 0 ? marginSum / marginCount : null,
+  };
+}
+
+async function calcularKPIsPedidos(url) {
+  const buffer = await descargarArchivo(url, false);
+  const wb = XLSX.read(new Uint8Array(buffer), { type: 'array', cellDates: true });
+  const idx = wb.Sheets['INDICE'];
+  if (!idx) throw new Error('No se encontró hoja INDICE');
+
+  // Proveedores: bloques 1 y 2 (filas 3-19)
+  const proveedores = [];
+  const parseProv = (row, okCol, nomCol, pedCol, impCol) => {
+    const nombre = cellStr(idx, row, nomCol);
+    if (!nombre) return null;
+    return {
+      nombre,
+      ok: cellStr(idx, row, okCol).toUpperCase() === 'OK',
+      pedido: cellStr(idx, row, pedCol).toUpperCase() === 'PEDIDO',
+      importe: cellNum(idx, row, impCol),
+    };
+  };
+
+  for (let r = 3; r <= 19; r++) {
+    const p = parseProv(r, 2, 3, 5, 6);
+    if (p) proveedores.push(p);
+  }
+  for (let r = 3; r <= 19; r++) {
+    const p = parseProv(r, 8, 9, 11, 12);
+    if (!p) continue;
+    const existente = proveedores.find(x => x.nombre.toUpperCase() === p.nombre.toUpperCase());
+    if (existente) {
+      if (p.ok) existente.ok = true;
+      if (p.pedido) existente.pedido = true;
+      if (p.importe && !existente.importe) existente.importe = p.importe;
+    } else {
+      proveedores.push(p);
+    }
+  }
+
+  // Deudas: filas 22-44
+  let deudaTotal = 0;
+  for (let r = 22; r <= 44; r++) {
+    const nombre = cellStr(idx, r, 3);
+    if (!nombre || nombre.toUpperCase() === 'TOTAL:' || nombre === 'NOMBRE / FABRICA' || nombre === 'ANOTACIONES IMPORTANTES:') continue;
+    const importe = cellNum(idx, r, 6);
+    if (importe) deudaTotal += importe;
+  }
+
+  const porPasar = proveedores.filter(p => p.pedido && !p.ok);
+
+  return {
+    por_pasar: porPasar.length,
+    deuda_total: deudaTotal,
+  };
+}
+
+// ============ RENDER KPIs ============
+function setKPI(el, value, cls = '') {
+  el.textContent = value;
+  el.className = 'kpi-value' + (cls ? ' ' + cls : '');
+}
+function setKPIError(el, msg) {
+  el.textContent = msg || 'Error';
+  el.className = 'kpi-value error';
+}
+function setKPINoConfig(el) {
+  el.textContent = 'Sin configurar';
+  el.className = 'kpi-value loading';
+}
+
+async function cargarKPIsModulo(modulo, kpis) {
+  const url = localStorage.getItem(STORAGE_KEYS[modulo + '_url']);
+  if (!url) {
+    Object.keys(kpis).forEach(k => setKPINoConfig(kpis[k]));
+    return { ok: false, reason: 'no_config' };
+  }
+
+  try {
+    if (modulo === 'costos') {
+      const r = await calcularKPIsCostos(url);
+      setKPI(kpis.productos, fmtN(r.productos), 'info');
+      setKPI(kpis.margen, r.margen ? fmtPct(r.margen) : '—',
+             r.margen > 150 ? 'good' : r.margen > 80 ? 'accent' : 'warn');
+    } else if (modulo === 'pedidos') {
+      const r = await calcularKPIsPedidos(url);
+      setKPI(kpis.porpasar, fmtN(r.por_pasar), r.por_pasar > 0 ? 'warn' : 'good');
+      setKPI(kpis.deuda, fmt$(r.deuda_total), r.deuda_total > 0 ? 'bad' : 'good');
+    }
+    return { ok: true };
+  } catch (e) {
+    Object.keys(kpis).forEach(k => setKPIError(kpis[k], 'error'));
+    console.error('KPI ' + modulo, e);
+    return { ok: false, reason: 'fetch_error', error: e.message };
+  }
+}
+
+async function cargarTodosKPIs() {
+  const t0 = Date.now();
+  mostrarStatus('Cargando datos de módulos…', 'loading');
+
+  // Módulo costos
+  const kpisCostos = {
+    productos: document.querySelector('[data-kpi="costos-productos"]'),
+    margen: document.querySelector('[data-kpi="costos-margen"]'),
+  };
+  // Módulo pedidos
+  const kpisPedidos = {
+    porpasar: document.querySelector('[data-kpi="pedidos-porpasar"]'),
+    deuda: document.querySelector('[data-kpi="pedidos-deuda"]'),
+  };
+
+  const [rCostos, rPedidos] = await Promise.allSettled([
+    cargarKPIsModulo('costos', kpisCostos),
+    cargarKPIsModulo('pedidos', kpisPedidos),
+  ]);
+
+  actualizarConfigStatus();
+
+  const okCount = [rCostos, rPedidos].filter(r => r.value && r.value.ok).length;
+  const totalConfig = ['costos_url', 'pedidos_url'].filter(k => localStorage.getItem(STORAGE_KEYS[k])).length;
+
+  if (totalConfig === 0) {
+    mostrarStatus('⚠ Configurá los links de Drive para ver los datos', 'warn');
+  } else if (okCount === totalConfig) {
+    localStorage.setItem(STORAGE_KEYS.last_sync, Date.now().toString());
+    mostrarStatus('✓ Datos cargados (' + ((Date.now() - t0) / 1000).toFixed(1) + 's)', 'ok');
+  } else {
+    mostrarStatus('⚠ Algunos datos no se pudieron cargar', 'warn');
+  }
+
+  actualizarUltimoSync();
+}
+
+function actualizarUltimoSync() {
+  const t = localStorage.getItem(STORAGE_KEYS.last_sync);
+  if (!t) return;
+  const d = new Date(parseInt(t));
+  const txt = 'Últ. sync: ' + d.toLocaleString('es-AR', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' });
+  document.getElementById('last-sync-foot').textContent = txt;
+}
+
+function actualizarConfigStatus() {
+  const modulos = [
+    { key: 'costos_url', nombre: 'Costos y Fábricas' },
+    { key: 'pedidos_url', nombre: 'Pedidos a Fábrica' },
+  ];
+  const sinConfig = modulos.filter(m => !localStorage.getItem(STORAGE_KEYS[m.key]));
+  const block = document.getElementById('config-status-block');
+
+  if (sinConfig.length === 0) {
+    block.style.display = 'none';
+    return;
+  }
+  block.style.display = 'block';
+  document.getElementById('config-rows').innerHTML = modulos.map(m => {
+    const ok = !!localStorage.getItem(STORAGE_KEYS[m.key]);
+    return `<div class="config-row">
+      <span class="config-indicator ${ok ? 'ok' : 'miss'}"></span>
+      <span class="config-name">${escapeHtml(m.nombre)}</span>
+      <span class="config-status-txt ${ok ? 'ok' : ''}">${ok ? 'CONECTADO' : 'SIN CONFIGURAR'}</span>
+    </div>`;
+  }).join('');
+}
+
+// ============ NAVEGACIÓN ============
+function abrirModulo(modulo) {
+  const mod = document.getElementById('mod-' + modulo);
+  if (!mod || mod.classList.contains('disabled')) return;
+
+  // Verificar que hay URL configurada
+  const url = localStorage.getItem(STORAGE_KEYS[modulo + '_url']);
+  if (!url) {
+    if (!confirm('No hay link de Drive configurado para este módulo.\n\n¿Querés abrirlo igualmente? (Podés configurarlo desde ahí también)')) {
+      document.getElementById('modal-config').classList.add('active');
+      return;
+    }
+  }
+  // Navegar
+  window.location.href = MODULE_PATHS[modulo];
+}
+
+// ============ GREETING ============
+function actualizarSaludo() {
+  const ahora = new Date();
+  const h = ahora.getHours();
+  let hola;
+  if (h < 6) hola = 'Buenas noches';
+  else if (h < 13) hola = 'Buenos días';
+  else if (h < 20) hola = 'Buenas tardes';
+  else hola = 'Buenas noches';
+  document.getElementById('hello').textContent = hola + ', Maxi';
+
+  const dias = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+  const meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+  const fechaTxt = dias[ahora.getDay()] + ' ' + ahora.getDate() + ' de ' + meses[ahora.getMonth()] + ' · ' + ahora.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
+  document.getElementById('date').textContent = fechaTxt;
+}
+
+// ============ MODAL CONFIG ============
+function abrirConfig() {
+  document.getElementById('url-costos').value = localStorage.getItem(STORAGE_KEYS.costos_url) || '';
+  document.getElementById('url-pedidos').value = localStorage.getItem(STORAGE_KEYS.pedidos_url) || '';
+  document.getElementById('modal-config').classList.add('active');
+}
+function cerrarModal(id) {
+  document.getElementById(id).classList.remove('active');
+}
+
+function guardarConfig() {
+  const costos = document.getElementById('url-costos').value.trim();
+  const pedidos = document.getElementById('url-pedidos').value.trim();
+
+  if (costos) localStorage.setItem(STORAGE_KEYS.costos_url, costos);
+  else localStorage.removeItem(STORAGE_KEYS.costos_url);
+
+  if (pedidos) localStorage.setItem(STORAGE_KEYS.pedidos_url, pedidos);
+  else localStorage.removeItem(STORAGE_KEYS.pedidos_url);
+
+  cerrarModal('modal-config');
+  cargarTodosKPIs();
+}
+
+// ============ INIT ============
+function init() {
+  actualizarSaludo();
+  actualizarConfigStatus();
+  actualizarUltimoSync();
+
+  // Navegación en tarjetas
+  document.querySelectorAll('.module').forEach(m => {
+    m.addEventListener('click', e => {
+      e.preventDefault();
+      abrirModulo(m.dataset.module);
+    });
+  });
+
+  // Botones header
+  document.getElementById('btn-config').addEventListener('click', abrirConfig);
+  document.getElementById('btn-refresh').addEventListener('click', () => cargarTodosKPIs());
+  document.getElementById('btn-save-config').addEventListener('click', guardarConfig);
+
+  // Cerrar modal con click fuera o ESC
+  document.getElementById('modal-config').addEventListener('click', e => {
+    if (e.target.id === 'modal-config') cerrarModal('modal-config');
+  });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') cerrarModal('modal-config');
+  });
+
+  // Cargar KPIs
+  cargarTodosKPIs();
+
+  // Actualizar reloj cada minuto
+  setInterval(actualizarSaludo, 60000);
+}
+
+init();
+</script>
+
+</body>
+</html>
