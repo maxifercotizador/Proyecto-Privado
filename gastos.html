@@ -263,6 +263,18 @@
     border-left: 3px solid var(--border);
     border-radius: 6px;
     padding: 12px;
+    transition: all 0.15s;
+  }
+  .cat-item.clickable {
+    cursor: pointer;
+  }
+  .cat-item.clickable:hover {
+    border-color: var(--border-strong);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  }
+  .cat-item.clickable:hover .cat-bar-fill {
+    filter: brightness(1.2);
   }
   .cat-item.sueldos { border-left-color: var(--cat-sueldos); }
   .cat-item.gfijos { border-left-color: var(--cat-gfijos); }
@@ -874,7 +886,7 @@ function parsearGastos(wb) {
     }
   }
 
-  // ========= 2) Sueldos (hoja SUEL, columnas A:C) =========
+  // ========= 2) Sueldos (hoja SUEL, columnas A:C - desglosado por persona) =========
   const su = wb.Sheets['SUEL'];
   if (su) {
     for (let r = 3; r <= 400; r++) {
@@ -1009,14 +1021,39 @@ function renderDashboard() {
   const maxCat = Math.max(...catData.map(c => c.suma), 1);
   const totalCats = catData.reduce((s,c) => s + c.suma, 0);
 
-  document.getElementById('cat-dash').innerHTML = catData.map(c => `
-    <div class="cat-item ${c.key}">
+  document.getElementById('cat-dash').innerHTML = catData.map(c => {
+    // Mapeo del key del parser al valor del <select> de Movimientos
+    const catValue = c.nombre === 'Mercadería' ? 'Mercaderia' : c.nombre;
+    return `
+    <div class="cat-item ${c.key} clickable" data-cat="${catValue}" data-mes="${mes}" title="Ver movimientos de ${escapeHtml(c.nombre)}">
       <div class="cat-name">${c.nombre}</div>
       <div class="cat-amount">${fmt$(c.suma)}</div>
       <div class="cat-count">${c.cantidad} items · ${fmtPct(totalCats > 0 ? c.suma/totalCats*100 : 0)}</div>
       <div class="cat-bar"><div class="cat-bar-fill" style="width:${maxCat > 0 ? (c.suma/maxCat*100) : 0}%"></div></div>
-    </div>
-  `).join('');
+    </div>`;
+  }).join('');
+
+  // Listener: click en tarjeta → ir a Movimientos con filtro
+  document.querySelectorAll('#cat-dash .cat-item.clickable').forEach(el => {
+    el.addEventListener('click', () => {
+      const cat = el.dataset.cat;
+      const mesKey = el.dataset.mes;
+      // Setear filtros de movimientos
+      state.filters.categoria = cat;
+      state.filters.rango = 'todos';
+      state.filters.mes = mesKey;
+      state.filters.estado = '';
+      state.filters.search = '';
+      document.getElementById('f-categoria').value = cat;
+      document.getElementById('f-rango').value = 'todos';
+      document.getElementById('f-mes').style.display = '';
+      document.getElementById('f-mes').value = mesKey;
+      document.getElementById('f-estado').value = '';
+      document.getElementById('f-search').value = '';
+      // Cambiar a la pestaña Movimientos
+      switchTab('movimientos');
+    });
+  });
 
   // Próximos vencimientos en Dashboard (mismo widget que en proyección pero resumido)
   renderProxVencimientosDash();
@@ -1153,9 +1190,11 @@ function renderMovimientos() {
 function renderProyeccion() {
   const hoy = new Date();
   hoy.setHours(0,0,0,0);
+  const finMes = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 0);
 
+  // SOLO pendientes del mes actual (no futuros lejanos)
   const pendientes = state.movimientos.filter(m =>
-    m.categoria === 'GFijos' && m.estado === 'pendiente' && m.fecha >= hoy
+    m.categoria === 'GFijos' && m.estado === 'pendiente' && m.fecha >= hoy && m.fecha <= finMes
   ).sort((a,b) => a.fecha - b.fecha);
 
   const totalPendiente = pendientes.reduce((s,m) => s + m.importe, 0);
@@ -1164,16 +1203,11 @@ function renderProyeccion() {
   const estaSemana = pendientes.filter(m => m.fecha < estaSemanaLimite);
   const totalSemana = estaSemana.reduce((s,m) => s + m.importe, 0);
 
-  // Este mes
-  const finMes = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 0);
-  const mesCorriente = pendientes.filter(m => m.fecha <= finMes);
-  const totalMes = mesCorriente.reduce((s,m) => s + m.importe, 0);
-
   document.getElementById('kpi-proy').innerHTML = `
     <div class="kpi-card pendiente">
-      <div class="kpi-label">Total pendiente</div>
+      <div class="kpi-label">Pendiente del mes</div>
       <div class="kpi-value" style="color:var(--bad)">${fmt$(totalPendiente)}</div>
-      <div class="kpi-sub">${pendientes.length} pagos futuros</div>
+      <div class="kpi-sub">${pendientes.length} pagos antes del ${fmtDate(finMes)}</div>
     </div>
     <div class="kpi-card proximo">
       <div class="kpi-label">Próximos 7 días</div>
@@ -1181,15 +1215,15 @@ function renderProyeccion() {
       <div class="kpi-sub">${estaSemana.length} vencimientos</div>
     </div>
     <div class="kpi-card mes">
-      <div class="kpi-label">Lo que queda del mes</div>
-      <div class="kpi-value" style="color:var(--info)">${fmt$(totalMes)}</div>
-      <div class="kpi-sub">${mesCorriente.length} pagos antes del ${fmtDate(finMes)}</div>
+      <div class="kpi-label">Promedio por pago</div>
+      <div class="kpi-value" style="color:var(--info)">${fmt$(pendientes.length > 0 ? totalPendiente / pendientes.length : 0)}</div>
+      <div class="kpi-sub">de los ${pendientes.length} pendientes</div>
     </div>
   `;
 
   const lista = document.getElementById('proy-list');
   if (pendientes.length === 0) {
-    lista.innerHTML = '<div class="empty">✓ No hay vencimientos pendientes</div>';
+    lista.innerHTML = '<div class="empty">✓ No hay vencimientos pendientes en el mes</div>';
     return;
   }
 
