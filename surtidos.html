@@ -35,12 +35,23 @@
   .back-btn:hover { border-color: var(--border-strong); color: var(--text); }
 
   .main { max-width: 1600px; margin: 0 auto; padding: 20px; }
+  @media (max-width: 700px) {
+    .main { padding: 10px 6px; }
+    header { padding: 10px 12px; }
+    .logo { font-size: 16px; }
+  }
 
   /* KPIs superiores */
   .kpis-row {
     display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 20px;
   }
-  @media (max-width: 1000px) { .kpis-row { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 1000px) { .kpis-row { grid-template-columns: repeat(5, 1fr); gap: 6px; margin-bottom: 12px; } }
+  @media (max-width: 700px) {
+    .kpi-tab { padding: 8px 6px; }
+    .kpi-label { font-size: 8px; margin-bottom: 2px; letter-spacing: 0.04em; }
+    .kpi-value { font-size: 20px; }
+    .kpi-sub { display: none; }
+  }
   .kpi-tab {
     background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
     padding: 14px; cursor: pointer; position: relative; overflow: hidden;
@@ -63,6 +74,13 @@
   .kpi-sub { font-size: 11px; color: var(--text-dim); line-height: 1.3; }
 
   .card { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 18px; margin-bottom: 16px; }
+  @media (max-width: 700px) {
+    .card { padding: 10px !important; margin-bottom: 10px; border-radius: 8px; }
+    .filters { padding: 8px !important; gap: 6px !important; }
+    .control-label { font-size: 10px; }
+    .btn-opt { font-size: 11px; padding: 4px 8px; }
+    .btn-group input[type="number"] { width: 50px; font-size: 11px; padding: 3px 6px; }
+  }
 
   /* Filtros */
   .filters {
@@ -134,6 +152,24 @@
   .table-wrap::-webkit-scrollbar-thumb:hover { background: var(--accent); }
   .table-wrap::-webkit-scrollbar-corner { background: var(--panel-2); }
   table.data { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 13px; min-width: 1200px; }
+
+  @media (max-width: 700px) {
+    table.data { min-width: 560px; font-size: 11px; }
+    table.data thead th { padding: 6px 4px; font-size: 9px; }
+    table.data td { padding: 6px 4px !important; }
+    /* Ocultar columna Estado en mobile (se muestra como mini pill en el nombre) */
+    table.data th:nth-child(3), table.data td:nth-child(3) { display: none; }
+    /* Columna Items también oculta en mobile (se muestra en el nombre con "+N items") */
+    table.data th:nth-child(4), table.data td:nth-child(4) { display: none; }
+    .surtido-nombre-mobile-pill {
+      display: inline-block; font-size: 8px; padding: 1px 5px;
+      border-radius: 8px; font-weight: 700; letter-spacing: 0.03em;
+      vertical-align: middle; margin-left: 4px;
+    }
+    .expand-icon { font-size: 9px; }
+    .mobile-only { display: inline !important; }
+    /* KPIs ya mostrados arriba hacen de filtro por estado */
+  }
   table.data thead th {
     font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em;
     color: var(--text-mute); font-weight: 600; text-align: left;
@@ -539,10 +575,13 @@ function renderRow(s, idx) {
 
   const gColor = c.ganancia != null && c.ganancia > 0 ? 'color:var(--good);font-weight:600' : c.ganancia != null && c.ganancia < 0 ? 'color:var(--bad);font-weight:600' : '';
 
+  // Mini info para mobile (se oculta en desktop): cantidad items + pill estado
+  const mobileInfo = `<span class="mobile-only" style="display:none;font-size:9px;color:var(--text-mute);margin-left:4px">· ${s.it} items</span>`;
+
   const mainRow = `
     <tr class="row-surtido ${expanded ? 'expanded' : ''}" data-nombre="${s.n.replace(/"/g, '&quot;')}">
       <td><span class="expand-icon">▶</span></td>
-      <td><strong>${s.n}</strong>${alertMk}${comp}</td>
+      <td><strong>${s.n}</strong>${alertMk}${mobileInfo}${comp}</td>
       <td><span class="cat-pill ${s.cat}">${catLabel(s.cat)}</span>${s.cat !== 'ok' ? '<div style="font-size:10px;color:var(--text-mute);margin-top:2px">' + s.itC + '/' + s.it + ' (' + s.pct + '%)</div>' : ''}</td>
       <td class="num">${s.it}</td>
       <td class="num">${fmt$(c.venta)}</td>
