@@ -18,27 +18,14 @@
     --purple: #b58aff; --purple-dim: rgba(181,138,255,0.12);
     --invest: #06d6a0; --invest-dim: rgba(6,214,160,0.12);
   }
-  html, body {
-    background: var(--bg); color: var(--text);
-    font-family: 'IBM Plex Sans', sans-serif; font-size: 14px;
-    min-height: 100vh;
-  }
+  html, body { background: var(--bg); color: var(--text); font-family: 'IBM Plex Sans', sans-serif; font-size: 14px; min-height: 100vh; }
   a { color: inherit; text-decoration: none; }
-  header {
-    padding: 14px 20px; display: flex; align-items: center;
-    justify-content: space-between; gap: 16px;
-    border-bottom: 1px solid var(--border); flex-wrap: wrap;
-  }
+  header { padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; gap: 16px; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
   .logo { font-size: 20px; font-weight: 700; display: flex; align-items: center; gap: 10px; }
   .logo .dot { width: 10px; height: 10px; background: var(--accent); border-radius: 50%; animation: pulse 2.5s ease-in-out infinite; }
   @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.6} }
   .header-actions { display: flex; gap: 8px; align-items: center; }
-  .btn-mode, .back-btn {
-    font-size: 12px; color: var(--text-dim);
-    padding: 6px 10px; border: 1px solid var(--border);
-    background: var(--panel); border-radius: 6px;
-    cursor: pointer; font-family: inherit;
-  }
+  .btn-mode, .back-btn { font-size: 12px; color: var(--text-dim); padding: 6px 10px; border: 1px solid var(--border); background: var(--panel); border-radius: 6px; cursor: pointer; font-family: inherit; }
   .btn-mode:hover, .back-btn:hover { border-color: var(--border-strong); color: var(--text); }
   .btn-mode.active { border-color: var(--warn); color: var(--warn); background: var(--warn-dim); }
 
@@ -56,20 +43,12 @@
   .kpi-value { font-size: 24px; font-weight: 700; font-family: 'JetBrains Mono', monospace; margin-bottom: 4px; }
   .kpi-sub { font-size: 11px; color: var(--text-dim); line-height: 1.4; }
 
-  .diag-banner {
-    max-width: 1400px; margin: 20px auto 0; padding: 14px 20px;
-    border-radius: 10px; border-left: 4px solid;
-    display: flex; align-items: center; gap: 16px;
-    background: var(--panel); border: 1px solid var(--border);
-  }
+  .diag-banner { max-width: 1400px; margin: 20px auto 0; padding: 14px 20px; border-radius: 10px; border-left: 4px solid; display: flex; align-items: center; gap: 16px; background: var(--panel); border: 1px solid var(--border); }
   .diag-banner.bad { border-left-color: var(--bad); }
   .diag-banner.warn { border-left-color: var(--warn); }
   .diag-banner.good { border-left-color: var(--good); }
   .diag-banner.invest { border-left-color: var(--invest); }
   .diag-icon { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; font-weight: 700; }
-  .diag-banner.bad .diag-icon { background: var(--bad-dim); color: var(--bad); }
-  .diag-banner.warn .diag-icon { background: var(--warn-dim); color: var(--warn); }
-  .diag-banner.good .diag-icon { background: var(--good-dim); color: var(--good); }
   .diag-banner.invest .diag-icon { background: var(--invest-dim); color: var(--invest); }
   .diag-title { font-size: 14px; font-weight: 600; margin-bottom: 2px; }
   .diag-subtitle { font-size: 12px; color: var(--text-dim); }
@@ -101,32 +80,23 @@
   .wf-item.total.pos .wf-value { color: var(--good); }
   .wf-item.total.neg .wf-value { color: var(--bad); }
 
-  .block {
-    background: var(--panel-2);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 14px;
-    margin-bottom: 12px;
-  }
+  .block { background: var(--panel-2); border: 1px solid var(--border); border-radius: 8px; padding: 14px; margin-bottom: 12px; }
   .block.invest { border-left: 3px solid var(--invest); }
   .block.loan { border-left: 3px solid var(--warn); }
-  .block-title {
-    font-size: 13px; font-weight: 600;
-    display: flex; justify-content: space-between;
-    align-items: center; margin-bottom: 8px;
-  }
-  .block-title .amount {
-    font-family: 'JetBrains Mono', monospace;
-    font-weight: 700;
-  }
+  .block-title { font-size: 13px; font-weight: 600; display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .block-title .amount { font-family: 'JetBrains Mono', monospace; font-weight: 700; }
   .block-desc { font-size: 12px; color: var(--text-dim); line-height: 1.5; }
 
   .table-wrap { overflow-x: auto; margin: 0 -18px; padding: 0 18px; }
   table.simple { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 600px; }
-  table.simple th { font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-mute); font-weight: 600; text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+  table.simple th { font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-mute); font-weight: 600; text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--border); white-space: nowrap; position: sticky; top: 0; background: var(--panel); cursor: pointer; user-select: none; }
   table.simple th.num { text-align: right; }
+  table.simple th:hover { color: var(--text); }
+  table.simple th .sort { font-size: 9px; color: var(--accent); margin-left: 4px; }
   table.simple td { padding: 10px 12px; border-bottom: 1px solid var(--border); }
   table.simple td.num { text-align: right; font-family: 'JetBrains Mono', monospace; }
+  table.simple tr:hover td { background: var(--panel-2); }
+
   .pill { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 600; letter-spacing: 0.03em; }
   .pill.good { background: var(--good-dim); color: var(--good); }
   .pill.warn { background: var(--warn-dim); color: var(--warn); }
@@ -159,22 +129,40 @@
   .rec-impact { margin-top: 6px; font-size: 12px; color: var(--good); font-weight: 500; font-family: 'JetBrains Mono', monospace; }
 
   body.modo-publico .solo-real { display: none !important; }
-
   .hint { font-size: 12px; color: var(--text-mute); padding: 10px 14px; background: var(--panel-2); border-left: 3px solid var(--info); border-radius: 6px; margin-top: 10px; line-height: 1.5; }
   .hint strong { color: var(--text-dim); }
+  .progress-bar { width: 100%; height: 8px; background: var(--panel-2); border-radius: 4px; overflow: hidden; margin: 8px 0; }
+  .progress-fill { height: 100%; background: linear-gradient(90deg, var(--invest), var(--good)); transition: width 0.3s; }
 
-  .progress-bar {
-    width: 100%; height: 8px;
+  /* Surtidos */
+  .filter-bar { display: flex; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; align-items: center; }
+  .filter-bar input, .filter-bar select {
+    background: var(--panel-2); border: 1px solid var(--border); color: var(--text);
+    padding: 8px 12px; border-radius: 6px; font-family: inherit; font-size: 13px;
+  }
+  .filter-bar input:focus, .filter-bar select:focus { outline: none; border-color: var(--accent); }
+  .search-input { flex: 1; min-width: 200px; }
+  .filter-toggle { font-size: 11px; color: var(--text-dim); padding: 6px 10px; border: 1px solid var(--border); background: var(--panel-2); border-radius: 6px; cursor: pointer; font-family: inherit; transition: all 0.15s; }
+  .filter-toggle:hover { color: var(--text); border-color: var(--border-strong); }
+  .filter-toggle.active { border-color: var(--accent); color: var(--accent); background: rgba(255,106,0,0.1); }
+  .cost-bar { display: inline-block; width: 40px; height: 6px; background: var(--panel-2); border-radius: 3px; overflow: hidden; vertical-align: middle; margin-left: 6px; }
+  .cost-bar-fill { height: 100%; background: var(--good); transition: width 0.2s; }
+  .cost-bar-fill.mid { background: var(--warn); }
+  .cost-bar-fill.low { background: var(--bad); }
+  .margen-chip {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 600; font-size: 12px;
+    padding: 2px 6px; border-radius: 4px;
     background: var(--panel-2);
-    border-radius: 4px;
-    overflow: hidden;
-    margin: 8px 0;
   }
-  .progress-fill {
-    height: 100%;
-    background: linear-gradient(90deg, var(--invest), var(--good));
-    transition: width 0.3s;
-  }
+  .margen-chip.excel { background: rgba(59,214,113,0.2); color: var(--good); }
+  .margen-chip.muy-bueno { background: var(--good-dim); color: var(--good); }
+  .margen-chip.bueno { background: var(--info-dim); color: var(--info); }
+  .margen-chip.medio { background: var(--warn-dim); color: var(--warn); }
+  .margen-chip.bajo { background: var(--bad-dim); color: var(--bad); }
+
+  .surtido-nombre { font-weight: 600; display: flex; align-items: center; gap: 8px; }
+  .mx-pill { font-size: 9px; padding: 1px 5px; border-radius: 3px; background: var(--purple-dim); color: var(--purple); font-weight: 600; letter-spacing: 0.04em; }
 </style>
 </head>
 <body>
@@ -213,9 +201,7 @@
     </h3>
     <div class="waterfall" id="waterfall"></div>
     <div class="hint">
-      <strong>Diferencia clave:</strong> el <strong style="color: var(--good);">resultado operativo</strong>
-      es lo que genera tu negocio. La <strong style="color: var(--invest);">obra</strong> es inversión en un activo (la cede nueva). Los
-      <strong style="color: var(--warn);">préstamos</strong> son financiación para esa inversión. Todo eso junto es la realidad completa.
+      <strong>Diferencia clave:</strong> el <strong style="color: var(--good);">resultado operativo</strong> es lo que genera tu negocio. La <strong style="color: var(--invest);">obra</strong> es inversión en un activo. Los <strong style="color: var(--warn);">préstamos</strong> son financiación para esa inversión.
     </div>
   </div>
 
@@ -226,28 +212,83 @@
         <span>🏗️ Construcción cede nueva</span>
         <span class="amount" style="color: var(--invest)">$7.1M/mes · 38%</span>
       </div>
-      <div class="block-desc">
-        Inversión directa en materiales, mano de obra (Naza) y demás. Se convierte en activo inmobiliario.
-        <strong style="color: var(--invest);">No es gasto, es patrimonio.</strong>
-      </div>
+      <div class="block-desc">Inversión en materiales, mano de obra (Naza). Se convierte en activo. <strong style="color: var(--invest);">No es gasto, es patrimonio.</strong></div>
     </div>
     <div class="block loan">
       <div class="block-title">
         <span>💳 Cuotas préstamos / tarjetas</span>
         <span class="amount" style="color: var(--warn)">$9.3M/mes · 51%</span>
       </div>
-      <div class="block-desc">
-        Galicia, Santander, tarjetas. Mayormente financiación de la obra. Cada cuota amortiza capital y paga interés.
-      </div>
+      <div class="block-desc">Galicia, Santander, tarjetas. Mayormente financiación de la obra.</div>
     </div>
     <div class="block" style="border-left: 3px solid var(--good);">
       <div class="block-title">
         <span>✓ Libre para vos / imprevistos</span>
         <span class="amount" style="color: var(--good)">$2.0M/mes · 11%</span>
       </div>
-      <div class="block-desc">
-        Lo que queda disponible después de toda la operación e inversión. De acá sacás para comer y mantener margen de maniobra.
+      <div class="block-desc">Lo que queda disponible después de toda la operación e inversión.</div>
+    </div>
+  </div>
+</div>
+
+<div class="view" id="view-surtidos">
+  <div class="card">
+    <h3>
+      Ganancia por surtido · versión estándar
+      <span class="badge" style="background: var(--panel-2); color: var(--text-mute);">65 surtidos analizados</span>
+    </h3>
+
+    <div class="hero-inner" style="grid-template-columns: repeat(3, 1fr); margin-bottom: 16px;">
+      <div class="kpi good">
+        <div class="kpi-label">Con costo confiable</div>
+        <div class="kpi-value" id="s-conf">—</div>
+        <div class="kpi-sub">Productos con ≥80% de costos cargados</div>
       </div>
+      <div class="kpi warn">
+        <div class="kpi-label">Con datos parciales</div>
+        <div class="kpi-value" id="s-parc">—</div>
+        <div class="kpi-sub">Entre 1% y 79% de costos cargados</div>
+      </div>
+      <div class="kpi" style="border-left: 3px solid var(--purple);">
+        <div class="kpi-label">Sin costo (fabricados)</div>
+        <div class="kpi-value" id="s-mx">—</div>
+        <div class="kpi-sub">Los que fabrica Victor (MAXIFER)</div>
+      </div>
+    </div>
+
+    <div class="filter-bar">
+      <input type="text" id="search" class="search-input" placeholder="Buscar surtido...">
+      <select id="sort-by">
+        <option value="gananciaStd">Ordenar: Ganancia (mayor)</option>
+        <option value="margenStdPct">Ordenar: Margen % (mayor)</option>
+        <option value="precioStd">Ordenar: Precio lista (mayor)</option>
+        <option value="nombre">Ordenar: Nombre (A-Z)</option>
+        <option value="pctCostoConocido">Ordenar: Confiabilidad costo</option>
+      </select>
+      <button class="filter-toggle" id="f-conf" data-filter="confiable">Solo confiables</button>
+      <button class="filter-toggle" id="f-mx" data-filter="maxifer">Solo fabricados (Victor)</button>
+    </div>
+
+    <div class="table-wrap">
+      <table class="simple" id="tbl-surtidos">
+        <thead>
+          <tr>
+            <th>Surtido</th>
+            <th class="num">Items</th>
+            <th class="num">Piezas std</th>
+            <th class="num">Precio lista</th>
+            <th class="num">Costo</th>
+            <th class="num">Ganancia</th>
+            <th class="num">Margen</th>
+            <th class="num">Confianza</th>
+          </tr>
+        </thead>
+        <tbody id="tbl-surtidos-body"></tbody>
+      </table>
+    </div>
+
+    <div class="hint" style="margin-top: 14px;">
+      <strong>Cómo leer esto:</strong> "Precio lista" es cuánto sumás si alguien te compra un surtido completo sin descuento. "Costo" es lo que pagaste por esa mercadería. "Ganancia" es la diferencia. Los surtidos con <strong>0% costo</strong> son los que fabrica Victor (no tienen costo cargado en el sistema porque la fabricación es "gratis" para vos, aunque la materia prima SÍ cuesta). El margen real de esos es menor que el 100% que muestra.
     </div>
   </div>
 </div>
@@ -276,17 +317,15 @@
         <span class="amount" style="color: var(--invest)">Diciembre 2026</span>
       </div>
       <div class="progress-bar">
-        <div class="progress-fill" id="progress-obra" style="width: 30%"></div>
+        <div class="progress-fill" style="width: 30%"></div>
       </div>
-      <div class="block-desc">
-        Estimado que estás a ~30% del camino. Te quedan ~9 meses de inversión antes de liberar la cede.
-      </div>
+      <div class="block-desc">Estimado ~30% del camino. Te quedan ~9 meses de inversión.</div>
     </div>
 
     <h3 style="margin-top: 20px;">Proyección a fin de año</h3>
     <div class="waterfall">
       <div class="wf-item invest">
-        <div class="wf-label">Invertido en obra hasta ahora (2026)<span class="sub">— estimado ene-mar</span></div>
+        <div class="wf-label">Invertido hasta ahora (2026)<span class="sub">— estimado ene-mar</span></div>
         <div class="wf-value">$11M</div>
       </div>
       <div class="wf-item invest">
@@ -294,15 +333,13 @@
         <div class="wf-value">$64M</div>
       </div>
       <div class="wf-item total invest">
-        <div class="wf-label">Inversión total estimada 2026</div>
+        <div class="wf-label">Inversión total 2026</div>
         <div class="wf-value" style="color: var(--invest)">~$75M</div>
       </div>
     </div>
 
     <div class="hint" style="border-left-color: var(--invest); margin-top: 16px;">
-      <strong>Cuando termine la obra (dic 2026):</strong> liberás ~$7.1M/mes que hoy va directo a construir.
-      Además, si los préstamos eran para la obra, en los meses siguientes vas amortizando esas cuotas y eventualmente
-      recuperás otros $6-9M/mes. <strong>En 12-18 meses después de terminar, tenés +$13-16M/mes más disponibles.</strong>
+      <strong>Cuando termine (dic 2026):</strong> liberás ~$7.1M/mes que hoy va a la obra. Además, con los préstamos amortizándose, en 12-18 meses recuperás otros $6-9M/mes. <strong>Total extra en 2027/2028: +$13-16M/mes.</strong>
     </div>
   </div>
 </div>
@@ -324,39 +361,27 @@
         <tbody id="tbl-vendedores"></tbody>
       </table>
     </div>
-    <div class="hint">
-      Las "comisiones" en MAXIFER no son gastos registrados: el vendedor recibe
-      mercadería más barata y se queda con la diferencia. Es un costo variable oculto.
-    </div>
+    <div class="hint">Las "comisiones" no son gastos registrados: el vendedor recibe mercadería más barata y se queda con la diferencia. Es un costo variable oculto.</div>
   </div>
 </div>
 
 <div class="view" id="view-victor">
   <div class="card">
     <h3>Análisis del trato con Victor</h3>
-    <p style="color: var(--text-dim); font-size: 13px; line-height: 1.6; margin-bottom: 16px;">
-      Victor no cobra por fabricar, a cambio se queda con toda la cobranza de sus ventas propias.
-      Esto es una decisión familiar válida, pero tiene un costo financiero concreto que vale la pena conocer —
-      especialmente en esta etapa de inversión en la obra.
-    </p>
+    <p style="color: var(--text-dim); font-size: 13px; line-height: 1.6; margin-bottom: 16px;">Victor no cobra por fabricar, a cambio se queda con toda la cobranza de sus ventas propias. Decisión familiar válida, pero con costo financiero concreto — especialmente en fase de obra.</p>
     <div class="victor-wrap" style="margin-bottom: 16px;">
       <div class="v-card">
         <h4>Lo que aporta Victor</h4>
         <div class="v-val" style="color: var(--good)">~$2.1M/mes</div>
-        <div class="v-sub">Costo estimado de materia prima + mano de obra de los productos que fabrica (336 productos, 10% catálogo).</div>
+        <div class="v-sub">Costo estimado de MP + mano de obra de los 336 productos que fabrica (10% catálogo).</div>
       </div>
       <div class="v-card">
         <h4>Lo que se lleva Victor</h4>
         <div class="v-val" style="color: var(--bad)">$9.0M/mes</div>
-        <div class="v-sub"><strong>Anualizado: $108M/año</strong>. Eso es casi el 50% de lo que cuesta tu obra nueva completa.</div>
+        <div class="v-sub"><strong>Anualizado: $108M/año</strong>. Casi el 50% del costo total de tu obra nueva.</div>
       </div>
     </div>
-
-    <div class="hint" style="border-left-color: var(--purple);">
-      <strong>Contexto importante:</strong> si Victor tomara comisión del 30% en lugar del 100%,
-      liberarías $6M/mes = $72M/año. Ese dinero podría financiar la obra sin tanto préstamo,
-      o acelerar la construcción. Es una conversación posible pero tuya.
-    </div>
+    <div class="hint" style="border-left-color: var(--purple);"><strong>Contexto:</strong> si Victor tomara comisión del 30% en lugar del 100%, liberarías $6M/mes = $72M/año. Ese dinero podría financiar la obra sin tanto préstamo, o acelerar la construcción.</div>
   </div>
 </div>
 
@@ -369,9 +394,7 @@
 
 <script>
 const DATA = {
-  ventasBlanco: 31_000_000,
-  ventasNegro: 52_000_000,
-  ventasTotal: 83_000_000,
+  ventasBlanco: 31_000_000, ventasNegro: 52_000_000, ventasTotal: 83_000_000,
   victorVentas: 9_000_000,
   vendedores: [
     { nombre: 'Gordillo, Maximiliano', neto: 43_000_000, comision: 0, nota: 'Dueño' },
@@ -383,47 +406,36 @@ const DATA = {
     { nombre: 'Distribuidor, Federico', neto: 1_000_000, comision: 0.15, nota: '15%' },
     { nombre: 'Mascio, Marcelo', neto: 500_000, comision: 0.15, nota: '15%' },
   ],
-  // DESGLOSE REAL de gastos
-  operativoReal: 52_313_764,   // Sueldos + alquiler + mercadería + impuestos + etc.
-  obra: 7_069_646,              // Naza + materiales construcción
-  prestamos: 9_341_943,         // Mayoría para obra
+  operativoReal: 52_313_764, obra: 7_069_646, prestamos: 9_341_943,
 };
 
+// SURTIDOS
+const SURTIDOS = [{"n":"RESORTES COMPLETO","c":"RES. COMP.","it":277,"pS":829,"pR":791,"vS":2439584,"vR":2192035,"cS":245790,"cR":237953,"gS":2193794,"gR":1954082,"mS":89.9,"mR":89.1,"pc":50,"mx":false},{"n":"CLIPS IMPORTADOS COMPLETO","c":"CL. IMP COM","it":324,"pS":1299,"pR":978,"vS":1650521,"vR":1312890,"cS":0,"cR":0,"gS":1650521,"gR":1312890,"mS":100,"mR":100,"pc":0,"mx":false},{"n":"CONEXIONES DE ALUMINIO N°2 - Nuevo","c":"CONEX. ALUM. 2 Ult.","it":57,"pS":115,"pR":114,"vS":1455068,"vR":1439068,"cS":0,"cR":0,"gS":1455068,"gR":1439068,"mS":100,"mR":100,"pc":0,"mx":true},{"n":"CONEXIONES DE ALUMINIO N°1 - Nuevo","c":"CONEX. ALUM. 1 Ult.","it":78,"pS":157,"pR":157,"vS":1401320,"vR":1401320,"cS":0,"cR":0,"gS":1401320,"gR":1401320,"mS":100,"mR":100,"pc":0,"mx":true},{"n":"CONECTORES NEUMATICOS / COMPLETO","c":"CON. NEU. COMPL.","it":118,"pS":386,"pR":262,"vS":1558353,"vR":1175810,"cS":415105,"cR":307101,"gS":1143249,"gR":868708,"mS":73.4,"mR":73.9,"pc":98,"mx":false},{"n":"ARANDELAS co-fi-alum","c":"ARAN. CO-FI-AL","it":77,"pS":1184,"pR":379,"vS":1133220,"vR":475069,"cS":134807,"cR":52665,"gS":998414,"gR":422404,"mS":88.1,"mR":88.9,"pc":90,"mx":false},{"n":"CONECTORES DE COMBUSTIBLE Reducido","c":"Conec. Comb. Red.","it":33,"pS":96,"pR":65,"vS":1104711,"vR":752074,"cS":154808,"cR":103205,"gS":949903,"gR":648869,"mS":86,"mR":86.3,"pc":79,"mx":false},{"n":"ALUMINIO LINEA TEMPERATURA","c":"Conex. Alum. L. Temp.","it":29,"pS":57,"pR":57,"vS":935502,"vR":935502,"cS":0,"cR":0,"gS":935502,"gR":935502,"mS":100,"mR":100,"pc":0,"mx":true},{"n":"PERILLAS DE COCINA Completo","c":"PER. COMP.","it":62,"pS":185,"pR":125,"vS":1149643,"vR":797762,"cS":258120,"cR":172080,"gS":891523,"gR":625682,"mS":77.5,"mR":78.4,"pc":97,"mx":false},{"n":"RESORTES LP","c":"RES. LP","it":40,"pS":118,"pR":80,"vS":817647,"vR":570098,"cS":23511,"cR":15674,"gS":794136,"gR":554424,"mS":97.1,"mR":97.3,"pc":20,"mx":false},{"n":"TORNILLOS ESPECIALES + TR COMPLETO","c":"TR Espec. + Torn.","it":134,"pS":666,"pR":402,"vS":770602,"vR":500361,"cS":18140,"cR":10884,"gS":752462,"gR":489477,"mS":97.6,"mR":97.8,"pc":14,"mx":false},{"n":"TERMINALES completo","c":"TEM. COMP.","it":83,"pS":1746,"pR":527,"vS":902480,"vR":568940,"cS":174910,"cR":99165,"gS":727571,"gR":469775,"mS":80.6,"mR":82.6,"pc":93,"mx":false},{"n":"Oring completo","c":"OR. COMP.","it":148,"pS":1571,"pR":736,"vS":814977,"vR":597833,"cS":102287,"cR":71334,"gS":712690,"gR":526499,"mS":87.4,"mR":88.1,"pc":99,"mx":false},{"n":"CONECTORES NUEVA INCORPORACION","c":"CON. NEU. NUEV.","it":49,"pS":167,"pR":109,"vS":926800,"vR":634781,"cS":237928,"cR":157947,"gS":688872,"gR":476835,"mS":74.3,"mR":75.1,"pc":96,"mx":false},{"n":"TORNILLERIA ESPECIAL Y TR IMPORTADAS","c":"Torn. Esp. TR. IMP.","it":114,"pS":565,"pR":341,"vS":666432,"vR":432659,"cS":0,"cR":0,"gS":666432,"gR":432659,"mS":100,"mR":100,"pc":0,"mx":false},{"n":"RACORD completo","c":"RAC. GR.","it":63,"pS":172,"pR":125,"vS":870493,"vR":659933,"cS":210274,"cR":148553,"gS":660220,"gR":511380,"mS":75.8,"mR":77.5,"pc":90,"mx":false},{"n":"CLIPS LINEA NACIONAL COMPLETO","c":"PL Nac. 160 M.","it":162,"pS":647,"pR":327,"vS":785018,"vR":452509,"cS":139587,"cR":69793,"gS":645432,"gR":382716,"mS":82.2,"mR":84.6,"pc":98,"mx":false},{"n":"RESORTES LC","c":"RES. LC","it":111,"pS":441,"pR":332,"vS":689359,"vR":539519,"cS":47884,"cR":35913,"gS":641475,"gR":503607,"mS":93.1,"mR":93.3,"pc":31,"mx":false},{"n":"CONECTORES PLASTICOS MANGUERAS","c":"CONC. PL","it":78,"pS":384,"pR":232,"vS":661193,"vR":421436,"cS":25878,"cR":15527,"gS":635315,"gR":405909,"mS":96.1,"mR":96.3,"pc":28,"mx":false},{"n":"CONECTORES NEUMATICOS","c":"CON. NEU.","it":71,"pS":234,"pR":154,"vS":824756,"vR":571028,"cS":225268,"cR":149155,"gS":599487,"gR":421873,"mS":72.7,"mR":73.9,"pc":97,"mx":false},{"n":"RESORTES LF","c":"RES. LF","it":89,"pS":353,"pR":179,"vS":681191,"vR":385595,"cS":100551,"cR":50275,"gS":580640,"gR":335320,"mS":85.2,"mR":87,"pc":67,"mx":false},{"n":"ESPARRAGOS DE ACERO","c":"ESPARR.","it":49,"pS":285,"pR":144,"vS":718834,"vR":382817,"cS":143739,"cR":71869,"gS":575095,"gR":310948,"mS":80,"mR":81.2,"pc":96,"mx":false},{"n":"TAPONES DE CARTER","c":"TAP.CAR.","it":28,"pS":106,"pR":80,"vS":766328,"vR":582196,"cS":194765,"cR":146074,"gS":571563,"gR":436122,"mS":74.6,"mR":74.9,"pc":93,"mx":false},{"n":"CARBONES COMPLETO","c":"CARB. CPL","it":60,"pS":148,"pR":90,"vS":759403,"vR":480442,"cS":206556,"cR":123934,"gS":552847,"gR":356508,"mS":72.8,"mR":74.2,"pc":97,"mx":false},{"n":"ARANDELAS DE GOMA / COMPLETA","c":"ARAND. COMP.","it":79,"pS":1293,"pR":461,"vS":546014,"vR":282471,"cS":0,"cR":0,"gS":546014,"gR":282471,"mS":100,"mR":100,"pc":0,"mx":true},{"n":"TORNILLERIA ESPECIAL","c":"Torn. Esp.","it":80,"pS":472,"pR":316,"vS":520460,"vR":365573,"cS":0,"cR":0,"gS":520460,"gR":365573,"mS":100,"mR":100,"pc":0,"mx":false},{"n":"UNIONES ORIENTABLES","c":"Uni. Orient.","it":31,"pS":119,"pR":61,"vS":646500,"vR":347650,"cS":129540,"cR":64770,"gS":516960,"gR":282880,"mS":80,"mR":81.4,"pc":61,"mx":true},{"n":"RACORD chico","c":"RAC. CH.","it":37,"pS":165,"pR":107,"vS":679964,"vR":501440,"cS":170368,"cR":124822,"gS":509595,"gR":376618,"mS":74.9,"mR":75.1,"pc":95,"mx":false},{"n":"ABRAZADERAS C/ GOMA","c":"ABRA. GOMA","it":38,"pS":255,"pR":147,"vS":502176,"vR":312672,"cS":0,"cR":0,"gS":502176,"gR":312672,"mS":100,"mR":100,"pc":0,"mx":true},{"n":"PERILLAS DE COCINA Surtido 2","c":"PER. 2","it":32,"pS":93,"pR":63,"vS":591072,"vR":414714,"cS":129600,"cR":86400,"gS":461472,"gR":328314,"mS":78.1,"mR":79.2,"pc":94,"mx":false},{"n":"RESORTES LB","c":"RES. LB","it":38,"pS":113,"pR":113,"vS":564025,"vR":564025,"cS":110953,"cR":110953,"gS":453072,"gR":453072,"mS":80.3,"mR":80.3,"pc":95,"mx":false},{"n":"PERILLAS DE COCINA Surtido 1","c":"PER. 1","it":32,"pS":93,"pR":63,"vS":575371,"vR":399848,"cS":128520,"cR":85680,"gS":446851,"gR":314168,"mS":77.7,"mR":78.6,"pc":94,"mx":false},{"n":"ESPINAS ELASTICAS","c":"ESP. ELAS.","it":56,"pS":839,"pR":265,"vS":526226,"vR":258849,"cS":87828,"cR":40966,"gS":438398,"gR":217883,"mS":83.3,"mR":84.2,"pc":96,"mx":false},{"n":"SUPLEMENTO 0,2 - SUPLEMENTO 0,8","c":"SUPL.0,2-0,8","it":79,"pS":1903,"pR":633,"vS":795616,"vR":264326,"cS":357678,"cR":104548,"gS":437938,"gR":159778,"mS":55,"mR":60.4,"pc":96,"mx":true},{"n":"GANCHOS - CHAVETAS / COMPLETO","c":"GA+CH COMP.","it":44,"pS":193,"pR":131,"vS":424441,"vR":357182,"cS":0,"cR":0,"gS":424441,"gR":357182,"mS":100,"mR":100,"pc":0,"mx":true},{"n":"CONEXIÓN DE ALUMINIO 27 Med. Mayor Rot.","c":"Conex. Alum. Mayor Rot.","it":29,"pS":56,"pR":56,"vS":424029,"vR":424029,"cS":0,"cR":0,"gS":424029,"gR":424029,"mS":100,"mR":100,"pc":0,"mx":true},{"n":"TUERCAS RAPIDAS COMPLETO","c":"TR L. Compl.","it":56,"pS":327,"pR":219,"vS":444290,"vR":310460,"cS":21768,"cR":14512,"gS":422522,"gR":295948,"mS":95.1,"mR":95.3,"pc":34,"mx":false},{"n":"ORING inicial","c":"OR. CH.","it":94,"pS":1334,"pR":556,"vS":477561,"vR":268783,"cS":59745,"cR":29784,"gS":417816,"gR":239000,"mS":87.5,"mR":88.9,"pc":98,"mx":false},{"n":"TERMINALES LINEA INDUSTRIAL","c":"TERM. LI.","it":23,"pS":300,"pR":86,"vS":503088,"vR":321769,"cS":87143,"cR":39950,"gS":415945,"gR":281819,"mS":82.7,"mR":87.6,"pc":74,"mx":false},{"n":"PLASTICOS chico","c":"PL CH.","it":92,"pS":544,"pR":364,"vS":500300,"vR":354134,"cS":95225,"cR":63483,"gS":405075,"gR":290650,"mS":81,"mR":82.1,"pc":98,"mx":false},{"n":"TERMINALES nuevo","c":"TERM. NU.","it":31,"pS":137,"pR":90,"vS":470280,"vR":353856,"cS":83359,"cR":55724,"gS":386921,"gR":298132,"mS":82.3,"mR":84.3,"pc":81,"mx":false},{"n":"CARBONES N°1","c":"CARB. 1","it":42,"pS":102,"pR":62,"vS":509100,"vR":318580,"cS":141000,"cR":84600,"gS":368100,"gR":233980,"mS":72.3,"mR":73.4,"pc":95,"mx":false},{"n":"RESORTES LA","c":"RES. LA","it":52,"pS":154,"pR":104,"vS":467575,"vR":332317,"cS":110149,"cR":73433,"gS":357426,"gR":258884,"mS":76.4,"mR":77.9,"pc":85,"mx":false},{"n":"INTERRUPTORES Y PULSADORES","c":"INTERR.PULSA.","it":47,"pS":138,"pR":93,"vS":440406,"vR":314937,"cS":83569,"cR":55713,"gS":356837,"gR":259225,"mS":81,"mR":82.3,"pc":96,"mx":true},{"n":"Oring grande","c":"OR. GR.","it":56,"pS":313,"pR":165,"vS":407235,"vR":239008,"cS":52296,"cR":27908,"gS":354939,"gR":211100,"mS":87.2,"mR":88.3,"pc":96,"mx":false},{"n":"ARANDELAS DE INYECCION","c":"Arand. Inyec.","it":42,"pS":442,"pR":242,"vS":424819,"vR":246628,"cS":76164,"cR":41544,"gS":348655,"gR":205084,"mS":82.1,"mR":83.2,"pc":86,"mx":true},{"n":"PICOS PARA GAS","c":"INYEC. GAS. ENV.","it":56,"pS":219,"pR":165,"vS":414079,"vR":331422,"cS":71614,"cR":55665,"gS":342466,"gR":275757,"mS":82.7,"mR":83.2,"pc":96,"mx":false},{"n":"TUERCAS RAPIDAS IMPORTADAS","c":"TR IMPO.","it":37,"pS":212,"pR":142,"vS":332260,"vR":231440,"cS":0,"cR":0,"gS":332260,"gR":231440,"mS":100,"mR":100,"pc":0,"mx":false},{"n":"TERMINALES chico","c":"TERM. CH.","it":42,"pS":1491,"pR":382,"vS":406110,"vR":183395,"cS":82357,"cR":30531,"gS":323753,"gR":152864,"mS":79.7,"mR":83.4,"pc":95,"mx":false},{"n":"ACCESORIOS DE BRONCE UNION POLIAMIDA","c":"Uni. Poliam.","it":35,"pS":153,"pR":94,"vS":370020,"vR":240812,"cS":53516,"cR":33169,"gS":316504,"gR":207643,"mS":85.5,"mR":86.2,"pc":94,"mx":false},{"n":"ARANDELAS DE GOMA","c":"ARAND. CH.","it":50,"pS":1011,"pR":483,"vS":304966,"vR":169736,"cS":0,"cR":0,"gS":304966,"gR":169736,"mS":100,"mR":100,"pc":0,"mx":true},{"n":"TOPES Y TAPONES DE GOMA","c":"TOP. TAP. GOMA","it":28,"pS":132,"pR":80,"vS":320075,"vR":204765,"cS":15537,"cR":9322,"gS":304538,"gR":195443,"mS":95.1,"mR":95.4,"pc":93,"mx":false},{"n":"TUERCAS RAPIDAS","c":"TUER. RAP.","it":37,"pS":557,"pR":212,"vS":371461,"vR":174189,"cS":78197,"cR":32622,"gS":293264,"gR":141567,"mS":78.9,"mR":81.3,"pc":89,"mx":false},{"n":"TUERCAS RAPIDAS Y TUERCAS REMACHES","c":"T. REM.+T. RAP.","it":57,"pS":478,"pR":333,"vS":347784,"vR":281032,"cS":62943,"cR":48690,"gS":284841,"gR":232342,"mS":81.9,"mR":82.7,"pc":93,"mx":false},{"n":"CONEXIONES PLASTICAS IMPORTADAS","c":"Conex. Import.","it":32,"pS":182,"pR":182,"vS":262824,"vR":262824,"cS":0,"cR":0,"gS":262824,"gR":262824,"mS":100,"mR":100,"pc":0,"mx":false},{"n":"ARANDELAS DE GOMA LINEA PESADA","c":"ARAND. LP.","it":30,"pS":283,"pR":171,"vS":257848,"vR":178709,"cS":0,"cR":0,"gS":257848,"gR":178709,"mS":100,"mR":100,"pc":0,"mx":true},{"n":"REGATONES","c":"REGAT.","it":64,"pS":564,"pR":377,"vS":311331,"vR":272054,"cS":57712,"cR":46710,"gS":253619,"gR":225344,"mS":81.5,"mR":82.8,"pc":97,"mx":false},{"n":"SEEGER DIN 471 - 472","c":"SEEG.","it":61,"pS":443,"pR":298,"vS":281555,"vR":238351,"cS":31831,"cR":26180,"gS":249724,"gR":212171,"mS":88.7,"mR":89,"pc":97,"mx":false},{"n":"CHAVETAS","c":"CHA. CH.","it":32,"pS":150,"pR":124,"vS":242453,"vR":219293,"cS":0,"cR":0,"gS":242453,"gR":219293,"mS":100,"mR":100,"pc":0,"mx":true},{"n":"INSERTOS","c":"INS.","it":26,"pS":122,"pR":74,"vS":260600,"vR":168280,"cS":34296,"cR":20578,"gS":226304,"gR":147702,"mS":86.8,"mR":87.8,"pc":92,"mx":false},{"n":"TUERCAS REMACHES","c":"TER. REM.","it":22,"pS":352,"pR":202,"vS":263015,"vR":181538,"cS":41352,"cR":26780,"gS":221663,"gR":154758,"mS":84.3,"mR":85.2,"pc":91,"mx":false},{"n":"ALEMITES","c":"ALEM.","it":25,"pS":140,"pR":94,"vS":257010,"vR":181273,"cS":46208,"cR":30805,"gS":210802,"gR":150468,"mS":82,"mR":83,"pc":92,"mx":false},{"n":"TARUGOS ESTRIADOS","c":"TAR. ESTR.","it":17,"pS":1742,"pR":752,"vS":210402,"vR":110554,"cS":0,"cR":0,"gS":210402,"gR":110554,"mS":100,"mR":100,"pc":0,"mx":false},{"n":"RETENES DE SEGURIDAD - ARANLOCK","c":"RET. ARAN.","it":23,"pS":902,"pR":527,"vS":167628,"vR":126664,"cS":27104,"cR":19093,"gS":140524,"gR":107571,"mS":83.8,"mR":84.9,"pc":91,"mx":false},{"n":"CHAVETAS PARTIDAS","c":"CHA. PART.","it":32,"pS":962,"pR":452,"vS":121411,"vR":83510,"cS":17101,"cR":10026,"gS":104311,"gR":73484,"mS":85.9,"mR":88,"pc":94,"mx":false}];
+
 function fmt$(n) {
-  if (n === null || n === undefined || isNaN(n)) return '—';
-  const abs = Math.abs(n);
-  const sign = n < 0 ? '-' : '';
+  if (n == null || isNaN(n)) return '—';
+  const abs = Math.abs(n), sign = n < 0 ? '-' : '';
   if (abs >= 1_000_000) return sign + '$' + (abs / 1_000_000).toFixed(1).replace('.', ',') + 'M';
   if (abs >= 1_000) return sign + '$' + Math.round(abs / 1_000) + 'k';
   return sign + '$' + Math.round(abs).toLocaleString('es-AR');
 }
 function fmt$full(n) {
-  if (n === null || n === undefined || isNaN(n)) return '—';
+  if (n == null || isNaN(n)) return '—';
   const sign = n < 0 ? '-' : '';
   return sign + '$' + Math.round(Math.abs(n)).toLocaleString('es-AR');
 }
 
 function calcular() {
-  let totalComisiones = 0;
-  for (const v of DATA.vendedores) {
-    if (v.comision > 0 && v.comision < 1) {
-      totalComisiones += v.neto * v.comision;
-    }
-  }
-  const paraMaxi = DATA.ventasTotal - DATA.victorVentas - totalComisiones;
+  let tc = 0;
+  for (const v of DATA.vendedores) if (v.comision > 0 && v.comision < 1) tc += v.neto * v.comision;
+  const paraMaxi = DATA.ventasTotal - DATA.victorVentas - tc;
   const resultadoOperativo = paraMaxi - DATA.operativoReal;
   const quedaLibre = resultadoOperativo - DATA.obra - DATA.prestamos;
   return {
-    ventasTotal: DATA.ventasTotal,
-    ventasBlanco: DATA.ventasBlanco,
-    ventasNegro: DATA.ventasNegro,
-    victorVentas: DATA.victorVentas,
-    totalComisiones, paraMaxi,
-    operativo: DATA.operativoReal,
-    obra: DATA.obra,
-    prestamos: DATA.prestamos,
-    resultadoOperativo,
-    quedaLibre,
+    ventasTotal: DATA.ventasTotal, ventasBlanco: DATA.ventasBlanco, ventasNegro: DATA.ventasNegro,
+    victorVentas: DATA.victorVentas, totalComisiones: tc, paraMaxi,
+    operativo: DATA.operativoReal, obra: DATA.obra, prestamos: DATA.prestamos,
+    resultadoOperativo, quedaLibre,
     margenOperativo: (resultadoOperativo / DATA.ventasTotal) * 100,
   };
 }
@@ -431,43 +443,32 @@ function calcular() {
 function renderHero() {
   const r = calcular();
   const kpis = [
-    { label: 'Ventas totales/mes', value: fmt$(r.ventasTotal), sub: `Blanco ${fmt$(r.ventasBlanco)} + Negro ${fmt$(r.ventasNegro)}`, cls: 'info' },
-    { label: 'Resultado operativo', value: fmt$(r.resultadoOperativo), sub: `${r.margenOperativo.toFixed(1)}% sobre ventas — sano`, cls: 'good' },
-    { label: 'Inversión en obra', value: fmt$(r.obra), sub: `Va a construir tu cede nueva`, cls: 'invest' },
-    { label: 'Queda libre', value: fmt$(r.quedaLibre), sub: `Para vos + imprevistos`, cls: r.quedaLibre > 0 ? 'warn' : 'bad' },
+    { label: 'Ventas totales/mes', value: fmt$(r.ventasTotal), sub: 'Blanco ' + fmt$(r.ventasBlanco) + ' + Negro ' + fmt$(r.ventasNegro), cls: 'info' },
+    { label: 'Resultado operativo', value: fmt$(r.resultadoOperativo), sub: r.margenOperativo.toFixed(1) + '% sobre ventas — sano', cls: 'good' },
+    { label: 'Inversión obra', value: fmt$(r.obra), sub: 'Va a construir tu cede nueva', cls: 'invest' },
+    { label: 'Queda libre', value: fmt$(r.quedaLibre), sub: 'Para vos + imprevistos', cls: r.quedaLibre > 0 ? 'warn' : 'bad' },
   ];
-  document.getElementById('hero-kpis').innerHTML = kpis.map(k => `
-    <div class="kpi ${k.cls}">
-      <div class="kpi-label">${k.label}</div>
-      <div class="kpi-value">${k.value}</div>
-      <div class="kpi-sub">${k.sub}</div>
-    </div>
-  `).join('');
-
+  document.getElementById('hero-kpis').innerHTML = kpis.map(k => 
+    '<div class="kpi ' + k.cls + '"><div class="kpi-label">' + k.label + '</div><div class="kpi-value">' + k.value + '</div><div class="kpi-sub">' + k.sub + '</div></div>'
+  ).join('');
   const diag = document.getElementById('diag-banner');
   diag.className = 'diag-banner invest';
-  diag.innerHTML = `
-    <div class="diag-icon">🏗</div>
-    <div>
-      <div class="diag-title">Estás en fase de inversión intensa</div>
-      <div class="diag-subtitle">Tu operación es sana (${fmt$full(r.resultadoOperativo)}/mes de margen). Lo que te genera la sensación de "no llego" es que estás construyendo tu cede nueva y pagando préstamos de la obra. Al terminar (dic 2026), liberás ~$13-16M/mes.</div>
-    </div>
-  `;
+  diag.innerHTML = '<div class="diag-icon">🏗</div><div><div class="diag-title">Estás en fase de inversión intensa</div><div class="diag-subtitle">Tu operación es sana (' + fmt$full(r.resultadoOperativo) + '/mes). La sensación de "no llego" es por la obra + préstamos. Al terminar (dic 2026), recuperás ~$13-16M/mes.</div></div>';
 }
 
 function renderWaterfall() {
   const r = calcular();
   const items = [
-    { lbl: 'Ventas en blanco (facturadas)', val: r.ventasBlanco, sub: 'Factura A', type: 'pos' },
+    { lbl: 'Ventas en blanco', val: r.ventasBlanco, sub: 'Factura A', type: 'pos' },
     { lbl: 'Ventas en negro', val: r.ventasNegro, sub: 'COMPA + COMPB', type: 'pos', solo_real: true },
     { lbl: 'TOTAL VENDIDO', val: r.ventasTotal, type: 'subtotal' },
     { lbl: 'Victor se lleva cobranza', val: -r.victorVentas, sub: 'Fabrica gratis, cobra directo', type: 'neg' },
-    { lbl: 'Comisiones a vendedores', val: -r.totalComisiones, sub: 'Precios más bajos que ellos revenden', type: 'neg' },
+    { lbl: 'Comisiones vendedores', val: -r.totalComisiones, sub: 'Precios más bajos', type: 'neg' },
     { lbl: 'Plata real a tu caja', val: r.paraMaxi, type: 'subtotal' },
-    { lbl: 'Gastos operativos', val: -r.operativo, sub: 'Sueldos + merca + alquiler + impuestos + etc.', type: 'neg' },
+    { lbl: 'Gastos operativos', val: -r.operativo, sub: 'Sueldos + merca + alquiler + impuestos', type: 'neg' },
     { lbl: 'RESULTADO OPERATIVO', val: r.resultadoOperativo, type: 'total-pos' },
-    { lbl: 'Inversión en obra (activo)', val: -r.obra, sub: 'Naza + materiales construcción', type: 'invest' },
-    { lbl: 'Cuotas préstamos / tarjetas', val: -r.prestamos, sub: 'Mayormente obra (Galicia, Santander)', type: 'neg' },
+    { lbl: 'Inversión obra (activo)', val: -r.obra, sub: 'Naza + materiales', type: 'invest' },
+    { lbl: 'Cuotas préstamos', val: -r.prestamos, sub: 'Galicia, Santander', type: 'neg' },
     { lbl: 'QUEDA LIBRE EN CAJA', val: r.quedaLibre, type: r.quedaLibre >= 0 ? 'total-pos' : 'total-neg' },
   ];
   document.getElementById('waterfall').innerHTML = items.map(i => {
@@ -478,98 +479,113 @@ function renderWaterfall() {
     else if (i.type === 'total-neg') cls = 'total neg';
     else if (i.type === 'invest') cls = 'invest';
     else cls = 'pos';
-    return `<div class="wf-item ${cls} ${i.solo_real ? 'solo-real' : ''}">
-      <div class="wf-label">${i.lbl}${i.sub ? `<span class="sub">— ${i.sub}</span>` : ''}</div>
-      <div class="wf-value">${fmt$full(i.val)}</div>
-    </div>`;
+    return '<div class="wf-item ' + cls + (i.solo_real ? ' solo-real' : '') + '"><div class="wf-label">' + i.lbl + (i.sub ? '<span class="sub">— ' + i.sub + '</span>' : '') + '</div><div class="wf-value">' + fmt$full(i.val) + '</div></div>';
   }).join('');
 }
 
 function renderVendedores() {
   const tbody = document.getElementById('tbl-vendedores');
-  let totalNeto = 0, totalSeQueda = 0, totalParaMaxi = 0;
+  let tn = 0, ts = 0, tm = 0;
   tbody.innerHTML = DATA.vendedores.map(v => {
-    const seQueda = v.neto * v.comision;
-    const paraMaxi = v.neto - seQueda;
-    totalNeto += v.neto; totalSeQueda += seQueda; totalParaMaxi += paraMaxi;
-    let comPill;
-    if (v.comision === 0) comPill = `<span class="pill mute">0%</span>`;
-    else if (v.comision === 1.0) comPill = `<span class="pill bad">100%</span>`;
-    else if (v.comision >= 0.25) comPill = `<span class="pill warn">${(v.comision * 100).toFixed(0)}%</span>`;
-    else comPill = `<span class="pill info">${(v.comision * 100).toFixed(0)}%</span>`;
-    return `<tr>
-      <td>${v.nombre}<div style="font-size:11px;color:var(--text-mute);">${v.nota}</div></td>
-      <td class="num">${fmt$(v.neto)}</td>
-      <td class="num">${comPill}</td>
-      <td class="num" style="color:${seQueda > 0 ? 'var(--bad)' : 'var(--text-mute)'}">${fmt$(seQueda)}</td>
-      <td class="num" style="color:var(--good);font-weight:600;">${fmt$(paraMaxi)}</td>
-    </tr>`;
-  }).join('') + `<tr style="border-top: 2px solid var(--border-strong); font-weight: 600;">
-    <td>TOTAL</td><td class="num">${fmt$(totalNeto)}</td><td class="num"></td>
-    <td class="num" style="color: var(--bad);">${fmt$(totalSeQueda)}</td>
-    <td class="num" style="color: var(--good);">${fmt$(totalParaMaxi)}</td>
-  </tr>`;
+    const sq = v.neto * v.comision;
+    const pm = v.neto - sq;
+    tn += v.neto; ts += sq; tm += pm;
+    let pill;
+    if (v.comision === 0) pill = '<span class="pill mute">0%</span>';
+    else if (v.comision === 1.0) pill = '<span class="pill bad">100%</span>';
+    else if (v.comision >= 0.25) pill = '<span class="pill warn">' + (v.comision * 100).toFixed(0) + '%</span>';
+    else pill = '<span class="pill info">' + (v.comision * 100).toFixed(0) + '%</span>';
+    return '<tr><td>' + v.nombre + '<div style="font-size:11px;color:var(--text-mute);">' + v.nota + '</div></td><td class="num">' + fmt$(v.neto) + '</td><td class="num">' + pill + '</td><td class="num" style="color:' + (sq > 0 ? 'var(--bad)' : 'var(--text-mute)') + '">' + fmt$(sq) + '</td><td class="num" style="color:var(--good);font-weight:600;">' + fmt$(pm) + '</td></tr>';
+  }).join('') + '<tr style="border-top: 2px solid var(--border-strong); font-weight: 600;"><td>TOTAL</td><td class="num">' + fmt$(tn) + '</td><td class="num"></td><td class="num" style="color: var(--bad);">' + fmt$(ts) + '</td><td class="num" style="color: var(--good);">' + fmt$(tm) + '</td></tr>';
+}
+
+// SURTIDOS - render
+let filtroSearch = '', filtroConf = false, filtroMx = false, ordenBy = 'gS';
+function renderSurtidos() {
+  // KPIs
+  const conf = SURTIDOS.filter(s => s.pc >= 80 && !s.mx).length;
+  const parc = SURTIDOS.filter(s => s.pc > 0 && s.pc < 80).length;
+  const mx = SURTIDOS.filter(s => s.mx).length;
+  document.getElementById('s-conf').textContent = conf;
+  document.getElementById('s-parc').textContent = parc;
+  document.getElementById('s-mx').textContent = mx;
+
+  let lista = SURTIDOS.slice();
+  if (filtroSearch) {
+    const q = filtroSearch.toLowerCase();
+    lista = lista.filter(s => s.n.toLowerCase().includes(q));
+  }
+  if (filtroConf) lista = lista.filter(s => s.pc >= 80);
+  if (filtroMx) lista = lista.filter(s => s.mx);
+
+  lista.sort((a, b) => {
+    if (ordenBy === 'nombre' || ordenBy === 'n') return a.n.localeCompare(b.n);
+    if (ordenBy === 'gananciaStd') return b.gS - a.gS;
+    if (ordenBy === 'margenStdPct') return b.mS - a.mS;
+    if (ordenBy === 'precioStd') return b.vS - a.vS;
+    if (ordenBy === 'pctCostoConocido') return b.pc - a.pc;
+    return 0;
+  });
+
+  function margenClass(pct, pc) {
+    if (pc < 50) return 'medio'; // poco confiable
+    if (pct >= 90) return 'excel';
+    if (pct >= 80) return 'muy-bueno';
+    if (pct >= 70) return 'bueno';
+    if (pct >= 50) return 'medio';
+    return 'bajo';
+  }
+
+  function confBar(pc) {
+    const cls = pc >= 80 ? '' : pc >= 50 ? 'mid' : 'low';
+    return '<span class="mono" style="font-size:11px;color:var(--text-dim);">' + pc + '%</span><span class="cost-bar"><span class="cost-bar-fill ' + cls + '" style="width:' + pc + '%"></span></span>';
+  }
+
+  const tbody = document.getElementById('tbl-surtidos-body');
+  tbody.innerHTML = lista.map(s => {
+    const mxBadge = s.mx ? '<span class="mx-pill">FAB VICTOR</span>' : '';
+    const margenCls = margenClass(s.mS, s.pc);
+    const margenLabel = s.pc === 0 ? 'sin costo' : s.mS.toFixed(1) + '%';
+    return '<tr>' +
+      '<td><div class="surtido-nombre">' + s.n + mxBadge + '</div></td>' +
+      '<td class="num">' + s.it + '</td>' +
+      '<td class="num">' + s.pS + '</td>' +
+      '<td class="num">' + fmt$(s.vS) + '</td>' +
+      '<td class="num" style="color:var(--text-dim)">' + (s.pc === 0 ? '—' : fmt$(s.cS)) + '</td>' +
+      '<td class="num" style="font-weight:600;color:' + (s.pc >= 50 ? 'var(--good)' : 'var(--text-dim)') + '">' + fmt$(s.gS) + '</td>' +
+      '<td class="num"><span class="margen-chip ' + margenCls + '">' + margenLabel + '</span></td>' +
+      '<td class="num">' + confBar(s.pc) + '</td>' +
+    '</tr>';
+  }).join('');
+
+  if (lista.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:30px;color:var(--text-mute)">Sin resultados</td></tr>';
+  }
 }
 
 function renderAcciones() {
   const r = calcular();
   const acciones = [
-    {
-      tipo: 'invest', num: '1',
-      title: 'Terminar la obra lo antes posible',
-      desc: `La obra te está comiendo ${fmt$(r.obra + r.prestamos)}/mes entre inversión directa y préstamos. Cada mes adicional son $16M que no vuelven al bolsillo. Acelerar la obra = recuperar liquidez más rápido. Si podés poner más mano de obra o más horas, hacelo.`,
-      impacto: 'Al terminar: +$13-16M/mes libres en caja'
-    },
-    {
-      tipo: 'family', num: '2',
-      title: 'Renegociar con Victor (justo ahora que estás en obra)',
-      desc: `En este momento necesitás cash más que nunca. Proponerle a Victor pasar del 100% al 30-40% de comisión te liberaría $5-6M/mes para acelerar la obra o bajar deuda. Contexto ideal para la conversación: "papá, estoy construyendo la cede nueva y necesito revisar los números un tiempo".`,
-      impacto: '+$60-72M/año para acelerar obra'
-    },
-    {
-      tipo: 'urgent', num: '3',
-      title: 'Subir precios 10%',
-      desc: `Pasás de ${fmt$(r.quedaLibre)}/mes libres a ~${fmt$(r.quedaLibre + r.ventasTotal * 0.10)}/mes. En ferretería y autopartes un 10% pasa desapercibido. Es la acción más rápida con mayor impacto en tu caja disponible hoy.`,
-      impacto: `+$${(r.ventasTotal * 0.10 / 1_000_000).toFixed(1)}M/mes · +$${(r.ventasTotal * 0.10 * 12 / 1_000_000).toFixed(0)}M/año`
-    },
-    {
-      tipo: 'soon', num: '4',
-      title: 'No tomar más deuda hasta terminar la obra',
-      desc: 'Ya tenés $9.3M/mes de cuotas. Agregar más préstamos o tarjetas en este momento te puede ahogar si un mes baja la venta. Aguantá con lo que tenés hasta diciembre, después podés volver a tomar si aparece una oportunidad.',
-      impacto: 'Preservar oxígeno financiero'
-    },
-    {
-      tipo: 'good', num: '5',
-      title: 'Planear qué hacer con los $13-16M/mes que vuelvan en 2027',
-      desc: 'Cuando termine la obra y vayas bajando las cuotas, vas a tener mucho más disponible. Definí ahora en qué lo vas a usar: (a) pagar el resto de deuda rápido, (b) invertir en stock y crecer, (c) retirar más para vos, (d) abrir otra cede o local. Decidirlo con anticipación evita que se "evapore".',
-      impacto: 'Planificación de 2027'
-    },
-    {
-      tipo: 'good', num: '6',
-      title: 'Empezar a registrar retiros personales',
-      desc: 'Aunque saques poco, anotar fecha + monto cada vez te da claridad. En la fase actual (obra) es crucial saber exactamente cuánto sacás, porque cada peso cuenta.',
-      impacto: 'Control y claridad'
-    }
+    { tipo: 'invest', num: '1', title: 'Terminar la obra lo antes posible', desc: 'La obra te está comiendo ' + fmt$(r.obra + r.prestamos) + '/mes entre inversión directa y préstamos. Cada mes adicional son $16M que no vuelven al bolsillo. Acelerar = recuperar liquidez más rápido.', impacto: 'Al terminar: +$13-16M/mes libres' },
+    { tipo: 'family', num: '2', title: 'Renegociar con Victor ahora que estás en obra', desc: 'En este momento necesitás cash. Proponerle pasar del 100% al 30-40% te libera $5-6M/mes para acelerar la obra o bajar deuda. Contexto ideal: "papá, estoy construyendo la cede y necesito revisar los números un tiempo".', impacto: '+$60-72M/año' },
+    { tipo: 'urgent', num: '3', title: 'Subir precios 10%', desc: 'Pasás de ' + fmt$(r.quedaLibre) + '/mes libres a ~' + fmt$(r.quedaLibre + r.ventasTotal * 0.10) + '/mes. En ferretería y autopartes un 10% pasa desapercibido.', impacto: '+' + fmt$(r.ventasTotal * 0.10) + '/mes · +' + fmt$(r.ventasTotal * 0.10 * 12) + '/año' },
+    { tipo: 'soon', num: '4', title: 'No tomar más deuda hasta fin de obra', desc: 'Ya tenés $9.3M/mes de cuotas. Agregar más préstamos te puede ahogar si un mes baja la venta. Aguantá hasta diciembre.', impacto: 'Preservar oxígeno financiero' },
+    { tipo: 'good', num: '5', title: 'Planear qué hacer con los $13-16M/mes de 2027', desc: 'Cuando termine la obra vas a tener más disponible. Definí ya: (a) pagar el resto de deuda rápido, (b) invertir en stock, (c) retirar más para vos, (d) otra cede/local. Decidirlo con anticipación evita que se "evapore".', impacto: 'Planificación 2027' },
+    { tipo: 'good', num: '6', title: 'Empezar a registrar retiros personales', desc: 'Aunque saques poco, anotar fecha + monto te da claridad. En fase de obra es crucial saber cuánto sacás realmente.', impacto: 'Control y claridad' }
   ];
-  document.getElementById('lista-acciones').innerHTML = acciones.map(a => `
-    <div class="rec-item ${a.tipo}">
-      <div class="rec-num">${a.num}</div>
-      <div style="flex: 1;">
-        <div class="rec-title">${a.title}</div>
-        <div class="rec-desc">${a.desc}</div>
-        ${a.impacto ? `<div class="rec-impact">→ ${a.impacto}</div>` : ''}
-      </div>
-    </div>`).join('');
+  document.getElementById('lista-acciones').innerHTML = acciones.map(a => 
+    '<div class="rec-item ' + a.tipo + '"><div class="rec-num">' + a.num + '</div><div style="flex: 1;"><div class="rec-title">' + a.title + '</div><div class="rec-desc">' + a.desc + '</div>' + (a.impacto ? '<div class="rec-impact">→ ' + a.impacto + '</div>' : '') + '</div></div>'
+  ).join('');
 }
 
+// Tabs
 function switchTab(name) {
   document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
   document.querySelectorAll('.view').forEach(v => v.classList.toggle('active', v.id === 'view-' + name));
 }
-document.querySelectorAll('.tab').forEach(t => {
-  t.addEventListener('click', () => switchTab(t.dataset.tab));
-});
+document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => switchTab(t.dataset.tab)));
 
+// Modo privado
 const btnModo = document.getElementById('btn-modo');
 let modoPublico = false;
 btnModo.addEventListener('click', () => {
@@ -585,9 +601,16 @@ btnModo.addEventListener('click', () => {
   }
 });
 
+// Filtros surtidos
+document.getElementById('search').addEventListener('input', e => { filtroSearch = e.target.value; renderSurtidos(); });
+document.getElementById('sort-by').addEventListener('change', e => { ordenBy = e.target.value; renderSurtidos(); });
+document.getElementById('f-conf').addEventListener('click', function() { filtroConf = !filtroConf; this.classList.toggle('active', filtroConf); if (filtroConf && filtroMx) { filtroMx = false; document.getElementById('f-mx').classList.remove('active'); } renderSurtidos(); });
+document.getElementById('f-mx').addEventListener('click', function() { filtroMx = !filtroMx; this.classList.toggle('active', filtroMx); if (filtroMx && filtroConf) { filtroConf = false; document.getElementById('f-conf').classList.remove('active'); } renderSurtidos(); });
+
 renderHero();
 renderWaterfall();
 renderVendedores();
+renderSurtidos();
 renderAcciones();
 </script>
 </body>
