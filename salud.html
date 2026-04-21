@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MAXIFER — Salud Financiera</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Instrument+Serif&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0a0a0a; --panel: #141414; --panel-2: #1c1c1c;
+    --border: #2a2a2a; --border-strong: #3a3a3a;
+    --text: #eaeaea; --text-dim: #9a9a9a; --text-mute: #6a6a6a;
+    --accent: #ff6a00; --good: #3bd671; --good-dim: rgba(59,214,113,0.12);
+    --warn: #f5b400; --warn-dim: rgba(245,180,0,0.12);
+    --bad: #ff4747; --bad-dim: rgba(255,71,71,0.12);
+    --info: #5aa8ff; --info-dim: rgba(90,168,255,0.12);
+    --purple: #b58aff; --purple-dim: rgba(181,138,255,0.12);
+    --invest: #06d6a0; --invest-dim: rgba(6,214,160,0.12);
+  }
+  html, body {
+    background: var(--bg); color: var(--text);
+    font-family: 'IBM Plex Sans', sans-serif; font-size: 14px;
+    min-height: 100vh;
+  }
+  a { color: inherit; text-decoration: none; }
+  header {
+    padding: 14px 20px; display: flex; align-items: center;
+    justify-content: space-between; gap: 16px;
+    border-bottom: 1px solid var(--border); flex-wrap: wrap;
+  }
+  .logo { font-size: 20px; font-weight: 700; display: flex; align-items: center; gap: 10px; }
+  .logo .dot { width: 10px; height: 10px; background: var(--accent); border-radius: 50%; animation: pulse 2.5s ease-in-out infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.6} }
+  .header-actions { display: flex; gap: 8px; align-items: center; }
+  .btn-mode, .back-btn {
+    font-size: 12px; color: var(--text-dim);
+    padding: 6px 10px; border: 1px solid var(--border);
+    background: var(--panel); border-radius: 6px;
+    cursor: pointer; font-family: inherit;
+  }
+  .btn-mode:hover, .back-btn:hover { border-color: var(--border-strong); color: var(--text); }
+  .btn-mode.active { border-color: var(--warn); color: var(--warn); background: var(--warn-dim); }
+
+  .hero { padding: 24px 20px; border-bottom: 1px solid var(--border); }
+  .hero-inner { max-width: 1400px; margin: 0 auto; display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+  @media (max-width: 900px) { .hero-inner { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 500px) { .hero-inner { grid-template-columns: 1fr; } }
+  .kpi { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 16px; position: relative; overflow: hidden; }
+  .kpi::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: var(--info); }
+  .kpi.good::before { background: var(--good); }
+  .kpi.bad::before { background: var(--bad); }
+  .kpi.warn::before { background: var(--warn); }
+  .kpi.invest::before { background: var(--invest); }
+  .kpi-label { font-size: 10px; color: var(--text-mute); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600; margin-bottom: 6px; }
+  .kpi-value { font-size: 24px; font-weight: 700; font-family: 'JetBrains Mono', monospace; margin-bottom: 4px; }
+  .kpi-sub { font-size: 11px; color: var(--text-dim); line-height: 1.4; }
+
+  .diag-banner {
+    max-width: 1400px; margin: 20px auto 0; padding: 14px 20px;
+    border-radius: 10px; border-left: 4px solid;
+    display: flex; align-items: center; gap: 16px;
+    background: var(--panel); border: 1px solid var(--border);
+  }
+  .diag-banner.bad { border-left-color: var(--bad); }
+  .diag-banner.warn { border-left-color: var(--warn); }
+  .diag-banner.good { border-left-color: var(--good); }
+  .diag-banner.invest { border-left-color: var(--invest); }
+  .diag-icon { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; font-weight: 700; }
+  .diag-banner.bad .diag-icon { background: var(--bad-dim); color: var(--bad); }
+  .diag-banner.warn .diag-icon { background: var(--warn-dim); color: var(--warn); }
+  .diag-banner.good .diag-icon { background: var(--good-dim); color: var(--good); }
+  .diag-banner.invest .diag-icon { background: var(--invest-dim); color: var(--invest); }
+  .diag-title { font-size: 14px; font-weight: 600; margin-bottom: 2px; }
+  .diag-subtitle { font-size: 12px; color: var(--text-dim); }
+
+  .tabs { padding: 0 20px; border-bottom: 1px solid var(--border); display: flex; gap: 4px; overflow-x: auto; background: var(--bg); position: sticky; top: 0; z-index: 10; }
+  .tab { padding: 12px 18px; font-size: 13px; color: var(--text-dim); border: none; background: transparent; cursor: pointer; border-bottom: 2px solid transparent; white-space: nowrap; font-family: inherit; }
+  .tab:hover { color: var(--text); }
+  .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  .view { display: none; padding: 20px; max-width: 1400px; margin: 0 auto; }
+  .view.active { display: block; }
+
+  .card { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 18px; margin-bottom: 16px; }
+  .card h3 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-dim); font-weight: 600; margin-bottom: 14px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+  .card h3 .badge { font-size: 10px; padding: 2px 8px; border-radius: 10px; font-weight: 500; letter-spacing: 0; text-transform: none; }
+
+  .waterfall { display: flex; flex-direction: column; padding: 8px 0; }
+  .wf-item { display: grid; grid-template-columns: 1fr auto; align-items: center; padding: 14px 0; border-bottom: 1px solid var(--border); gap: 12px; }
+  .wf-item:last-child { border-bottom: none; }
+  .wf-item.total { padding: 16px 0; margin-top: 4px; border-top: 2px solid var(--border-strong); border-bottom: none; font-weight: 600; }
+  .wf-item.subtotal { padding: 14px 0; margin-top: 2px; border-top: 1px dashed var(--border-strong); border-bottom: none; }
+  .wf-label { font-size: 14px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .wf-label .sub { color: var(--text-mute); font-size: 11px; font-weight: 400; }
+  .wf-value { font-family: 'JetBrains Mono', monospace; font-size: 15px; font-weight: 600; }
+  .wf-item.pos .wf-value { color: var(--good); }
+  .wf-item.neg .wf-value { color: var(--bad); }
+  .wf-item.invest .wf-value { color: var(--invest); }
+  .wf-item.total .wf-value { font-size: 20px; }
+  .wf-item.total.pos .wf-value { color: var(--good); }
+  .wf-item.total.neg .wf-value { color: var(--bad); }
+
+  .block {
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px;
+    margin-bottom: 12px;
+  }
+  .block.invest { border-left: 3px solid var(--invest); }
+  .block.loan { border-left: 3px solid var(--warn); }
+  .block-title {
+    font-size: 13px; font-weight: 600;
+    display: flex; justify-content: space-between;
+    align-items: center; margin-bottom: 8px;
+  }
+  .block-title .amount {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+  }
+  .block-desc { font-size: 12px; color: var(--text-dim); line-height: 1.5; }
+
+  .table-wrap { overflow-x: auto; margin: 0 -18px; padding: 0 18px; }
+  table.simple { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 600px; }
+  table.simple th { font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-mute); font-weight: 600; text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+  table.simple th.num { text-align: right; }
+  table.simple td { padding: 10px 12px; border-bottom: 1px solid var(--border); }
+  table.simple td.num { text-align: right; font-family: 'JetBrains Mono', monospace; }
+  .pill { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 600; letter-spacing: 0.03em; }
+  .pill.good { background: var(--good-dim); color: var(--good); }
+  .pill.warn { background: var(--warn-dim); color: var(--warn); }
+  .pill.bad { background: var(--bad-dim); color: var(--bad); }
+  .pill.mute { background: var(--panel-2); color: var(--text-mute); }
+  .pill.info { background: var(--info-dim); color: var(--info); }
+  .pill.invest { background: var(--invest-dim); color: var(--invest); }
+
+  .victor-wrap { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 800px) { .victor-wrap { grid-template-columns: 1fr; } }
+  .v-card { background: var(--panel-2); border: 1px solid var(--border); border-radius: 8px; padding: 16px; }
+  .v-card h4 { font-size: 11px; color: var(--text-mute); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 10px; }
+  .v-val { font-family: 'JetBrains Mono', monospace; font-size: 22px; font-weight: 600; margin-bottom: 4px; }
+  .v-sub { font-size: 12px; color: var(--text-dim); line-height: 1.5; }
+
+  .rec-list { display: flex; flex-direction: column; gap: 10px; }
+  .rec-item { padding: 14px; background: var(--panel-2); border: 1px solid var(--border); border-left: 3px solid var(--info); border-radius: 8px; display: flex; gap: 12px; align-items: flex-start; }
+  .rec-item.urgent { border-left-color: var(--bad); }
+  .rec-item.soon { border-left-color: var(--warn); }
+  .rec-item.good { border-left-color: var(--good); }
+  .rec-item.family { border-left-color: var(--purple); }
+  .rec-item.invest { border-left-color: var(--invest); }
+  .rec-num { font-family: 'JetBrains Mono', monospace; font-size: 20px; font-weight: 700; color: var(--text-dim); min-width: 28px; }
+  .rec-item.urgent .rec-num { color: var(--bad); }
+  .rec-item.soon .rec-num { color: var(--warn); }
+  .rec-item.family .rec-num { color: var(--purple); }
+  .rec-item.invest .rec-num { color: var(--invest); }
+  .rec-title { font-weight: 600; font-size: 14px; margin-bottom: 4px; }
+  .rec-desc { font-size: 13px; color: var(--text-dim); line-height: 1.5; }
+  .rec-impact { margin-top: 6px; font-size: 12px; color: var(--good); font-weight: 500; font-family: 'JetBrains Mono', monospace; }
+
+  body.modo-publico .solo-real { display: none !important; }
+
+  .hint { font-size: 12px; color: var(--text-mute); padding: 10px 14px; background: var(--panel-2); border-left: 3px solid var(--info); border-radius: 6px; margin-top: 10px; line-height: 1.5; }
+  .hint strong { color: var(--text-dim); }
+
+  .progress-bar {
+    width: 100%; height: 8px;
+    background: var(--panel-2);
+    border-radius: 4px;
+    overflow: hidden;
+    margin: 8px 0;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--invest), var(--good));
+    transition: width 0.3s;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <span class="dot"></span>
+    <span>MAXIFER</span>
+    <span style="color: var(--text-dim); font-size: 14px; font-family: 'Instrument Serif', serif; font-style: italic;">salud financiera</span>
+  </div>
+  <div class="header-actions">
+    <button class="btn-mode" id="btn-modo">🔒 Modo privado</button>
+    <a href="./index.html" class="back-btn">← Panel</a>
+  </div>
+</header>
+
+<div class="hero">
+  <div class="hero-inner" id="hero-kpis"></div>
+  <div id="diag-banner"></div>
+</div>
+
+<div class="tabs">
+  <button class="tab active" data-tab="dashboard">Diagnóstico</button>
+  <button class="tab" data-tab="surtidos">Surtidos</button>
+  <button class="tab" data-tab="obra">Obra</button>
+  <button class="tab" data-tab="vendedores">Vendedores</button>
+  <button class="tab" data-tab="victor">Victor</button>
+  <button class="tab" data-tab="acciones">Plan</button>
+</div>
+
+<div class="view active" id="view-dashboard">
+  <div class="card">
+    <h3>
+      Flujo completo de marzo 2026
+      <span class="badge" style="background: var(--panel-2); color: var(--text-mute);">Operativo + Inversión + Financiero</span>
+    </h3>
+    <div class="waterfall" id="waterfall"></div>
+    <div class="hint">
+      <strong>Diferencia clave:</strong> el <strong style="color: var(--good);">resultado operativo</strong>
+      es lo que genera tu negocio. La <strong style="color: var(--invest);">obra</strong> es inversión en un activo (la cede nueva). Los
+      <strong style="color: var(--warn);">préstamos</strong> son financiación para esa inversión. Todo eso junto es la realidad completa.
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>¿Cómo usás los $18.5M que genera el negocio?</h3>
+    <div class="block invest">
+      <div class="block-title">
+        <span>🏗️ Construcción cede nueva</span>
+        <span class="amount" style="color: var(--invest)">$7.1M/mes · 38%</span>
+      </div>
+      <div class="block-desc">
+        Inversión directa en materiales, mano de obra (Naza) y demás. Se convierte en activo inmobiliario.
+        <strong style="color: var(--invest);">No es gasto, es patrimonio.</strong>
+      </div>
+    </div>
+    <div class="block loan">
+      <div class="block-title">
+        <span>💳 Cuotas préstamos / tarjetas</span>
+        <span class="amount" style="color: var(--warn)">$9.3M/mes · 51%</span>
+      </div>
+      <div class="block-desc">
+        Galicia, Santander, tarjetas. Mayormente financiación de la obra. Cada cuota amortiza capital y paga interés.
+      </div>
+    </div>
+    <div class="block" style="border-left: 3px solid var(--good);">
+      <div class="block-title">
+        <span>✓ Libre para vos / imprevistos</span>
+        <span class="amount" style="color: var(--good)">$2.0M/mes · 11%</span>
+      </div>
+      <div class="block-desc">
+        Lo que queda disponible después de toda la operación e inversión. De acá sacás para comer y mantener margen de maniobra.
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="view" id="view-obra">
+  <div class="card">
+    <h3>🏗️ Obra — construcción cede nueva</h3>
+
+    <div class="victor-wrap" style="margin-bottom: 20px;">
+      <div class="v-card" style="border-left: 3px solid var(--invest);">
+        <h4>Invertido en obra (marzo)</h4>
+        <div class="v-val" style="color: var(--invest)">$7.1M</div>
+        <div class="v-sub">Mano de obra Naza + materiales</div>
+      </div>
+      <div class="v-card" style="border-left: 3px solid var(--warn);">
+        <h4>Cuotas préstamos (marzo)</h4>
+        <div class="v-val" style="color: var(--warn)">$9.3M</div>
+        <div class="v-sub">Mayoría relacionadas con la obra</div>
+      </div>
+    </div>
+
+    <h3>Cronograma estimado</h3>
+    <div class="block invest">
+      <div class="block-title">
+        <span>Fin de obra esperado</span>
+        <span class="amount" style="color: var(--invest)">Diciembre 2026</span>
+      </div>
+      <div class="progress-bar">
+        <div class="progress-fill" id="progress-obra" style="width: 30%"></div>
+      </div>
+      <div class="block-desc">
+        Estimado que estás a ~30% del camino. Te quedan ~9 meses de inversión antes de liberar la cede.
+      </div>
+    </div>
+
+    <h3 style="margin-top: 20px;">Proyección a fin de año</h3>
+    <div class="waterfall">
+      <div class="wf-item invest">
+        <div class="wf-label">Invertido en obra hasta ahora (2026)<span class="sub">— estimado ene-mar</span></div>
+        <div class="wf-value">$11M</div>
+      </div>
+      <div class="wf-item invest">
+        <div class="wf-label">Falta invertir (abr-dic)<span class="sub">— 9 meses × $7.1M</span></div>
+        <div class="wf-value">$64M</div>
+      </div>
+      <div class="wf-item total invest">
+        <div class="wf-label">Inversión total estimada 2026</div>
+        <div class="wf-value" style="color: var(--invest)">~$75M</div>
+      </div>
+    </div>
+
+    <div class="hint" style="border-left-color: var(--invest); margin-top: 16px;">
+      <strong>Cuando termine la obra (dic 2026):</strong> liberás ~$7.1M/mes que hoy va directo a construir.
+      Además, si los préstamos eran para la obra, en los meses siguientes vas amortizando esas cuotas y eventualmente
+      recuperás otros $6-9M/mes. <strong>En 12-18 meses después de terminar, tenés +$13-16M/mes más disponibles.</strong>
+    </div>
+  </div>
+</div>
+
+<div class="view" id="view-vendedores">
+  <div class="card">
+    <h3>Desglose por vendedor · Marzo 2026</h3>
+    <div class="table-wrap">
+      <table class="simple">
+        <thead>
+          <tr>
+            <th>Vendedor</th>
+            <th class="num">Neto vendido</th>
+            <th class="num">Comisión</th>
+            <th class="num">Se queda vendedor</th>
+            <th class="num">Te queda a vos</th>
+          </tr>
+        </thead>
+        <tbody id="tbl-vendedores"></tbody>
+      </table>
+    </div>
+    <div class="hint">
+      Las "comisiones" en MAXIFER no son gastos registrados: el vendedor recibe
+      mercadería más barata y se queda con la diferencia. Es un costo variable oculto.
+    </div>
+  </div>
+</div>
+
+<div class="view" id="view-victor">
+  <div class="card">
+    <h3>Análisis del trato con Victor</h3>
+    <p style="color: var(--text-dim); font-size: 13px; line-height: 1.6; margin-bottom: 16px;">
+      Victor no cobra por fabricar, a cambio se queda con toda la cobranza de sus ventas propias.
+      Esto es una decisión familiar válida, pero tiene un costo financiero concreto que vale la pena conocer —
+      especialmente en esta etapa de inversión en la obra.
+    </p>
+    <div class="victor-wrap" style="margin-bottom: 16px;">
+      <div class="v-card">
+        <h4>Lo que aporta Victor</h4>
+        <div class="v-val" style="color: var(--good)">~$2.1M/mes</div>
+        <div class="v-sub">Costo estimado de materia prima + mano de obra de los productos que fabrica (336 productos, 10% catálogo).</div>
+      </div>
+      <div class="v-card">
+        <h4>Lo que se lleva Victor</h4>
+        <div class="v-val" style="color: var(--bad)">$9.0M/mes</div>
+        <div class="v-sub"><strong>Anualizado: $108M/año</strong>. Eso es casi el 50% de lo que cuesta tu obra nueva completa.</div>
+      </div>
+    </div>
+
+    <div class="hint" style="border-left-color: var(--purple);">
+      <strong>Contexto importante:</strong> si Victor tomara comisión del 30% en lugar del 100%,
+      liberarías $6M/mes = $72M/año. Ese dinero podría financiar la obra sin tanto préstamo,
+      o acelerar la construcción. Es una conversación posible pero tuya.
+    </div>
+  </div>
+</div>
+
+<div class="view" id="view-acciones">
+  <div class="card">
+    <h3>Plan priorizado según tu situación</h3>
+    <div class="rec-list" id="lista-acciones"></div>
+  </div>
+</div>
+
+<script>
+const DATA = {
+  ventasBlanco: 31_000_000,
+  ventasNegro: 52_000_000,
+  ventasTotal: 83_000_000,
+  victorVentas: 9_000_000,
+  vendedores: [
+    { nombre: 'Gordillo, Maximiliano', neto: 43_000_000, comision: 0, nota: 'Dueño' },
+    { nombre: 'Micky, Fabi', neto: 13_000_000, comision: 0.25, nota: '25% (socio)' },
+    { nombre: 'Uldokat, Nadia', neto: 12_000_000, comision: 0, nota: 'Empleada' },
+    { nombre: 'Gordillo, Victor', neto: 9_000_000, comision: 1.0, nota: '100% (papá/fábrica)' },
+    { nombre: 'Mayeski, Gabriel Leonardo', neto: 3_000_000, comision: 0, nota: 'Sin comisión' },
+    { nombre: 'Puebla, Eduardo', neto: 2_000_000, comision: 0.15, nota: '15%' },
+    { nombre: 'Distribuidor, Federico', neto: 1_000_000, comision: 0.15, nota: '15%' },
+    { nombre: 'Mascio, Marcelo', neto: 500_000, comision: 0.15, nota: '15%' },
+  ],
+  // DESGLOSE REAL de gastos
+  operativoReal: 52_313_764,   // Sueldos + alquiler + mercadería + impuestos + etc.
+  obra: 7_069_646,              // Naza + materiales construcción
+  prestamos: 9_341_943,         // Mayoría para obra
+};
+
+function fmt$(n) {
+  if (n === null || n === undefined || isNaN(n)) return '—';
+  const abs = Math.abs(n);
+  const sign = n < 0 ? '-' : '';
+  if (abs >= 1_000_000) return sign + '$' + (abs / 1_000_000).toFixed(1).replace('.', ',') + 'M';
+  if (abs >= 1_000) return sign + '$' + Math.round(abs / 1_000) + 'k';
+  return sign + '$' + Math.round(abs).toLocaleString('es-AR');
+}
+function fmt$full(n) {
+  if (n === null || n === undefined || isNaN(n)) return '—';
+  const sign = n < 0 ? '-' : '';
+  return sign + '$' + Math.round(Math.abs(n)).toLocaleString('es-AR');
+}
+
+function calcular() {
+  let totalComisiones = 0;
+  for (const v of DATA.vendedores) {
+    if (v.comision > 0 && v.comision < 1) {
+      totalComisiones += v.neto * v.comision;
+    }
+  }
+  const paraMaxi = DATA.ventasTotal - DATA.victorVentas - totalComisiones;
+  const resultadoOperativo = paraMaxi - DATA.operativoReal;
+  const quedaLibre = resultadoOperativo - DATA.obra - DATA.prestamos;
+  return {
+    ventasTotal: DATA.ventasTotal,
+    ventasBlanco: DATA.ventasBlanco,
+    ventasNegro: DATA.ventasNegro,
+    victorVentas: DATA.victorVentas,
+    totalComisiones, paraMaxi,
+    operativo: DATA.operativoReal,
+    obra: DATA.obra,
+    prestamos: DATA.prestamos,
+    resultadoOperativo,
+    quedaLibre,
+    margenOperativo: (resultadoOperativo / DATA.ventasTotal) * 100,
+  };
+}
+
+function renderHero() {
+  const r = calcular();
+  const kpis = [
+    { label: 'Ventas totales/mes', value: fmt$(r.ventasTotal), sub: `Blanco ${fmt$(r.ventasBlanco)} + Negro ${fmt$(r.ventasNegro)}`, cls: 'info' },
+    { label: 'Resultado operativo', value: fmt$(r.resultadoOperativo), sub: `${r.margenOperativo.toFixed(1)}% sobre ventas — sano`, cls: 'good' },
+    { label: 'Inversión en obra', value: fmt$(r.obra), sub: `Va a construir tu cede nueva`, cls: 'invest' },
+    { label: 'Queda libre', value: fmt$(r.quedaLibre), sub: `Para vos + imprevistos`, cls: r.quedaLibre > 0 ? 'warn' : 'bad' },
+  ];
+  document.getElementById('hero-kpis').innerHTML = kpis.map(k => `
+    <div class="kpi ${k.cls}">
+      <div class="kpi-label">${k.label}</div>
+      <div class="kpi-value">${k.value}</div>
+      <div class="kpi-sub">${k.sub}</div>
+    </div>
+  `).join('');
+
+  const diag = document.getElementById('diag-banner');
+  diag.className = 'diag-banner invest';
+  diag.innerHTML = `
+    <div class="diag-icon">🏗</div>
+    <div>
+      <div class="diag-title">Estás en fase de inversión intensa</div>
+      <div class="diag-subtitle">Tu operación es sana (${fmt$full(r.resultadoOperativo)}/mes de margen). Lo que te genera la sensación de "no llego" es que estás construyendo tu cede nueva y pagando préstamos de la obra. Al terminar (dic 2026), liberás ~$13-16M/mes.</div>
+    </div>
+  `;
+}
+
+function renderWaterfall() {
+  const r = calcular();
+  const items = [
+    { lbl: 'Ventas en blanco (facturadas)', val: r.ventasBlanco, sub: 'Factura A', type: 'pos' },
+    { lbl: 'Ventas en negro', val: r.ventasNegro, sub: 'COMPA + COMPB', type: 'pos', solo_real: true },
+    { lbl: 'TOTAL VENDIDO', val: r.ventasTotal, type: 'subtotal' },
+    { lbl: 'Victor se lleva cobranza', val: -r.victorVentas, sub: 'Fabrica gratis, cobra directo', type: 'neg' },
+    { lbl: 'Comisiones a vendedores', val: -r.totalComisiones, sub: 'Precios más bajos que ellos revenden', type: 'neg' },
+    { lbl: 'Plata real a tu caja', val: r.paraMaxi, type: 'subtotal' },
+    { lbl: 'Gastos operativos', val: -r.operativo, sub: 'Sueldos + merca + alquiler + impuestos + etc.', type: 'neg' },
+    { lbl: 'RESULTADO OPERATIVO', val: r.resultadoOperativo, type: 'total-pos' },
+    { lbl: 'Inversión en obra (activo)', val: -r.obra, sub: 'Naza + materiales construcción', type: 'invest' },
+    { lbl: 'Cuotas préstamos / tarjetas', val: -r.prestamos, sub: 'Mayormente obra (Galicia, Santander)', type: 'neg' },
+    { lbl: 'QUEDA LIBRE EN CAJA', val: r.quedaLibre, type: r.quedaLibre >= 0 ? 'total-pos' : 'total-neg' },
+  ];
+  document.getElementById('waterfall').innerHTML = items.map(i => {
+    let cls = '';
+    if (i.type === 'neg') cls = 'neg';
+    else if (i.type === 'subtotal') cls = 'subtotal pos';
+    else if (i.type === 'total-pos') cls = 'total pos';
+    else if (i.type === 'total-neg') cls = 'total neg';
+    else if (i.type === 'invest') cls = 'invest';
+    else cls = 'pos';
+    return `<div class="wf-item ${cls} ${i.solo_real ? 'solo-real' : ''}">
+      <div class="wf-label">${i.lbl}${i.sub ? `<span class="sub">— ${i.sub}</span>` : ''}</div>
+      <div class="wf-value">${fmt$full(i.val)}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderVendedores() {
+  const tbody = document.getElementById('tbl-vendedores');
+  let totalNeto = 0, totalSeQueda = 0, totalParaMaxi = 0;
+  tbody.innerHTML = DATA.vendedores.map(v => {
+    const seQueda = v.neto * v.comision;
+    const paraMaxi = v.neto - seQueda;
+    totalNeto += v.neto; totalSeQueda += seQueda; totalParaMaxi += paraMaxi;
+    let comPill;
+    if (v.comision === 0) comPill = `<span class="pill mute">0%</span>`;
+    else if (v.comision === 1.0) comPill = `<span class="pill bad">100%</span>`;
+    else if (v.comision >= 0.25) comPill = `<span class="pill warn">${(v.comision * 100).toFixed(0)}%</span>`;
+    else comPill = `<span class="pill info">${(v.comision * 100).toFixed(0)}%</span>`;
+    return `<tr>
+      <td>${v.nombre}<div style="font-size:11px;color:var(--text-mute);">${v.nota}</div></td>
+      <td class="num">${fmt$(v.neto)}</td>
+      <td class="num">${comPill}</td>
+      <td class="num" style="color:${seQueda > 0 ? 'var(--bad)' : 'var(--text-mute)'}">${fmt$(seQueda)}</td>
+      <td class="num" style="color:var(--good);font-weight:600;">${fmt$(paraMaxi)}</td>
+    </tr>`;
+  }).join('') + `<tr style="border-top: 2px solid var(--border-strong); font-weight: 600;">
+    <td>TOTAL</td><td class="num">${fmt$(totalNeto)}</td><td class="num"></td>
+    <td class="num" style="color: var(--bad);">${fmt$(totalSeQueda)}</td>
+    <td class="num" style="color: var(--good);">${fmt$(totalParaMaxi)}</td>
+  </tr>`;
+}
+
+function renderAcciones() {
+  const r = calcular();
+  const acciones = [
+    {
+      tipo: 'invest', num: '1',
+      title: 'Terminar la obra lo antes posible',
+      desc: `La obra te está comiendo ${fmt$(r.obra + r.prestamos)}/mes entre inversión directa y préstamos. Cada mes adicional son $16M que no vuelven al bolsillo. Acelerar la obra = recuperar liquidez más rápido. Si podés poner más mano de obra o más horas, hacelo.`,
+      impacto: 'Al terminar: +$13-16M/mes libres en caja'
+    },
+    {
+      tipo: 'family', num: '2',
+      title: 'Renegociar con Victor (justo ahora que estás en obra)',
+      desc: `En este momento necesitás cash más que nunca. Proponerle a Victor pasar del 100% al 30-40% de comisión te liberaría $5-6M/mes para acelerar la obra o bajar deuda. Contexto ideal para la conversación: "papá, estoy construyendo la cede nueva y necesito revisar los números un tiempo".`,
+      impacto: '+$60-72M/año para acelerar obra'
+    },
+    {
+      tipo: 'urgent', num: '3',
+      title: 'Subir precios 10%',
+      desc: `Pasás de ${fmt$(r.quedaLibre)}/mes libres a ~${fmt$(r.quedaLibre + r.ventasTotal * 0.10)}/mes. En ferretería y autopartes un 10% pasa desapercibido. Es la acción más rápida con mayor impacto en tu caja disponible hoy.`,
+      impacto: `+$${(r.ventasTotal * 0.10 / 1_000_000).toFixed(1)}M/mes · +$${(r.ventasTotal * 0.10 * 12 / 1_000_000).toFixed(0)}M/año`
+    },
+    {
+      tipo: 'soon', num: '4',
+      title: 'No tomar más deuda hasta terminar la obra',
+      desc: 'Ya tenés $9.3M/mes de cuotas. Agregar más préstamos o tarjetas en este momento te puede ahogar si un mes baja la venta. Aguantá con lo que tenés hasta diciembre, después podés volver a tomar si aparece una oportunidad.',
+      impacto: 'Preservar oxígeno financiero'
+    },
+    {
+      tipo: 'good', num: '5',
+      title: 'Planear qué hacer con los $13-16M/mes que vuelvan en 2027',
+      desc: 'Cuando termine la obra y vayas bajando las cuotas, vas a tener mucho más disponible. Definí ahora en qué lo vas a usar: (a) pagar el resto de deuda rápido, (b) invertir en stock y crecer, (c) retirar más para vos, (d) abrir otra cede o local. Decidirlo con anticipación evita que se "evapore".',
+      impacto: 'Planificación de 2027'
+    },
+    {
+      tipo: 'good', num: '6',
+      title: 'Empezar a registrar retiros personales',
+      desc: 'Aunque saques poco, anotar fecha + monto cada vez te da claridad. En la fase actual (obra) es crucial saber exactamente cuánto sacás, porque cada peso cuenta.',
+      impacto: 'Control y claridad'
+    }
+  ];
+  document.getElementById('lista-acciones').innerHTML = acciones.map(a => `
+    <div class="rec-item ${a.tipo}">
+      <div class="rec-num">${a.num}</div>
+      <div style="flex: 1;">
+        <div class="rec-title">${a.title}</div>
+        <div class="rec-desc">${a.desc}</div>
+        ${a.impacto ? `<div class="rec-impact">→ ${a.impacto}</div>` : ''}
+      </div>
+    </div>`).join('');
+}
+
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
+  document.querySelectorAll('.view').forEach(v => v.classList.toggle('active', v.id === 'view-' + name));
+}
+document.querySelectorAll('.tab').forEach(t => {
+  t.addEventListener('click', () => switchTab(t.dataset.tab));
+});
+
+const btnModo = document.getElementById('btn-modo');
+let modoPublico = false;
+btnModo.addEventListener('click', () => {
+  modoPublico = !modoPublico;
+  if (modoPublico) {
+    document.body.classList.add('modo-publico');
+    btnModo.textContent = '🔓 Mostrar todo';
+    btnModo.classList.add('active');
+  } else {
+    document.body.classList.remove('modo-publico');
+    btnModo.textContent = '🔒 Modo privado';
+    btnModo.classList.remove('active');
+  }
+});
+
+renderHero();
+renderWaterfall();
+renderVendedores();
+renderAcciones();
+</script>
+</body>
+</html>

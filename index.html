@@ -598,6 +598,34 @@
       </div>
     </a>
 
+    <!-- SALUD FINANCIERA -->
+    <a href="#" class="module salud" data-module="salud" id="mod-salud">
+      <div class="module-head">
+        <div>
+          <div class="module-title">Salud Financiera</div>
+        </div>
+        <div class="module-icon">+</div>
+      </div>
+      <div class="module-desc">Punto de equilibrio, margen operativo, simulador de precios y plan de acción.</div>
+      <div class="module-kpis">
+        <div class="module-kpi">
+          <div class="kpi-label">Ingreso real</div>
+          <div class="kpi-value" data-kpi="salud-ingreso">$76.6M</div>
+        </div>
+        <div class="module-kpi">
+          <div class="kpi-label">Resultado op.</div>
+          <div class="kpi-value" data-kpi="salud-resultado">—</div>
+        </div>
+      </div>
+      <div class="module-footer">
+        <div>
+          <div>Abrir módulo</div>
+          <div class="last-update" data-update="salud" style="color: var(--text-mute);">sin archivo de datos</div>
+        </div>
+        <span class="arrow">→</span>
+      </div>
+    </a>
+
   </div>
 
   <div class="config-status" id="config-status-block" style="display:none;">
@@ -625,6 +653,7 @@ const MODULE_PATHS = {
   costos: './costos.html',
   pedidos: './pedidos.html',
   gastos: './gastos.html',
+  salud: './salud.html',
 };
 
 // Storage keys compartidos con los módulos
@@ -1111,6 +1140,19 @@ function init() {
   // Cargar KPIs y fechas de actualización
   cargarTodosKPIs();
   cargarTodasLasActualizaciones();
+  
+  // KPI de Salud: cálculo simple (los datos vienen del módulo salud)
+  const ingresoReal = 76_566_667;
+  const margenBruto = 0.54;
+  const gastos = 44_000_000;
+  const resultadoOp = ingresoReal * margenBruto - gastos;
+  const elSalud = document.querySelector('[data-kpi="salud-resultado"]');
+  if (elSalud) {
+    const abs = Math.abs(resultadoOp);
+    const txt = (resultadoOp < 0 ? '-$' : '$') + (abs / 1_000_000).toFixed(1).replace('.', ',') + 'M';
+    elSalud.textContent = txt;
+    elSalud.style.color = resultadoOp >= 0 ? 'var(--good)' : 'var(--bad)';
+  }
 
   // Actualizar reloj cada minuto
   setInterval(actualizarSaludo, 60000);
