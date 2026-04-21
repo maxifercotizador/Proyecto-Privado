@@ -329,7 +329,7 @@
       <select id="sort-by">
         <option value="g">Ordenar: Ganancia ↓</option>
         <option value="m">Margen ↓</option>
-        <option value="vL">Precio lista ↓</option>
+        <option value="v">Venta ↓</option>
         <option value="it">Cant. items ↓</option>
         <option value="n">Nombre A-Z</option>
         <option value="pct">% Completitud ↓</option>
@@ -380,7 +380,6 @@
             <th data-sort="n">Surtido</th>
             <th data-sort="cat">Estado</th>
             <th data-sort="it" class="num">Items</th>
-            <th data-sort="vL" class="num">Lista</th>
             <th data-sort="v" class="num" id="th-venta">Venta <span style="color:var(--accent)" id="th-venta-pct">46%</span></th>
             <th data-sort="co" class="num">Costo</th>
             <th data-sort="g" class="num" id="th-ganancia">Ganancia</th>
@@ -396,11 +395,6 @@
     </div>
   </div>
 
-  <div class="hint">
-    <strong>Cómo funciona:</strong> Los filtros superiores (KPIs) funcionan como pestañas: tocá uno para ver solo esa categoría.
-    Tocá cualquier fila para ver el <strong>detalle completo</strong> con todos los productos, sus costos unitarios y contribución a la ganancia.
-    Los <strong>costos estimados</strong> (Gavetas y Varios) usan la regla del 10% ganancia sobre precio al 46%: Gaveta Chica $6.382 · Mediana $7.364 · Grande $7.855 · Varios Ch $8.247 · Varios Gr $14.727.
-  </div>
 </div>
 
 <script>
@@ -551,7 +545,6 @@ function renderRow(s, idx) {
       <td><strong>${s.n}</strong>${alertMk}${comp}</td>
       <td><span class="cat-pill ${s.cat}">${catLabel(s.cat)}</span>${s.cat !== 'ok' ? '<div style="font-size:10px;color:var(--text-mute);margin-top:2px">' + s.itC + '/' + s.it + ' (' + s.pct + '%)</div>' : ''}</td>
       <td class="num">${s.it}</td>
-      <td class="num" style="color:var(--text-mute)">${fmt$(s.vL)}</td>
       <td class="num">${fmt$(c.venta)}</td>
       <td class="num">${s.co != null ? fmt$(s.co) : '<span style="color:var(--text-mute)">—</span>'}</td>
       <td class="num" style="${gColor}">${c.ganancia != null ? fmt$(c.ganancia) : '—'}</td>
@@ -562,7 +555,7 @@ function renderRow(s, idx) {
 
   return mainRow + `
     <tr class="row-detalle">
-      <td colspan="9">${renderDetalle(s)}</td>
+      <td colspan="8">${renderDetalle(s)}</td>
     </tr>`;
 }
 
@@ -731,7 +724,7 @@ document.querySelectorAll('#tbl thead th[data-sort]').forEach(th => {
     const col = th.dataset.sort;
     if (state.sort === col) state.sortDir *= -1;
     else { state.sort = col; state.sortDir = col === 'n' ? 1 : -1; }
-    document.getElementById('sort-by').value = ['g','m','v','vL','it','n','pct'].includes(col) ? col : 'g';
+    document.getElementById('sort-by').value = ['g','m','v','it','n','pct'].includes(col) ? col : 'g';
     state.expanded = null;
     render();
   });
