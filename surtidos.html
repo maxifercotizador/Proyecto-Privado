@@ -680,9 +680,7 @@ function renderDetalle(s) {
         <td style="width:40px;text-align:center">${i.n}</td>
         <td class="desc-col">${i.d || '<em style="color:var(--text-mute)">sin descripción</em>'}</td>
         <td style="font-size:10px;color:var(--text-mute);white-space:nowrap">${fabLabel}</td>
-        <td class="num">${i.c}</td>
-        <td class="num">${pU}</td>
-        <td class="num">${pT}</td>
+        <td class="num" style="font-weight:600">${i.c}</td>
         <td class="num">${cU}</td>
         <td class="num">${cT}</td>
         <td class="num" style="font-weight:600;color:${gU != null && gU > 0 ? 'var(--good)' : gU != null && gU < 0 ? 'var(--bad)' : ''}">${gT}</td>
@@ -700,8 +698,6 @@ function renderDetalle(s) {
               <th>Descripción</th>
               <th>Fábrica</th>
               <th style="text-align:right">Cant</th>
-              <th style="text-align:right">P.Unit</th>
-              <th style="text-align:right">P.Total</th>
               <th style="text-align:right">C.Unit</th>
               <th style="text-align:right">C.Total</th>
               <th style="text-align:right">Ganancia</th>
