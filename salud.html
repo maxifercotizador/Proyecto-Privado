@@ -11,7 +11,8 @@
     --bg: #0a0a0a; --panel: #141414; --panel-2: #1c1c1c;
     --border: #2a2a2a; --border-strong: #3a3a3a;
     --text: #eaeaea; --text-dim: #9a9a9a; --text-mute: #6a6a6a;
-    --accent: #ff6a00; --good: #3bd671; --good-dim: rgba(59,214,113,0.12);
+    --accent: #ff6a00; --accent-dim: rgba(255,106,0,0.15);
+    --good: #3bd671; --good-dim: rgba(59,214,113,0.12);
     --warn: #f5b400; --warn-dim: rgba(245,180,0,0.12);
     --bad: #ff4747; --bad-dim: rgba(255,71,71,0.12);
     --info: #5aa8ff; --info-dim: rgba(90,168,255,0.12);
@@ -44,12 +45,8 @@
   .kpi-sub { font-size: 11px; color: var(--text-dim); line-height: 1.4; }
 
   .diag-banner { max-width: 1400px; margin: 20px auto 0; padding: 14px 20px; border-radius: 10px; border-left: 4px solid; display: flex; align-items: center; gap: 16px; background: var(--panel); border: 1px solid var(--border); }
-  .diag-banner.bad { border-left-color: var(--bad); }
-  .diag-banner.warn { border-left-color: var(--warn); }
-  .diag-banner.good { border-left-color: var(--good); }
   .diag-banner.invest { border-left-color: var(--invest); }
-  .diag-icon { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; font-weight: 700; }
-  .diag-banner.invest .diag-icon { background: var(--invest-dim); color: var(--invest); }
+  .diag-icon { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; font-weight: 700; background: var(--invest-dim); color: var(--invest); }
   .diag-title { font-size: 14px; font-weight: 600; margin-bottom: 2px; }
   .diag-subtitle { font-size: 12px; color: var(--text-dim); }
 
@@ -89,21 +86,16 @@
 
   .table-wrap { overflow-x: auto; margin: 0 -18px; padding: 0 18px; }
   table.simple { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 600px; }
-  table.simple th { font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-mute); font-weight: 600; text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--border); white-space: nowrap; position: sticky; top: 0; background: var(--panel); cursor: pointer; user-select: none; }
+  table.simple th { font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-mute); font-weight: 600; text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--border); white-space: nowrap; }
   table.simple th.num { text-align: right; }
-  table.simple th:hover { color: var(--text); }
-  table.simple th .sort { font-size: 9px; color: var(--accent); margin-left: 4px; }
   table.simple td { padding: 10px 12px; border-bottom: 1px solid var(--border); }
   table.simple td.num { text-align: right; font-family: 'JetBrains Mono', monospace; }
-  table.simple tr:hover td { background: var(--panel-2); }
-
   .pill { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 600; letter-spacing: 0.03em; }
   .pill.good { background: var(--good-dim); color: var(--good); }
   .pill.warn { background: var(--warn-dim); color: var(--warn); }
   .pill.bad { background: var(--bad-dim); color: var(--bad); }
   .pill.mute { background: var(--panel-2); color: var(--text-mute); }
   .pill.info { background: var(--info-dim); color: var(--info); }
-  .pill.invest { background: var(--invest-dim); color: var(--invest); }
 
   .victor-wrap { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
   @media (max-width: 800px) { .victor-wrap { grid-template-columns: 1fr; } }
@@ -120,10 +112,10 @@
   .rec-item.family { border-left-color: var(--purple); }
   .rec-item.invest { border-left-color: var(--invest); }
   .rec-num { font-family: 'JetBrains Mono', monospace; font-size: 20px; font-weight: 700; color: var(--text-dim); min-width: 28px; }
+  .rec-item.invest .rec-num { color: var(--invest); }
+  .rec-item.family .rec-num { color: var(--purple); }
   .rec-item.urgent .rec-num { color: var(--bad); }
   .rec-item.soon .rec-num { color: var(--warn); }
-  .rec-item.family .rec-num { color: var(--purple); }
-  .rec-item.invest .rec-num { color: var(--invest); }
   .rec-title { font-weight: 600; font-size: 14px; margin-bottom: 4px; }
   .rec-desc { font-size: 13px; color: var(--text-dim); line-height: 1.5; }
   .rec-impact { margin-top: 6px; font-size: 12px; color: var(--good); font-weight: 500; font-family: 'JetBrains Mono', monospace; }
@@ -132,37 +124,17 @@
   .hint { font-size: 12px; color: var(--text-mute); padding: 10px 14px; background: var(--panel-2); border-left: 3px solid var(--info); border-radius: 6px; margin-top: 10px; line-height: 1.5; }
   .hint strong { color: var(--text-dim); }
   .progress-bar { width: 100%; height: 8px; background: var(--panel-2); border-radius: 4px; overflow: hidden; margin: 8px 0; }
-  .progress-fill { height: 100%; background: linear-gradient(90deg, var(--invest), var(--good)); transition: width 0.3s; }
+  .progress-fill { height: 100%; background: linear-gradient(90deg, var(--invest), var(--good)); }
 
-  /* Surtidos */
-  .filter-bar { display: flex; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; align-items: center; }
-  .filter-bar input, .filter-bar select {
-    background: var(--panel-2); border: 1px solid var(--border); color: var(--text);
-    padding: 8px 12px; border-radius: 6px; font-family: inherit; font-size: 13px;
+  .link-surtidos {
+    background: linear-gradient(135deg, var(--panel) 0%, rgba(255,106,0,0.08) 100%);
+    border-color: var(--accent);
+    cursor: pointer; transition: all 0.2s;
   }
-  .filter-bar input:focus, .filter-bar select:focus { outline: none; border-color: var(--accent); }
-  .search-input { flex: 1; min-width: 200px; }
-  .filter-toggle { font-size: 11px; color: var(--text-dim); padding: 6px 10px; border: 1px solid var(--border); background: var(--panel-2); border-radius: 6px; cursor: pointer; font-family: inherit; transition: all 0.15s; }
-  .filter-toggle:hover { color: var(--text); border-color: var(--border-strong); }
-  .filter-toggle.active { border-color: var(--accent); color: var(--accent); background: rgba(255,106,0,0.1); }
-  .cost-bar { display: inline-block; width: 40px; height: 6px; background: var(--panel-2); border-radius: 3px; overflow: hidden; vertical-align: middle; margin-left: 6px; }
-  .cost-bar-fill { height: 100%; background: var(--good); transition: width 0.2s; }
-  .cost-bar-fill.mid { background: var(--warn); }
-  .cost-bar-fill.low { background: var(--bad); }
-  .margen-chip {
-    font-family: 'JetBrains Mono', monospace;
-    font-weight: 600; font-size: 12px;
-    padding: 2px 6px; border-radius: 4px;
-    background: var(--panel-2);
-  }
-  .margen-chip.excel { background: rgba(59,214,113,0.2); color: var(--good); }
-  .margen-chip.muy-bueno { background: var(--good-dim); color: var(--good); }
-  .margen-chip.bueno { background: var(--info-dim); color: var(--info); }
-  .margen-chip.medio { background: var(--warn-dim); color: var(--warn); }
-  .margen-chip.bajo { background: var(--bad-dim); color: var(--bad); }
-
-  .surtido-nombre { font-weight: 600; display: flex; align-items: center; gap: 8px; }
-  .mx-pill { font-size: 9px; padding: 1px 5px; border-radius: 3px; background: var(--purple-dim); color: var(--purple); font-weight: 600; letter-spacing: 0.04em; }
+  .link-surtidos:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(255,106,0,0.15); }
+  .surt-stats { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 8px; }
+  .surt-stat strong { font-family: 'JetBrains Mono', monospace; font-size: 16px; }
+  .surt-stat span { color: var(--text-dim); font-size: 12px; margin-left: 4px; }
 </style>
 </head>
 <body>
@@ -186,8 +158,6 @@
 
 <div class="tabs">
   <button class="tab active" data-tab="dashboard">Diagnóstico</button>
-  <button class="tab" data-tab="surtidos">Surtidos</button>
-  <button class="tab" data-tab="pendientes">Pendientes</button>
   <button class="tab" data-tab="obra">Obra</button>
   <button class="tab" data-tab="vendedores">Vendedores</button>
   <button class="tab" data-tab="victor">Victor</button>
@@ -230,145 +200,30 @@
       <div class="block-desc">Lo que queda disponible después de toda la operación e inversión.</div>
     </div>
   </div>
-</div>
 
-<div class="view" id="view-surtidos">
-  <div class="card">
-    <h3>
-      Ganancia por surtido
-      <span class="badge" style="background: var(--panel-2); color: var(--text-mute);">65 surtidos totales</span>
+  <!-- Link al módulo separado de Surtidos -->
+  <div class="card link-surtidos" onclick="window.location.href='./surtidos.html'">
+    <h3 style="color: var(--accent)">
+      📦 Análisis de Surtidos
+      <span class="badge" style="background: var(--accent-dim); color: var(--accent);">Módulo separado</span>
     </h3>
-
-    <div class="hero-inner" style="grid-template-columns: repeat(5, 1fr); margin-bottom: 16px;">
-      <div class="kpi good">
-        <div class="kpi-label">Completos</div>
-        <div class="kpi-value">${SURT.completos.length}</div>
-        <div class="kpi-sub">100% items con costo</div>
-      </div>
-      <div class="kpi warn">
-        <div class="kpi-label">Cuasi-completos</div>
-        <div class="kpi-value">${SURT.cuasi.length}</div>
-        <div class="kpi-sub">≥90% cargado, faltan 1-6 items</div>
-      </div>
-      <div class="kpi" style="border-left: 3px solid var(--bad);">
-        <div class="kpi-label">Parciales</div>
-        <div class="kpi-value">${SURT.parciales.length}</div>
-        <div class="kpi-sub">Entre 1% y 89%</div>
-      </div>
-      <div class="kpi" style="border-left: 3px solid var(--text-mute);">
-        <div class="kpi-label">Sin datos</div>
-        <div class="kpi-value">${SURT.sinDatos.length}</div>
-        <div class="kpi-sub">0% cargado</div>
-      </div>
-      <div class="kpi" style="border-left: 3px solid var(--purple);">
-        <div class="kpi-label">De Victor</div>
-        <div class="kpi-value">${SURT.victor.length}</div>
-        <div class="kpi-sub">No calculables</div>
-      </div>
-    </div>
-
-    <div class="filter-bar">
-      <input type="text" id="search" class="search-input" placeholder="Buscar surtido...">
-      <select id="sort-by">
-        <option value="g46">Ordenar: Ganancia 46% (mayor)</option>
-        <option value="gMk">Ordenar: Ganancia Micky (mayor)</option>
-        <option value="m46">Ordenar: Margen % 46%</option>
-        <option value="vL">Ordenar: Precio lista</option>
-        <option value="n">Ordenar: Nombre (A-Z)</option>
-      </select>
-    </div>
-
-    <div class="table-wrap">
-      <table class="simple" id="tbl-surtidos">
-        <thead>
-          <tr>
-            <th>Surtido</th>
-            <th class="num">Items</th>
-            <th class="num">Lista</th>
-            <th class="num" title="Vendido al 46% desc (Maxi, Nadia)">46% Maxi</th>
-            <th class="num" title="Vendido por Micky (46% + 25%)">Micky</th>
-            <th class="num" title="Vendido al 15% (Fede/Edu/Mas)">15%</th>
-            <th class="num">Costo</th>
-            <th class="num">Ganancia 46%</th>
-            <th class="num">Ganancia Micky</th>
-          </tr>
-        </thead>
-        <tbody id="tbl-surtidos-body"></tbody>
-      </table>
-    </div>
-
-    <div class="hint" style="margin-top: 14px;">
-      <strong>Cálculo completo.</strong> Incluye costo de gavetas y "Varios" calculados con regla del 10% de ganancia sobre precio de venta al 46%:
-      Gaveta Chica $6.382 · Mediana $7.364 · Grande $7.855 · Varios Ch $8.247 · Varios Gr $14.727.
-      La ⚠️ marca surtidos donde <strong>Micky vende a pérdida</strong>.
-      Los surtidos incompletos están en "Pendientes de costo".
-    </div>
-  </div>
-</div>
-
-<div class="view" id="view-pendientes">
-  <div class="card">
-    <h3>Surtidos pendientes de cargar costos</h3>
-    <p style="color: var(--text-dim); font-size: 13px; line-height: 1.6; margin-bottom: 16px;">
-      Estos surtidos tienen algún item sin costo cargado. La prioridad son los <strong>cuasi-completos</strong> (faltan 1-6 items) porque con cargar esos, quedan listos para análisis.
+    <p style="color: var(--text-dim); font-size: 13px; line-height: 1.6; margin-bottom: 12px;">
+      Ganancia de cada surtido con detalle por producto (costo, venta y margen unitarios). Filtros por estado, alertas de surtidos donde Micky vende a pérdida, y clasificación de pendientes por cargar.
     </p>
-
-    <h3 style="color: var(--warn);">Cuasi-completos — faltan solo algunos items</h3>
-    <div id="lista-cuasi"></div>
-
-    <h3 style="margin-top: 24px; color: var(--bad);">Parciales — falta más trabajo</h3>
-    <div id="lista-parciales"></div>
-
-    <h3 style="margin-top: 24px; color: var(--text-mute);">Sin datos ni fabricados por Victor</h3>
-    <p style="font-size: 12px; color: var(--text-dim); margin-bottom: 10px;">
-      Los de Victor no se pueden calcular (vos decidiste no estimar). Los "sin datos" necesitan carga completa.
-    </p>
-    <div id="lista-sindatos-victor"></div>
-  </div>
-</div>
-
-    <div class="filter-bar">
-      <input type="text" id="search" class="search-input" placeholder="Buscar surtido...">
-      <select id="sort-by">
-        <option value="gananciaStd">Ordenar: Ganancia (mayor)</option>
-        <option value="margenStdPct">Ordenar: Margen % (mayor)</option>
-        <option value="precioStd">Ordenar: Precio lista (mayor)</option>
-        <option value="nombre">Ordenar: Nombre (A-Z)</option>
-        <option value="pctCostoConocido">Ordenar: Confiabilidad costo</option>
-      </select>
-      <button class="filter-toggle" id="f-conf" data-filter="confiable">Solo confiables</button>
-      <button class="filter-toggle" id="f-mx" data-filter="maxifer">Solo fabricados (Victor)</button>
+    <div class="surt-stats">
+      <div class="surt-stat"><strong style="color: var(--good);">30</strong><span>OK calculables</span></div>
+      <div class="surt-stat"><strong style="color: var(--warn);">7</strong><span>Cuasi completos</span></div>
+      <div class="surt-stat"><strong style="color: var(--bad);">12</strong><span>Parciales</span></div>
+      <div class="surt-stat"><strong style="color: var(--text-mute);">6</strong><span>Sin datos</span></div>
+      <div class="surt-stat"><strong style="color: var(--purple);">10</strong><span>De Victor</span></div>
     </div>
-
-    <div class="table-wrap">
-      <table class="simple" id="tbl-surtidos">
-                <thead>
-          <tr>
-            <th>Surtido</th>
-            <th class="num">Items</th>
-            <th class="num">Lista</th>
-            <th class="num" title="Venta al 46% descuento (Maxi, Nadia, sin comisión)">46% Maxi</th>
-            <th class="num" title="Venta con descuento de Micky: 46% + 25% adicional">Micky</th>
-            <th class="num" title="Venta con descuento 15% adicional (Fed/Edu/Mas)">15%</th>
-            <th class="num">Gan. 46%</th>
-            <th class="num">Gan. Micky</th>
-            <th class="num">Confianza</th>
-          </tr>
-        </thead>
-        <tbody id="tbl-surtidos-body"></tbody>
-      </table>
-    </div>
-
-    <div class="hint" style="margin-top: 14px;">
-      <strong>Cálculo real con descuentos:</strong> "46% Maxi" es el precio al que te compran cuando vendés vos directo, Nadia, Mayeski (aplicás 46% desc sobre lista). "Micky" suma su 25% adicional (46% + 25% anidado = 59.5% desc efectivo). "15%" es lo que aplicás a Federico, Eduardo, Mascio. La ⚠️ marca surtidos donde Micky vende a pérdida. Los fabricados por Victor (sin costo cargado) no muestran ganancia porque falta cargar el costo real de la materia prima.
-    </div>
+    <div style="text-align: right; font-size: 12px; color: var(--accent); margin-top: 8px;">Abrir módulo →</div>
   </div>
 </div>
 
 <div class="view" id="view-obra">
   <div class="card">
     <h3>🏗️ Obra — construcción cede nueva</h3>
-
     <div class="victor-wrap" style="margin-bottom: 20px;">
       <div class="v-card" style="border-left: 3px solid var(--invest);">
         <h4>Invertido en obra (marzo)</h4>
@@ -388,9 +243,7 @@
         <span>Fin de obra esperado</span>
         <span class="amount" style="color: var(--invest)">Diciembre 2026</span>
       </div>
-      <div class="progress-bar">
-        <div class="progress-fill" style="width: 30%"></div>
-      </div>
+      <div class="progress-bar"><div class="progress-fill" style="width: 30%"></div></div>
       <div class="block-desc">Estimado ~30% del camino. Te quedan ~9 meses de inversión.</div>
     </div>
 
@@ -440,20 +293,20 @@
 <div class="view" id="view-victor">
   <div class="card">
     <h3>Análisis del trato con Victor</h3>
-    <p style="color: var(--text-dim); font-size: 13px; line-height: 1.6; margin-bottom: 16px;">Victor no cobra por fabricar, a cambio se queda con toda la cobranza de sus ventas propias. Decisión familiar válida, pero con costo financiero concreto — especialmente en fase de obra.</p>
+    <p style="color: var(--text-dim); font-size: 13px; line-height: 1.6; margin-bottom: 16px;">Victor no cobra por fabricar, a cambio se queda con toda la cobranza de sus ventas propias. Decisión familiar válida, pero con costo financiero concreto.</p>
     <div class="victor-wrap" style="margin-bottom: 16px;">
       <div class="v-card">
         <h4>Lo que aporta Victor</h4>
         <div class="v-val" style="color: var(--good)">~$2.1M/mes</div>
-        <div class="v-sub">Costo estimado de MP + mano de obra de los 336 productos que fabrica (10% catálogo).</div>
+        <div class="v-sub">Costo estimado de MP + mano de obra de los 336 productos que fabrica.</div>
       </div>
       <div class="v-card">
         <h4>Lo que se lleva Victor</h4>
         <div class="v-val" style="color: var(--bad)">$9.0M/mes</div>
-        <div class="v-sub"><strong>Anualizado: $108M/año</strong>. Casi el 50% del costo total de tu obra nueva.</div>
+        <div class="v-sub"><strong>Anualizado: $108M/año</strong>.</div>
       </div>
     </div>
-    <div class="hint" style="border-left-color: var(--purple);"><strong>Contexto:</strong> si Victor tomara comisión del 30% en lugar del 100%, liberarías $6M/mes = $72M/año. Ese dinero podría financiar la obra sin tanto préstamo, o acelerar la construcción.</div>
+    <div class="hint" style="border-left-color: var(--purple);"><strong>Contexto:</strong> si Victor tomara comisión del 30% en lugar del 100%, liberarías $6M/mes = $72M/año.</div>
   </div>
 </div>
 
@@ -480,9 +333,6 @@ const DATA = {
   ],
   operativoReal: 52_313_764, obra: 7_069_646, prestamos: 9_341_943,
 };
-
-// SURTIDOS
-const SURT = {"completos":[{"n":"CONECTORES NEUMATICOS / COMPLETO","c":"CON. NEU. COMPL.","it":116,"pS":386,"pR":262,"gv":5,"vr":1,"vL":1558353,"v46":841511,"vMk":631133,"v15":715284,"co":466650,"coItems":415105,"coGav":36818,"coVar":14727,"g46":374861,"gMk":164483,"g15":248634,"m46":44.5,"mMk":26.1,"m15":34.8},{"n":"PERILLAS DE COCINA Completo","c":"PER. COMP.","it":60,"pS":185,"pR":125,"gv":4,"vr":1,"vL":1149643,"v46":620807,"vMk":465605,"v15":527686,"co":304265,"coItems":258120,"coGav":31418,"coVar":14727,"g46":316542,"gMk":161340,"g15":223421,"m46":51,"mMk":34.7,"m15":42.3},{"n":"Oring completo","c":"OR. COMP.","it":146,"pS":1571,"pR":736,"gv":5,"vr":1,"vL":814977,"v46":440087,"vMk":330066,"v15":374074,"co":153832,"coItems":102287,"coGav":36818,"coVar":14727,"g46":286255,"gMk":176233,"g15":220242,"m46":65,"mMk":53.4,"m15":58.9},{"n":"CONECTORES NUEVA INCORPORACION","c":"CON. NEU. NUEV.","it":47,"pS":167,"pR":109,"gv":2,"vr":1,"vL":926800,"v46":500472,"vMk":375354,"v15":425401,"co":267382,"coItems":237928,"coGav":14727,"coVar":14727,"g46":233090,"gMk":107972,"g15":158019,"m46":46.6,"mMk":28.8,"m15":37.1},{"n":"ESPARRAGOS DE ACERO","c":"ESPARR.","it":47,"pS":285,"pR":144,"gv":2,"vr":1,"vL":718834,"v46":388170,"vMk":291128,"v15":329945,"co":166713,"coItems":143739,"coGav":14727,"coVar":8247,"g46":221457,"gMk":124414,"g15":163231,"m46":57.1,"mMk":42.7,"m15":49.5},{"n":"TAPONES DE CARTER","c":"TAP.CAR.","it":26,"pS":106,"pR":80,"gv":1,"vr":1,"vL":766328,"v46":413817,"vMk":310363,"v15":351745,"co":209394,"coItems":194765,"coGav":6382,"coVar":8247,"g46":204423,"gMk":100969,"g15":142350,"m46":49.4,"mMk":32.5,"m15":40.5},{"n":"CONECTORES NEUMATICOS","c":"CON. NEU.","it":69,"pS":234,"pR":154,"gv":3,"vr":1,"vL":824756,"v46":445368,"vMk":334026,"v15":378563,"co":262087,"coItems":225268,"coGav":22091,"coVar":14727,"g46":183282,"gMk":71940,"g15":116476,"m46":41.2,"mMk":21.5,"m15":30.8},{"n":"RACORD chico","c":"RAC. CH.","it":35,"pS":165,"pR":107,"gv":1,"vr":1,"vL":679964,"v46":367181,"vMk":275385,"v15":312103,"co":185979,"coItems":170368,"coGav":7364,"coVar":8247,"g46":181201,"gMk":89406,"g15":126124,"m46":49.3,"mMk":32.5,"m15":40.4},{"n":"ESPINAS ELASTICAS","c":"ESP. ELAS.","it":54,"pS":839,"pR":265,"gv":2,"vr":1,"vL":526226,"v46":284162,"vMk":213121,"v15":241538,"co":108839,"coItems":87828,"coGav":12764,"coVar":8247,"g46":175323,"gMk":104283,"g15":132699,"m46":61.7,"mMk":48.9,"m15":54.9},{"n":"CARBONES COMPLETO","c":"CARB. CPL","it":58,"pS":148,"pR":90,"gv":2,"vr":1,"vL":759403,"v46":410078,"vMk":307558,"v15":348566,"co":236992,"coItems":206556,"coGav":15709,"coVar":14727,"g46":173086,"gMk":70566,"g15":111574,"m46":42.2,"mMk":22.9,"m15":32},{"n":"ORING inicial","c":"OR. CH.","it":92,"pS":1334,"pR":556,"gv":3,"vr":1,"vL":477561,"v46":257883,"vMk":193412,"v15":219200,"co":90083,"coItems":59745,"coGav":22091,"coVar":8247,"g46":167800,"gMk":103329,"g15":129118,"m46":65.1,"mMk":53.4,"m15":58.9},{"n":"PERILLAS DE COCINA Surtido 2","c":"PER. 2","it":30,"pS":93,"pR":63,"gv":2,"vr":1,"vL":591072,"v46":319179,"vMk":239384,"v15":271302,"co":160036,"coItems":129600,"coGav":15709,"coVar":14727,"g46":159142,"gMk":79348,"g15":111266,"m46":49.9,"mMk":33.1,"m15":41},{"n":"PERILLAS DE COCINA Surtido 1","c":"PER. 1","it":30,"pS":93,"pR":63,"gv":2,"vr":1,"vL":575371,"v46":310701,"vMk":233025,"v15":264096,"co":152476,"coItems":128520,"coGav":15709,"coVar":8247,"g46":158224,"gMk":80549,"g15":111619,"m46":50.9,"mMk":34.6,"m15":42.3},{"n":"RESORTES LB","c":"RES. LB","it":36,"pS":113,"pR":113,"gv":4,"vr":1,"vL":564025,"v46":304573,"vMk":228430,"v15":258887,"co":155135,"coItems":110953,"coGav":29455,"coVar":14727,"g46":149439,"gMk":73295,"g15":103753,"m46":49.1,"mMk":32.1,"m15":40.1},{"n":"Oring grande","c":"OR. GR.","it":54,"pS":313,"pR":165,"gv":2,"vr":1,"vL":407235,"v46":219907,"vMk":164930,"v15":186921,"co":75271,"coItems":52296,"coGav":14727,"coVar":8247,"g46":144636,"gMk":89659,"g15":111650,"m46":65.8,"mMk":54.4,"m15":59.7},{"n":"PLASTICOS chico","c":"PL CH.","it":90,"pS":544,"pR":364,"gv":3,"vr":1,"vL":500300,"v46":270162,"vMk":202622,"v15":229638,"co":125563,"coItems":95225,"coGav":22091,"coVar":8247,"g46":144599,"gMk":77058,"g15":104075,"m46":53.5,"mMk":38,"m15":45.3},{"n":"TOPES Y TAPONES DE GOMA","c":"TOP. TAP. GOMA","it":26,"pS":132,"pR":80,"gv":1,"vr":1,"vL":320075,"v46":172840,"vMk":129630,"v15":146914,"co":31148,"coItems":15537,"coGav":7364,"coVar":8247,"g46":141693,"gMk":98482,"g15":115766,"m46":82,"mMk":76,"m15":78.8},{"n":"ACCESORIOS DE BRONCE UNION POLIAMIDA","c":"Uni. Poliam.","it":33,"pS":153,"pR":94,"gv":1,"vr":1,"vL":370020,"v46":199811,"vMk":149858,"v15":169839,"co":68145,"coItems":53516,"coGav":6382,"coVar":8247,"g46":131665,"gMk":81713,"g15":101694,"m46":65.9,"mMk":54.5,"m15":59.9},{"n":"PICOS PARA GAS","c":"INYEC. GAS. ENV.","it":54,"pS":219,"pR":165,"gv":2,"vr":1,"vL":414079,"v46":223603,"vMk":167702,"v15":190062,"co":92624,"coItems":71614,"coGav":12764,"coVar":8247,"g46":130978,"gMk":75078,"g15":97438,"m46":58.6,"mMk":44.8,"m15":51.3},{"n":"INTERRUPTORES Y PULSADORES","c":"INTERR.PULSA.","it":45,"pS":138,"pR":93,"gv":2,"vr":1,"vL":440406,"v46":237819,"vMk":178365,"v15":202146,"co":114005,"coItems":83569,"coGav":15709,"coVar":14727,"g46":123814,"gMk":64359,"g15":88141,"m46":52.1,"mMk":36.1,"m15":43.6},{"n":"CARBONES N°1","c":"CARB. 1","it":40,"pS":102,"pR":62,"gv":1,"vr":1,"vL":509100,"v46":274914,"vMk":206185,"v15":233677,"co":157102,"coItems":141000,"coGav":7855,"coVar":8247,"g46":117812,"gMk":49084,"g15":76575,"m46":42.9,"mMk":23.8,"m15":32.8},{"n":"TERMINALES chico","c":"TERM. CH.","it":40,"pS":1491,"pR":382,"gv":2,"vr":1,"vL":406110,"v46":219299,"vMk":164475,"v15":186405,"co":103368,"coItems":82357,"coGav":12764,"coVar":8247,"g46":115931,"gMk":61106,"g15":83036,"m46":52.9,"mMk":37.2,"m15":44.5},{"n":"SEEGER DIN 471 - 472","c":"SEEG.","it":59,"pS":443,"pR":298,"gv":2,"vr":1,"vL":281555,"v46":152040,"vMk":114030,"v15":129234,"co":52842,"coItems":31831,"coGav":12764,"coVar":8247,"g46":99198,"gMk":61188,"g15":76392,"m46":65.2,"mMk":53.7,"m15":59.1},{"n":"INSERTOS","c":"INS.","it":24,"pS":122,"pR":74,"gv":1,"vr":1,"vL":260600,"v46":140724,"vMk":105543,"v15":119615,"co":48926,"coItems":34296,"coGav":6382,"coVar":8247,"g46":91799,"gMk":56618,"g15":70690,"m46":65.2,"mMk":53.6,"m15":59.1},{"n":"TUERCAS REMACHES","c":"TER. REM.","it":20,"pS":352,"pR":202,"gv":1,"vr":1,"vL":263015,"v46":142028,"vMk":106521,"v15":120724,"co":56963,"coItems":41352,"coGav":7364,"coVar":8247,"g46":85065,"gMk":49558,"g15":63761,"m46":59.9,"mMk":46.5,"m15":52.8},{"n":"ALEMITES","c":"ALEM.","it":23,"pS":140,"pR":94,"gv":1,"vr":1,"vL":257010,"v46":138785,"vMk":104089,"v15":117968,"co":60837,"coItems":46208,"coGav":6382,"coVar":8247,"g46":77949,"gMk":43252,"g15":57131,"m46":56.2,"mMk":41.6,"m15":48.4},{"n":"REGATONES","c":"REGAT.","it":62,"pS":564,"pR":377,"gv":4,"vr":1,"vL":311331,"v46":168119,"vMk":126089,"v15":142901,"co":103858,"coItems":57712,"coGav":31418,"coVar":14727,"g46":64261,"gMk":22231,"g15":39043,"m46":38.2,"mMk":17.6,"m15":27.3},{"n":"SUPLEMENTO 0,2 - SUPLEMENTO 0,8","c":"SUPL.0,2-0,8","it":76,"pS":1903,"pR":633,"gv":2,"vr":1,"vL":795616,"v46":429633,"vMk":322224,"v15":365188,"co":378689,"coItems":357678,"coGav":12764,"coVar":8247,"g46":50944,"gMk":-56465,"g15":-13501,"m46":11.9,"mMk":-17.5,"m15":-3.7},{"n":"RETENES DE SEGURIDAD - ARANLOCK","c":"RET. ARAN.","it":21,"pS":902,"pR":527,"gv":1,"vr":1,"vL":167628,"v46":90519,"vMk":67889,"v15":76941,"co":41733,"coItems":27104,"coGav":6382,"coVar":8247,"g46":48786,"gMk":26156,"g15":35208,"m46":53.9,"mMk":38.5,"m15":45.8},{"n":"CHAVETAS PARTIDAS","c":"CHA. PART.","it":30,"pS":962,"pR":452,"gv":1,"vr":1,"vL":121411,"v46":65562,"vMk":49172,"v15":55728,"co":31730,"coItems":17101,"coGav":6382,"coVar":8247,"g46":33832,"gMk":17442,"g15":23998,"m46":51.6,"mMk":35.5,"m15":43.1}],"cuasi":[{"n":"TUERCAS RAPIDAS","it":35,"cg":33,"pct":94,"falta":[{"p":"TUERCAS RAPIDAS","n":"19","d":"Reten parker - Park 8 - 11 mm - 24 mm","f":"TOBAR"},{"p":"TUERCAS RAPIDAS","n":"35","d":"Aranlock 9x18","f":"TOBAR"}]},{"n":"TERMINALES completo","it":81,"cg":77,"pct":95,"falta":[{"p":"TERMINALES","n":"93","d":"Terminal cobre estañado ojal - Cable 70 - Ojal: 10mm","f":"LCT"},{"p":"TERMINALES","n":"94","d":"Terminal cobre estañado ojal - Cable 70 - Ojal: 11mm","f":"LCT"},{"p":"TERMINALES","n":"95","d":"Terminal cobre estañado ojal - Cable 95 - Ojal: 11mm","f":"LCT"},{"p":"TERMINALES","n":"96","d":"Terminal cobre estañado ojal - Cable 95 - Ojal: 13mm","f":"LCT"}]},{"n":"ARANDELAS co-fi-alum","it":75,"cg":69,"pct":92,"falta":[{"p":"ARANDELAS DE POLIPROPILENO","n":"1/8 3x8","d":"1/8 3x8","f":"KLOSTER"},{"p":"ARANDELAS DE POLIPROPILENO","n":"5/32 4x10","d":"5/32 4x10","f":"KLOSTER"},{"p":"ARANDELAS DE POLIPROPILENO","n":"3/16  5x12","d":"3/16  5x12","f":"KLOSTER"},{"p":"ARANDELAS DE POLIPROPILENO","n":"1/4  6,5x14","d":"1/4  6,5x14","f":"KLOSTER"},{"p":"ARANDELAS DE POLIPROPILENO","n":"5/16  8x16","d":"5/16  8x16","f":"KLOSTER"},{"p":"ARANDELAS DE POLIPROPILENO","n":"3/8  10x18","d":"3/8  10x18","f":"KLOSTER"}]},{"n":"RACORD completo","it":61,"cg":57,"pct":93,"falta":[{"p":"RACORD - ACOPLES - REDUCCIONES - ENTREROSCAS","n":"95","d":"Milimétricos 10x1,5 - M 6","f":"INSERTOS"},{"p":"RACORD - ACOPLES - REDUCCIONES - ENTREROSCAS","n":"96","d":"Milimétricos 10x1,5 - M 8","f":"INSERTOS"},{"p":"RACORD - ACOPLES - REDUCCIONES - ENTREROSCAS","n":"97","d":"Milimétricos 12x1,5 - M 6","f":"INSERTOS"},{"p":"RACORD - ACOPLES - REDUCCIONES - ENTREROSCAS","n":"98","d":"Milimétricos 12x1,5 - M 8","f":"INSERTOS"}]},{"n":"TUERCAS RAPIDAS Y TUERCAS REMACHES","it":55,"cg":53,"pct":96,"falta":[{"p":"TUERCAS RAPIDAS","n":"19","d":"Reten parker - Park 8 - 11 mm - 24 mm","f":"TOBAR"},{"p":"TUERCAS RAPIDAS","n":"35","d":"Aranlock 9x18","f":"TOBAR"}]},{"n":"ARANDELAS DE INYECCION","it":40,"cg":36,"pct":90,"falta":[{"p":"ARANDELAS DE INYECCION","n":"101","d":"7,5 x 15 x 3 - ","f":"DAHE.DIESEL"},{"p":"ARANDELAS DE INYECCION","n":"102","d":"8 x 13 x 2,5 - ","f":"DAHE.DIESEL"},{"p":"ARANDELAS DE INYECCION","n":"103","d":"14,5 x 21 x 2 - R 19 DIESEL","f":"DAHE.DIESEL"},{"p":"ARANDELAS DE INYECCION","n":"104","d":"16 x 21 x 2 - PEUGEOR 405 D","f":"DAHE.DIESEL"}]},{"n":"CLIPS LINEA NACIONAL COMPLETO","it":160,"cg":159,"pct":99,"falta":[{"p":"PLASTICOS","n":"398","d":"CLIP PRECINTO UNIVERSAL","f":"FADER"}]}],"parciales":[{"n":"RESORTES LF","it":87,"cg":60,"pct":69,"falta":[{"p":"RESORTES LINEA FERRETERIA","n":"2","d":"0,5 x 6 x 50 - Expansión","f":"RESORTES"},{"p":"RESORTES LINEA FERRETERIA","n":"7","d":"0,8 x 10 x 50 - Expansión","f":"RESORTES"},{"p":"RESORTES LINEA FERRETERIA","n":"28","d":"2,25 x 12 x 175 - Expansión","f":"RESORTES"},{"p":"RESORTES LINEA FERRETERIA","n":"31","d":"1 x 7 x 22 - Expansión","f":"RESORTES"},{"p":"RESORTES LINEA FERRETERIA","n":"32","d":"1 x 8 x 25 - Expansión","f":"RESORTES"},{"p":"RESORTES LINEA FERRETERIA","n":"34","d":"1,5 x  x  - Expansión","f":"RESORTES"},{"p":"RESORTES LINEA FERRETERIA","n":"35","d":"1,25 x 14-19 x 25 - Compresión","f":"RESORTES"},{"p":"RESORTES LINEA FERRETERIA","n":"36","d":"1,5 x .10-18 x 35 - Compresión","f":"RESORTES"},{"p":"RESORTES LINEA FERRETERIA","n":"37","d":"1,5 x .14-18 x 90 - Compresión","f":"RESORTES"},{"p":"RESORTES LINEA FERRETERIA","n":"38","d":"1 x 5 x 5 - Torsión","f":"RESORTES"}],"totalFaltan":27},{"n":"RESORTES LA","it":50,"cg":44,"pct":88,"falta":[{"p":"RESORTES LINEA AUTOMOTOR","n":"421","d":"RESORTES LINEA FIAT - CLIP P/CABLE COMANDO DE FRENO - FIAT 128","f":"RESORTESGENERALES"},{"p":"RESORTES LINEA AUTOMOTOR","n":"481","d":"RESORTES LINEA FIAT - SEGURO P/PERNO PASADOR PAST. F/ A DISCO FIAT 1500/1600/125/MULTICARGA","f":"RESORTESGENERALES"},{"p":"RESORTES LINEA AUTOMOTOR","n":"690","d":"RESORTES LINEA PEUGEOT - CILINDRO MAESTRO DE EMBRAGUE PEUGEOT 404/504/505","f":"RESORTESGENERALES"},{"p":"RESORTES LINEA AUTOMOTOR","n":"794","d":"UNIVERSALES - RESORTE DE EMBRAGUE UNIVERSAL MEDIANO","f":"RESORTESGENERALES"},{"p":"RESORTES LINEA AUTOMOTOR","n":"796","d":"UNIVERSALES - RESORTE ACELERADOR UNIVERSAL CORTO","f":"RESORTESGENERALES"},{"p":"RESORTES LINEA AUTOMOTOR","n":"797","d":"UNIVERSALES - RESORTE ACELERADOR UNIVERSAL MEDIANO","f":"RESORTESGENERALES"}],"totalFaltan":6},{"n":"RESORTES LC","it":109,"cg":34,"pct":31,"falta":[{"p":"RESORTES LINEA COMPLEMENTARIA","n":"270","d":"0,3 x 3 x 15 - Expansión","f":"RESORTES"},{"p":"RESORTES LINEA COMPLEMENTARIA","n":"271","d":"0,3 x 4,5 x 22 - Expansión","f":"RESORTES"},{"p":"RESORTES LINEA COMPLEMENTARIA","n":"272","d":"0,3 x 4,2 x 15 - Expansión","f":"RESORTES"},{"p":"RESORTES LINEA COMPLEMENTARIA","n":"284","d":"1,5 x 12 x 51 - Expansión","f":"RESORTES"},{"p":"RESORTES LINEA COMPLEMENTARIA","n":"285","d":"1,5 x 12 x 140 - Expansión","f":"RESORTES"},{"p":"RESORTES LINEA COMPLEMENTARIA","n":"288","d":"3 x 17 x 56 - Espansión","f":"RESORTES"},{"p":"RESORTES LINEA COMPLEMENTARIA","n":"290","d":"1,25 x 10 - Torsión","f":"RESORTES"},{"p":"RESORTES LINEA COMPLEMENTARIA","n":"291","d":"0,3 x 4 x 4,5 - Torsión","f":"RESORTES"},{"p":"RESORTES LINEA COMPLEMENTARIA","n":"292","d":"0,5 x 4,5 x 3 - Torsión","f":"RESORTES"},{"p":"RESORTES LINEA COMPLEMENTARIA","n":"294","d":"0,8 x 4,5 x 8 - Torsión","f":"RESORTES"}],"totalFaltan":75},{"n":"RESORTES LP","it":38,"cg":8,"pct":21,"falta":[{"p":"RESORTES LINEA PESADA","n":"110","d":"2 x 12 x 150 - Compresión","f":"RESORTES"},{"p":"RESORTES LINEA PESADA","n":"112","d":"2 x 18 x 130 - Compresión","f":"RESORTES"},{"p":"RESORTES LINEA PESADA","n":"120","d":"2 x 30 x 100 - Compresión","f":"RESORTES"},{"p":"RESORTES LINEA PESADA","n":"122","d":"2 x 34 x 42 - Compresión","f":"RESORTES"},{"p":"RESORTES LINEA PESADA","n":"124","d":"2,25 x 27 x 37 - Compresión","f":"RESORTES"},{"p":"RESORTES LINEA PESADA","n":"126","d":"2,5 x 25 x 55 - Compresión","f":"RESORTES"},{"p":"RESORTES LINEA PESADA","n":"128","d":"2,5 x 33 x 50 - Compresión","f":"RESORTES"},{"p":"RESORTES LINEA PESADA","n":"130","d":"2,5 x 37 x 50 - Compresión","f":"RESORTES"},{"p":"RESORTES LINEA PESADA","n":"134","d":"2,75 x 38 x 42 - Compresión","f":"RESORTES"},{"p":"RESORTES LINEA PESADA","n":"138","d":"3 x 18 x 150 - Compresión","f":"RESORTES"}],"totalFaltan":30},{"n":"RESORTES COMPLETO","it":270,"cg":138,"pct":51,"falta":[{"p":"RESORTES LINEA FERRETERIA","n":"2","d":"0,5 x 6 x 50 - Expansión","f":"RESORTES"},{"p":"RESORTES LINEA FERRETERIA","n":"7","d":"0,8 x 10 x 50 - Expansión","f":"RESORTES"},{"p":"RESORTES LINEA FERRETERIA","n":"28","d":"2,25 x 12 x 175 - Expansión","f":"RESORTES"},{"p":"RESORTES LINEA FERRETERIA","n":"31","d":"1 x 7 x 22 - Expansión","f":"RESORTES"},{"p":"RESORTES LINEA FERRETERIA","n":"32","d":"1 x 8 x 25 - Expansión","f":"RESORTES"},{"p":"RESORTES LINEA FERRETERIA","n":"34","d":"1,5 x  x  - Expansión","f":"RESORTES"},{"p":"RESORTES LINEA FERRETERIA","n":"35","d":"1,25 x 14-19 x 25 - Compresión","f":"RESORTES"},{"p":"RESORTES LINEA FERRETERIA","n":"36","d":"1,5 x .10-18 x 35 - Compresión","f":"RESORTES"},{"p":"RESORTES LINEA FERRETERIA","n":"37","d":"1,5 x .14-18 x 90 - Compresión","f":"RESORTES"},{"p":"RESORTES LINEA FERRETERIA","n":"38","d":"1 x 5 x 5 - Torsión","f":"RESORTES"}],"totalFaltan":132},{"n":"CONECTORES PLASTICOS MANGUERAS","it":76,"cg":22,"pct":29,"falta":[{"p":"CONECTORES PLASTICOS MANGUERAS","n":"2","d":"Niple plástico para unir manguera de 5mm","f":"JORGEMANGUERA"},{"p":"CONECTORES PLASTICOS MANGUERAS","n":"3","d":"Niple plástico para unir manguera de 6mm","f":"JORGEMANGUERA"},{"p":"CONECTORES PLASTICOS MANGUERAS","n":"4","d":"Niple plástico para unir manguera de 8 mm","f":"JORGEMANGUERA"},{"p":"CONECTORES PLASTICOS MANGUERAS","n":"5","d":"Niple plástico para unir manguera de 10 mm","f":"JORGEMANGUERA"},{"p":"CONECTORES PLASTICOS MANGUERAS","n":"7","d":"Niple plástico para unir manguera de 13 mm","f":"JORGEMANGUERA"},{"p":"CONECTORES PLASTICOS MANGUERAS","n":"8","d":"Niple plástico para unir manguera de16 mm","f":"JORGEMANGUERA"},{"p":"CONECTORES PLASTICOS MANGUERAS","n":"9","d":"Niple plástico para unir manguera de 19 mm","f":"JORGEMANGUERA"},{"p":"CONECTORES PLASTICOS MANGUERAS","n":"10","d":"Niple plástico para unir manguera de 22 mm","f":"JORGEMANGUERA"},{"p":"CONECTORES PLASTICOS MANGUERAS","n":"12","d":"Conector 3 Vías limpiaparabrisas 5 mm","f":"JORGEMANGUERA"},{"p":"CONECTORES PLASTICOS MANGUERAS","n":"20","d":"Conector de calefacción purgador plástico de P 505","f":"JORGEMANGUERA"}],"totalFaltan":54},{"n":"TERMINALES nuevo","it":29,"cg":25,"pct":86,"falta":[{"p":"TERMINALES","n":"93","d":"Terminal cobre estañado ojal - Cable 70 - Ojal: 10mm","f":"LCT"},{"p":"TERMINALES","n":"94","d":"Terminal cobre estañado ojal - Cable 70 - Ojal: 11mm","f":"LCT"},{"p":"TERMINALES","n":"95","d":"Terminal cobre estañado ojal - Cable 95 - Ojal: 11mm","f":"LCT"},{"p":"TERMINALES","n":"96","d":"Terminal cobre estañado ojal - Cable 95 - Ojal: 13mm","f":"LCT"}],"totalFaltan":4},{"n":"TERMINALES LINEA INDUSTRIAL","it":21,"cg":17,"pct":81,"falta":[{"p":"TERMINALES","n":"93","d":"Terminal cobre estañado ojal - Cable 70 - Ojal: 10mm","f":"LCT"},{"p":"TERMINALES","n":"94","d":"Terminal cobre estañado ojal - Cable 70 - Ojal: 11mm","f":"LCT"},{"p":"TERMINALES","n":"95","d":"Terminal cobre estañado ojal - Cable 95 - Ojal: 11mm","f":"LCT"},{"p":"TERMINALES","n":"96","d":"Terminal cobre estañado ojal - Cable 95 - Ojal: 13mm","f":"LCT"}],"totalFaltan":4},{"n":"UNIONES ORIENTABLES","it":29,"cg":19,"pct":66,"falta":[{"p":"UNIONES ORIENTABLES","n":"2","d":" Bulon 8 x 075 x 25 mm bomba rotat diesel ","f":"DAHE.DIESEL"},{"p":"UNIONES ORIENTABLES","n":"5","d":" Bulon 8 x 1 x 33 doble ","f":"DAHE.DIESEL"},{"p":"UNIONES ORIENTABLES","n":"10","d":" Bulon 10 x 1 x 25 mm (2 salidas) bombas de freno","f":"DAHE.DIESEL"},{"p":"UNIONES ORIENTABLES","n":"11","d":" Bulon 10 x 1 x 25 mm (3 salidas) ","f":"DAHE.DIESEL"},{"p":"UNIONES ORIENTABLES","n":"13","d":" Bulon 10 x 1 x 35 mm doble ","f":"DAHE.DIESEL"},{"p":"UNIONES ORIENTABLES","n":"21","d":" Bulon 12 x 1,5 x 27 mm bombas rotativas","f":"DAHE.DIESEL"},{"p":"UNIONES ORIENTABLES","n":"40","d":" Union orientable 8 mm (nucleo) 6.4mm(vastago) ","f":"DAHE.DIESEL"},{"p":"UNIONES ORIENTABLES","n":"41","d":" Union orientable 10 mm x 6,4 mm ","f":"DAHE.DIESEL"},{"p":"UNIONES ORIENTABLES","n":"42","d":" Union orientable 8 mm x 8,5 mm ","f":"DAHE.DIESEL"},{"p":"UNIONES ORIENTABLES","n":"43","d":" Union orientable 10 mm x 8,5 mm ","f":"DAHE.DIESEL"}],"totalFaltan":10},{"n":"CONECTORES DE COMBUSTIBLE Reducido","it":31,"cg":26,"pct":84,"falta":[{"p":"CONECTORES DE COMBUSTIBLE","n":"1","d":"SAE 7.89 ID-6 - Acople recto","f":"ALNAT"},{"p":"CONECTORES DE COMBUSTIBLE","n":"18","d":"SAE 7.89 ID-10 - Codo 90°","f":"ALNAT"},{"p":"CONECTORES DE COMBUSTIBLE","n":"52","d":"SAE 9.89 ID-6 - Acople recto","f":"ALNAT"},{"p":"CONECTORES DE COMBUSTIBLE","n":"53","d":"SAE 9.89 ID-6 - Codo 90°","f":"ALNAT"},{"p":"CONECTORES DE COMBUSTIBLE","n":"59","d":"SAE 9.89 ID-6 - Conector macho","f":"ALNAT"}],"totalFaltan":5},{"n":"TUERCAS RAPIDAS COMPLETO","it":54,"cg":19,"pct":35,"falta":[{"p":"TUERCAS RAPIDAS NUEVAS","n":"75","d":"M 5 - 3/16- PARK 8/10 (25 x 18)","f":""},{"p":"TUERCAS RAPIDAS NUEVAS","n":"76","d":"M 5 - 3/16- PARK  8/10 (cuerpo GR)","f":""},{"p":"TUERCAS RAPIDAS NUEVAS","n":"77","d":"M 6 - 1/4- PARK 12 (20 x 20)","f":""},{"p":"TUERCAS RAPIDAS NUEVAS","n":"78","d":"M 6 - 1/4- PARK 12  (22 x 16)","f":""},{"p":"TUERCAS RAPIDAS NUEVAS","n":"79","d":"M 6 - 1/4- PARK 12 (16 x 28)","f":""},{"p":"TUERCAS RAPIDAS NUEVAS","n":"80","d":"M 6 - 1/4- PARK 12 (cuerpo Grande)","f":""},{"p":"TUERCAS RAPIDAS NUEVAS","n":"81","d":"M 6 con Tuerca de acero (28 x 19)","f":""},{"p":"TUERCAS RAPIDAS NUEVAS","n":"82","d":"PARK 6 (11 x 17 mm)","f":""},{"p":"TUERCAS RAPIDAS NUEVAS","n":"83","d":"PARK 6 (11 x 25 mm)","f":""},{"p":"TUERCAS RAPIDAS NUEVAS","n":"84","d":"PARK 6 (16 x 19 mm)","f":""}],"totalFaltan":35},{"n":"TORNILLOS ESPECIALES + TR COMPLETO","it":132,"cg":19,"pct":14,"falta":[{"p":"TORNILLERIA ESPECIAL","n":"1","d":"5 x 12 negro","f":""},{"p":"TORNILLERIA ESPECIAL","n":"3","d":"6 x 13 estañado","f":""},{"p":"TORNILLERIA ESPECIAL","n":"4","d":"6 x 12 negro","f":""},{"p":"TORNILLERIA ESPECIAL","n":"5","d":"6 x 14 negro","f":""},{"p":"TORNILLERIA ESPECIAL","n":"6","d":"6 x 16 negro c/arand","f":""},{"p":"TORNILLERIA ESPECIAL","n":"7","d":"6 x 16 estañado","f":""},{"p":"TORNILLERIA ESPECIAL","n":"9","d":"6 x 18 negro c/arand","f":""},{"p":"TORNILLERIA ESPECIAL","n":"13","d":"6 x 25 negro c/arand","f":""},{"p":"TORNILLERIA ESPECIAL","n":"14","d":"6 x 60 negro c/arand","f":""},{"p":"TORNILLERIA ESPECIAL","n":"16","d":"Park 6x10 neg c/aran","f":""}],"totalFaltan":113}],"sinDatos":[{"n":"TARUGOS ESTRIADOS","it":17},{"n":"CLIPS IMPORTADOS COMPLETO","it":324},{"n":"TORNILLERIA ESPECIAL","it":80},{"n":"TUERCAS RAPIDAS IMPORTADAS","it":37},{"n":"TORNILLERIA ESPECIAL Y TR IMPORTADAS","it":114},{"n":"CONEXIONES PLASTICAS IMPORTADAS","it":32}],"victor":[{"n":"GANCHOS - CHAVETAS / COMPLETO","it":44,"pctMax":95},{"n":"CHAVETAS","it":32,"pctMax":94},{"n":"ARANDELAS DE GOMA","it":50,"pctMax":96},{"n":"ARANDELAS DE GOMA LINEA PESADA","it":30,"pctMax":93},{"n":"ARANDELAS DE GOMA / COMPLETA","it":79,"pctMax":96},{"n":"ABRAZADERAS C/ GOMA","it":38,"pctMax":95},{"n":"CONEXIONES DE ALUMINIO N°1 - Nuevo","it":78,"pctMax":99},{"n":"CONEXIONES DE ALUMINIO N°2 - Nuevo","it":57,"pctMax":98},{"n":"CONEXIÓN DE ALUMINIO 27 Med. Mayor Rot.","it":29,"pctMax":97},{"n":"ALUMINIO LINEA TEMPERATURA","it":29,"pctMax":52}]};
 
 function fmt$(n) {
   if (n == null || isNaN(n)) return '—';
@@ -571,109 +421,14 @@ function renderVendedores() {
   }).join('') + '<tr style="border-top: 2px solid var(--border-strong); font-weight: 600;"><td>TOTAL</td><td class="num">' + fmt$(tn) + '</td><td class="num"></td><td class="num" style="color: var(--bad);">' + fmt$(ts) + '</td><td class="num" style="color: var(--good);">' + fmt$(tm) + '</td></tr>';
 }
 
-function renderSurtidos() {
-  let lista = SURT.completos.slice();
-  const q = document.getElementById('search').value.toLowerCase();
-  if (q) lista = lista.filter(s => s.n.toLowerCase().includes(q));
-
-  const ordenBy = document.getElementById('sort-by').value;
-  lista.sort((a, b) => {
-    if (ordenBy === 'n') return a.n.localeCompare(b.n);
-    return (b[ordenBy] || 0) - (a[ordenBy] || 0);
-  });
-
-  function margenChip(pct) {
-    let cls;
-    if (pct < 0) cls = 'bajo';
-    else if (pct >= 50) cls = 'excel';
-    else if (pct >= 35) cls = 'muy-bueno';
-    else if (pct >= 20) cls = 'bueno';
-    else if (pct >= 10) cls = 'medio';
-    else cls = 'bajo';
-    return '<span class="margen-chip ' + cls + '" style="font-size:10px">' + pct.toFixed(1) + '%</span>';
-  }
-
-  const tbody = document.getElementById('tbl-surtidos-body');
-  tbody.innerHTML = lista.map(s => {
-    const alertMk = s.gMk < 0 ? ' ⚠️' : '';
-    const g46Color = s.g46 < 0 ? 'var(--bad)' : s.g46 > 150000 ? 'var(--good)' : 'var(--text)';
-    const gMkColor = s.gMk < 0 ? 'var(--bad)' : s.gMk > 100000 ? 'var(--good)' : 'var(--text)';
-    
-    const costoDesglose = 'Items $' + s.coItems.toLocaleString('es-AR') +
-      (s.gv ? ' · ' + s.gv + ' gavetas $' + s.coGav.toLocaleString('es-AR') : '') +
-      (s.vr ? ' · ' + s.vr + ' varios $' + s.coVar.toLocaleString('es-AR') : '');
-
-    return '<tr>' +
-      '<td><div class="surtido-nombre">' + s.n + alertMk + '</div>' +
-      '<div style="font-size:10px;color:var(--text-mute)">' + s.it + ' productos' + (s.gv ? ' + ' + s.gv + ' gav' : '') + (s.vr ? ' + ' + s.vr + ' var' : '') + '</div></td>' +
-      '<td class="num">' + s.it + '</td>' +
-      '<td class="num" style="color:var(--text-mute)">' + fmt$(s.vL) + '</td>' +
-      '<td class="num">' + fmt$(s.v46) + '</td>' +
-      '<td class="num">' + fmt$(s.vMk) + '</td>' +
-      '<td class="num">' + fmt$(s.v15) + '</td>' +
-      '<td class="num" title="' + costoDesglose + '">' + fmt$(s.co) + '</td>' +
-      '<td class="num" style="color:' + g46Color + ';font-weight:600"><div>' + fmt$(s.g46) + '</div>' + margenChip(s.m46) + '</td>' +
-      '<td class="num" style="color:' + gMkColor + ';font-weight:600"><div>' + fmt$(s.gMk) + '</div>' + margenChip(s.mMk) + '</td>' +
-    '</tr>';
-  }).join('');
-
-  if (lista.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:30px;color:var(--text-mute)">Sin resultados</td></tr>';
-  }
-}
-
-function renderPendientes() {
-  // Cuasi-completos
-  document.getElementById('lista-cuasi').innerHTML = SURT.cuasi.map(s => 
-    '<div class="block" style="border-left: 3px solid var(--warn)">' +
-    '<div class="block-title"><span>' + s.n + '</span>' +
-    '<span class="amount" style="color: var(--warn)">' + s.cg + '/' + s.it + ' items · ' + s.pct + '%</span></div>' +
-    '<div class="block-desc">Faltan cargar:<ul style="margin:6px 0 0 18px;padding:0;list-style:disc">' +
-    s.falta.map(f => '<li><strong>' + f.p + '</strong> N°' + f.n + ' "' + (f.d || '') + '" <span style="color:var(--text-mute)">[' + (f.f || 'sin fábrica') + ']</span></li>').join('') +
-    '</ul></div></div>'
-  ).join('');
-
-  // Parciales agrupados por fábrica mayoritaria faltante
-  document.getElementById('lista-parciales').innerHTML = SURT.parciales.map(s => {
-    const porFab = {};
-    s.falta.forEach(f => {
-      const k = f.f || '(sin fábrica)';
-      if (!porFab[k]) porFab[k] = [];
-      porFab[k].push(f);
-    });
-    const resumen = Object.entries(porFab).sort((a,b) => b[1].length - a[1].length)
-      .map(([f, items]) => items.length + '× ' + f)
-      .join(' · ');
-    return '<div class="block" style="border-left: 3px solid var(--bad)">' +
-      '<div class="block-title"><span>' + s.n + '</span>' +
-      '<span class="amount" style="color: var(--bad)">' + s.cg + '/' + s.it + ' items · ' + s.pct + '%</span></div>' +
-      '<div class="block-desc">Faltan ' + s.falta.length + ' items: ' + resumen + '</div></div>';
-  }).join('');
-
-  // Sin datos + Victor
-  document.getElementById('lista-sindatos-victor').innerHTML = 
-    SURT.sinDatos.map(s => 
-      '<div class="block" style="border-left: 3px solid var(--text-mute); margin-bottom: 8px">' +
-      '<div class="block-title"><span>' + s.n + '</span>' +
-      '<span class="amount" style="color: var(--text-mute)">' + s.it + ' items · 0%</span></div>' +
-      '<div class="block-desc">Ningún costo cargado</div></div>'
-    ).join('') +
-    SURT.victor.map(s => 
-      '<div class="block" style="border-left: 3px solid var(--purple); margin-bottom: 8px">' +
-      '<div class="block-title"><span>' + s.n + '</span>' +
-      '<span class="amount" style="color: var(--purple)">Victor (' + s.pctMax + '%)</span></div>' +
-      '<div class="block-desc">Fabricado por Victor — sin costo calculable</div></div>'
-    ).join('');
-}
-
 function renderAcciones() {
   const r = calcular();
   const acciones = [
     { tipo: 'invest', num: '1', title: 'Terminar la obra lo antes posible', desc: 'La obra te está comiendo ' + fmt$(r.obra + r.prestamos) + '/mes entre inversión directa y préstamos. Cada mes adicional son $16M que no vuelven al bolsillo. Acelerar = recuperar liquidez más rápido.', impacto: 'Al terminar: +$13-16M/mes libres' },
-    { tipo: 'family', num: '2', title: 'Renegociar con Victor ahora que estás en obra', desc: 'En este momento necesitás cash. Proponerle pasar del 100% al 30-40% te libera $5-6M/mes para acelerar la obra o bajar deuda. Contexto ideal: "papá, estoy construyendo la cede y necesito revisar los números un tiempo".', impacto: '+$60-72M/año' },
+    { tipo: 'family', num: '2', title: 'Renegociar con Victor ahora que estás en obra', desc: 'En este momento necesitás cash. Proponerle pasar del 100% al 30-40% te libera $5-6M/mes para acelerar la obra o bajar deuda.', impacto: '+$60-72M/año' },
     { tipo: 'urgent', num: '3', title: 'Subir precios 10%', desc: 'Pasás de ' + fmt$(r.quedaLibre) + '/mes libres a ~' + fmt$(r.quedaLibre + r.ventasTotal * 0.10) + '/mes. En ferretería y autopartes un 10% pasa desapercibido.', impacto: '+' + fmt$(r.ventasTotal * 0.10) + '/mes · +' + fmt$(r.ventasTotal * 0.10 * 12) + '/año' },
     { tipo: 'soon', num: '4', title: 'No tomar más deuda hasta fin de obra', desc: 'Ya tenés $9.3M/mes de cuotas. Agregar más préstamos te puede ahogar si un mes baja la venta. Aguantá hasta diciembre.', impacto: 'Preservar oxígeno financiero' },
-    { tipo: 'good', num: '5', title: 'Planear qué hacer con los $13-16M/mes de 2027', desc: 'Cuando termine la obra vas a tener más disponible. Definí ya: (a) pagar el resto de deuda rápido, (b) invertir en stock, (c) retirar más para vos, (d) otra cede/local. Decidirlo con anticipación evita que se "evapore".', impacto: 'Planificación 2027' },
+    { tipo: 'good', num: '5', title: 'Planear qué hacer con los $13-16M/mes de 2027', desc: 'Cuando termine la obra vas a tener más disponible. Definí ya: (a) pagar el resto de deuda rápido, (b) invertir en stock, (c) retirar más para vos, (d) otra cede/local.', impacto: 'Planificación 2027' },
     { tipo: 'good', num: '6', title: 'Empezar a registrar retiros personales', desc: 'Aunque saques poco, anotar fecha + monto te da claridad. En fase de obra es crucial saber cuánto sacás realmente.', impacto: 'Control y claridad' }
   ];
   document.getElementById('lista-acciones').innerHTML = acciones.map(a => 
@@ -681,14 +436,12 @@ function renderAcciones() {
   ).join('');
 }
 
-// Tabs
 function switchTab(name) {
   document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
   document.querySelectorAll('.view').forEach(v => v.classList.toggle('active', v.id === 'view-' + name));
 }
 document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => switchTab(t.dataset.tab)));
 
-// Modo privado
 const btnModo = document.getElementById('btn-modo');
 let modoPublico = false;
 btnModo.addEventListener('click', () => {
@@ -704,334 +457,9 @@ btnModo.addEventListener('click', () => {
   }
 });
 
-// Filtros surtidos
-document.getElementById('search').addEventListener('input', renderSurtidos);
-document.getElementById('sort-by').addEventListener('change', renderSurtidos);
-document.getElementById('sort-by').addEventListener('change', e => { ordenBy = e.target.value; renderSurtidos(); });
-document.getElementById('f-conf').addEventListener('click', function() { filtroConf = !filtroConf; this.classList.toggle('active', filtroConf); if (filtroConf && filtroMx) { filtroMx = false; document.getElementById('f-mx').classList.remove('active'); } renderSurtidos(); });
-document.getElementById('f-mx').addEventListener('click', function() { filtroMx = !filtroMx; this.classList.toggle('active', filtroMx); if (filtroMx && filtroConf) { filtroConf = false; document.getElementById('f-conf').classList.remove('active'); } renderSurtidos(); });
-
 renderHero();
 renderWaterfall();
 renderVendedores();
-renderSurtidos();
-renderPendientes();
-renderAcciones();
-</script>
-</body>
-</html> + s.coItems.toLocaleString('es-AR') + (s.gv ? ' · ' + s.gv + ' gavetas: 
-
-function renderPendientes() {
-  // Cuasi-completos
-  document.getElementById('lista-cuasi').innerHTML = SURT.cuasi.map(s => 
-    '<div class="block" style="border-left: 3px solid var(--warn)">' +
-    '<div class="block-title"><span>' + s.n + '</span>' +
-    '<span class="amount" style="color: var(--warn)">' + s.cg + '/' + s.it + ' items · ' + s.pct + '%</span></div>' +
-    '<div class="block-desc">Faltan cargar:<ul style="margin:6px 0 0 18px;padding:0;list-style:disc">' +
-    s.falta.map(f => '<li><strong>' + f.p + '</strong> N°' + f.n + ' "' + (f.d || '') + '" <span style="color:var(--text-mute)">[' + (f.f || 'sin fábrica') + ']</span></li>').join('') +
-    '</ul></div></div>'
-  ).join('');
-
-  // Parciales agrupados por fábrica mayoritaria faltante
-  document.getElementById('lista-parciales').innerHTML = SURT.parciales.map(s => {
-    const porFab = {};
-    s.falta.forEach(f => {
-      const k = f.f || '(sin fábrica)';
-      if (!porFab[k]) porFab[k] = [];
-      porFab[k].push(f);
-    });
-    const resumen = Object.entries(porFab).sort((a,b) => b[1].length - a[1].length)
-      .map(([f, items]) => items.length + '× ' + f)
-      .join(' · ');
-    return '<div class="block" style="border-left: 3px solid var(--bad)">' +
-      '<div class="block-title"><span>' + s.n + '</span>' +
-      '<span class="amount" style="color: var(--bad)">' + s.cg + '/' + s.it + ' items · ' + s.pct + '%</span></div>' +
-      '<div class="block-desc">Faltan ' + s.falta.length + ' items: ' + resumen + '</div></div>';
-  }).join('');
-
-  // Sin datos + Victor
-  document.getElementById('lista-sindatos-victor').innerHTML = 
-    SURT.sinDatos.map(s => 
-      '<div class="block" style="border-left: 3px solid var(--text-mute); margin-bottom: 8px">' +
-      '<div class="block-title"><span>' + s.n + '</span>' +
-      '<span class="amount" style="color: var(--text-mute)">' + s.it + ' items · 0%</span></div>' +
-      '<div class="block-desc">Ningún costo cargado</div></div>'
-    ).join('') +
-    SURT.victor.map(s => 
-      '<div class="block" style="border-left: 3px solid var(--purple); margin-bottom: 8px">' +
-      '<div class="block-title"><span>' + s.n + '</span>' +
-      '<span class="amount" style="color: var(--purple)">Victor (' + s.pctMax + '%)</span></div>' +
-      '<div class="block-desc">Fabricado por Victor — sin costo calculable</div></div>'
-    ).join('');
-}
-
-function renderAcciones() {
-  const r = calcular();
-  const acciones = [
-    { tipo: 'invest', num: '1', title: 'Terminar la obra lo antes posible', desc: 'La obra te está comiendo ' + fmt$(r.obra + r.prestamos) + '/mes entre inversión directa y préstamos. Cada mes adicional son $16M que no vuelven al bolsillo. Acelerar = recuperar liquidez más rápido.', impacto: 'Al terminar: +$13-16M/mes libres' },
-    { tipo: 'family', num: '2', title: 'Renegociar con Victor ahora que estás en obra', desc: 'En este momento necesitás cash. Proponerle pasar del 100% al 30-40% te libera $5-6M/mes para acelerar la obra o bajar deuda. Contexto ideal: "papá, estoy construyendo la cede y necesito revisar los números un tiempo".', impacto: '+$60-72M/año' },
-    { tipo: 'urgent', num: '3', title: 'Subir precios 10%', desc: 'Pasás de ' + fmt$(r.quedaLibre) + '/mes libres a ~' + fmt$(r.quedaLibre + r.ventasTotal * 0.10) + '/mes. En ferretería y autopartes un 10% pasa desapercibido.', impacto: '+' + fmt$(r.ventasTotal * 0.10) + '/mes · +' + fmt$(r.ventasTotal * 0.10 * 12) + '/año' },
-    { tipo: 'soon', num: '4', title: 'No tomar más deuda hasta fin de obra', desc: 'Ya tenés $9.3M/mes de cuotas. Agregar más préstamos te puede ahogar si un mes baja la venta. Aguantá hasta diciembre.', impacto: 'Preservar oxígeno financiero' },
-    { tipo: 'good', num: '5', title: 'Planear qué hacer con los $13-16M/mes de 2027', desc: 'Cuando termine la obra vas a tener más disponible. Definí ya: (a) pagar el resto de deuda rápido, (b) invertir en stock, (c) retirar más para vos, (d) otra cede/local. Decidirlo con anticipación evita que se "evapore".', impacto: 'Planificación 2027' },
-    { tipo: 'good', num: '6', title: 'Empezar a registrar retiros personales', desc: 'Aunque saques poco, anotar fecha + monto te da claridad. En fase de obra es crucial saber cuánto sacás realmente.', impacto: 'Control y claridad' }
-  ];
-  document.getElementById('lista-acciones').innerHTML = acciones.map(a => 
-    '<div class="rec-item ' + a.tipo + '"><div class="rec-num">' + a.num + '</div><div style="flex: 1;"><div class="rec-title">' + a.title + '</div><div class="rec-desc">' + a.desc + '</div>' + (a.impacto ? '<div class="rec-impact">→ ' + a.impacto + '</div>' : '') + '</div></div>'
-  ).join('');
-}
-
-// Tabs
-function switchTab(name) {
-  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
-  document.querySelectorAll('.view').forEach(v => v.classList.toggle('active', v.id === 'view-' + name));
-}
-document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => switchTab(t.dataset.tab)));
-
-// Modo privado
-const btnModo = document.getElementById('btn-modo');
-let modoPublico = false;
-btnModo.addEventListener('click', () => {
-  modoPublico = !modoPublico;
-  if (modoPublico) {
-    document.body.classList.add('modo-publico');
-    btnModo.textContent = '🔓 Mostrar todo';
-    btnModo.classList.add('active');
-  } else {
-    document.body.classList.remove('modo-publico');
-    btnModo.textContent = '🔒 Modo privado';
-    btnModo.classList.remove('active');
-  }
-});
-
-// Filtros surtidos
-document.getElementById('search').addEventListener('input', renderSurtidos);
-document.getElementById('sort-by').addEventListener('change', renderSurtidos);
-document.getElementById('sort-by').addEventListener('change', e => { ordenBy = e.target.value; renderSurtidos(); });
-document.getElementById('f-conf').addEventListener('click', function() { filtroConf = !filtroConf; this.classList.toggle('active', filtroConf); if (filtroConf && filtroMx) { filtroMx = false; document.getElementById('f-mx').classList.remove('active'); } renderSurtidos(); });
-document.getElementById('f-mx').addEventListener('click', function() { filtroMx = !filtroMx; this.classList.toggle('active', filtroMx); if (filtroMx && filtroConf) { filtroConf = false; document.getElementById('f-conf').classList.remove('active'); } renderSurtidos(); });
-
-renderHero();
-renderWaterfall();
-renderVendedores();
-renderSurtidos();
-renderPendientes();
-renderAcciones();
-</script>
-</body>
-</html> + s.coGav.toLocaleString('es-AR') : '') + (s.vr ? ' · ' + s.vr + ' varios: 
-
-function renderPendientes() {
-  // Cuasi-completos
-  document.getElementById('lista-cuasi').innerHTML = SURT.cuasi.map(s => 
-    '<div class="block" style="border-left: 3px solid var(--warn)">' +
-    '<div class="block-title"><span>' + s.n + '</span>' +
-    '<span class="amount" style="color: var(--warn)">' + s.cg + '/' + s.it + ' items · ' + s.pct + '%</span></div>' +
-    '<div class="block-desc">Faltan cargar:<ul style="margin:6px 0 0 18px;padding:0;list-style:disc">' +
-    s.falta.map(f => '<li><strong>' + f.p + '</strong> N°' + f.n + ' "' + (f.d || '') + '" <span style="color:var(--text-mute)">[' + (f.f || 'sin fábrica') + ']</span></li>').join('') +
-    '</ul></div></div>'
-  ).join('');
-
-  // Parciales agrupados por fábrica mayoritaria faltante
-  document.getElementById('lista-parciales').innerHTML = SURT.parciales.map(s => {
-    const porFab = {};
-    s.falta.forEach(f => {
-      const k = f.f || '(sin fábrica)';
-      if (!porFab[k]) porFab[k] = [];
-      porFab[k].push(f);
-    });
-    const resumen = Object.entries(porFab).sort((a,b) => b[1].length - a[1].length)
-      .map(([f, items]) => items.length + '× ' + f)
-      .join(' · ');
-    return '<div class="block" style="border-left: 3px solid var(--bad)">' +
-      '<div class="block-title"><span>' + s.n + '</span>' +
-      '<span class="amount" style="color: var(--bad)">' + s.cg + '/' + s.it + ' items · ' + s.pct + '%</span></div>' +
-      '<div class="block-desc">Faltan ' + s.falta.length + ' items: ' + resumen + '</div></div>';
-  }).join('');
-
-  // Sin datos + Victor
-  document.getElementById('lista-sindatos-victor').innerHTML = 
-    SURT.sinDatos.map(s => 
-      '<div class="block" style="border-left: 3px solid var(--text-mute); margin-bottom: 8px">' +
-      '<div class="block-title"><span>' + s.n + '</span>' +
-      '<span class="amount" style="color: var(--text-mute)">' + s.it + ' items · 0%</span></div>' +
-      '<div class="block-desc">Ningún costo cargado</div></div>'
-    ).join('') +
-    SURT.victor.map(s => 
-      '<div class="block" style="border-left: 3px solid var(--purple); margin-bottom: 8px">' +
-      '<div class="block-title"><span>' + s.n + '</span>' +
-      '<span class="amount" style="color: var(--purple)">Victor (' + s.pctMax + '%)</span></div>' +
-      '<div class="block-desc">Fabricado por Victor — sin costo calculable</div></div>'
-    ).join('');
-}
-
-function renderAcciones() {
-  const r = calcular();
-  const acciones = [
-    { tipo: 'invest', num: '1', title: 'Terminar la obra lo antes posible', desc: 'La obra te está comiendo ' + fmt$(r.obra + r.prestamos) + '/mes entre inversión directa y préstamos. Cada mes adicional son $16M que no vuelven al bolsillo. Acelerar = recuperar liquidez más rápido.', impacto: 'Al terminar: +$13-16M/mes libres' },
-    { tipo: 'family', num: '2', title: 'Renegociar con Victor ahora que estás en obra', desc: 'En este momento necesitás cash. Proponerle pasar del 100% al 30-40% te libera $5-6M/mes para acelerar la obra o bajar deuda. Contexto ideal: "papá, estoy construyendo la cede y necesito revisar los números un tiempo".', impacto: '+$60-72M/año' },
-    { tipo: 'urgent', num: '3', title: 'Subir precios 10%', desc: 'Pasás de ' + fmt$(r.quedaLibre) + '/mes libres a ~' + fmt$(r.quedaLibre + r.ventasTotal * 0.10) + '/mes. En ferretería y autopartes un 10% pasa desapercibido.', impacto: '+' + fmt$(r.ventasTotal * 0.10) + '/mes · +' + fmt$(r.ventasTotal * 0.10 * 12) + '/año' },
-    { tipo: 'soon', num: '4', title: 'No tomar más deuda hasta fin de obra', desc: 'Ya tenés $9.3M/mes de cuotas. Agregar más préstamos te puede ahogar si un mes baja la venta. Aguantá hasta diciembre.', impacto: 'Preservar oxígeno financiero' },
-    { tipo: 'good', num: '5', title: 'Planear qué hacer con los $13-16M/mes de 2027', desc: 'Cuando termine la obra vas a tener más disponible. Definí ya: (a) pagar el resto de deuda rápido, (b) invertir en stock, (c) retirar más para vos, (d) otra cede/local. Decidirlo con anticipación evita que se "evapore".', impacto: 'Planificación 2027' },
-    { tipo: 'good', num: '6', title: 'Empezar a registrar retiros personales', desc: 'Aunque saques poco, anotar fecha + monto te da claridad. En fase de obra es crucial saber cuánto sacás realmente.', impacto: 'Control y claridad' }
-  ];
-  document.getElementById('lista-acciones').innerHTML = acciones.map(a => 
-    '<div class="rec-item ' + a.tipo + '"><div class="rec-num">' + a.num + '</div><div style="flex: 1;"><div class="rec-title">' + a.title + '</div><div class="rec-desc">' + a.desc + '</div>' + (a.impacto ? '<div class="rec-impact">→ ' + a.impacto + '</div>' : '') + '</div></div>'
-  ).join('');
-}
-
-// Tabs
-function switchTab(name) {
-  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
-  document.querySelectorAll('.view').forEach(v => v.classList.toggle('active', v.id === 'view-' + name));
-}
-document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => switchTab(t.dataset.tab)));
-
-// Modo privado
-const btnModo = document.getElementById('btn-modo');
-let modoPublico = false;
-btnModo.addEventListener('click', () => {
-  modoPublico = !modoPublico;
-  if (modoPublico) {
-    document.body.classList.add('modo-publico');
-    btnModo.textContent = '🔓 Mostrar todo';
-    btnModo.classList.add('active');
-  } else {
-    document.body.classList.remove('modo-publico');
-    btnModo.textContent = '🔒 Modo privado';
-    btnModo.classList.remove('active');
-  }
-});
-
-// Filtros surtidos
-document.getElementById('search').addEventListener('input', renderSurtidos);
-document.getElementById('sort-by').addEventListener('change', renderSurtidos);
-document.getElementById('sort-by').addEventListener('change', e => { ordenBy = e.target.value; renderSurtidos(); });
-document.getElementById('f-conf').addEventListener('click', function() { filtroConf = !filtroConf; this.classList.toggle('active', filtroConf); if (filtroConf && filtroMx) { filtroMx = false; document.getElementById('f-mx').classList.remove('active'); } renderSurtidos(); });
-document.getElementById('f-mx').addEventListener('click', function() { filtroMx = !filtroMx; this.classList.toggle('active', filtroMx); if (filtroMx && filtroConf) { filtroConf = false; document.getElementById('f-conf').classList.remove('active'); } renderSurtidos(); });
-
-renderHero();
-renderWaterfall();
-renderVendedores();
-renderSurtidos();
-renderPendientes();
-renderAcciones();
-</script>
-</body>
-</html> + s.coVar.toLocaleString('es-AR') : '');
-
-    return '<tr>' +
-      '<td><div class="surtido-nombre">' + s.n + alertMk + '</div>' +
-      '<div style="font-size:10px;color:var(--text-mute)">' + s.it + ' productos' + (s.gv ? ' + ' + s.gv + ' gavetas' : '') + (s.vr ? ' + ' + s.vr + ' varios' : '') + '</div></td>' +
-      '<td class="num">' + s.it + '</td>' +
-      '<td class="num" style="color:var(--text-mute)">' + fmt$(s.vL) + '</td>' +
-      '<td class="num">' + fmt$(s.v46) + '</td>' +
-      '<td class="num">' + fmt$(s.vMk) + '</td>' +
-      '<td class="num">' + fmt$(s.v15) + '</td>' +
-      '<td class="num" title="' + costoDesglose + '">' + fmt$(s.co) + '</td>' +
-      '<td class="num" style="color:' + g46Color + ';font-weight:600"><div>' + fmt$(s.g46) + '</div>' + margenChip(s.m46) + '</td>' +
-      '<td class="num" style="color:' + gMkColor + ';font-weight:600"><div>' + fmt$(s.gMk) + '</div>' + margenChip(s.mMk) + '</td>' +
-    '</tr>';
-  }).join('');
-
-  if (lista.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:30px;color:var(--text-mute)">Sin resultados</td></tr>';
-  }
-}
-
-function renderPendientes() {
-  // Cuasi-completos
-  document.getElementById('lista-cuasi').innerHTML = SURT.cuasi.map(s => 
-    '<div class="block" style="border-left: 3px solid var(--warn)">' +
-    '<div class="block-title"><span>' + s.n + '</span>' +
-    '<span class="amount" style="color: var(--warn)">' + s.cg + '/' + s.it + ' items · ' + s.pct + '%</span></div>' +
-    '<div class="block-desc">Faltan cargar:<ul style="margin:6px 0 0 18px;padding:0;list-style:disc">' +
-    s.falta.map(f => '<li><strong>' + f.p + '</strong> N°' + f.n + ' "' + (f.d || '') + '" <span style="color:var(--text-mute)">[' + (f.f || 'sin fábrica') + ']</span></li>').join('') +
-    '</ul></div></div>'
-  ).join('');
-
-  // Parciales agrupados por fábrica mayoritaria faltante
-  document.getElementById('lista-parciales').innerHTML = SURT.parciales.map(s => {
-    const porFab = {};
-    s.falta.forEach(f => {
-      const k = f.f || '(sin fábrica)';
-      if (!porFab[k]) porFab[k] = [];
-      porFab[k].push(f);
-    });
-    const resumen = Object.entries(porFab).sort((a,b) => b[1].length - a[1].length)
-      .map(([f, items]) => items.length + '× ' + f)
-      .join(' · ');
-    return '<div class="block" style="border-left: 3px solid var(--bad)">' +
-      '<div class="block-title"><span>' + s.n + '</span>' +
-      '<span class="amount" style="color: var(--bad)">' + s.cg + '/' + s.it + ' items · ' + s.pct + '%</span></div>' +
-      '<div class="block-desc">Faltan ' + s.falta.length + ' items: ' + resumen + '</div></div>';
-  }).join('');
-
-  // Sin datos + Victor
-  document.getElementById('lista-sindatos-victor').innerHTML = 
-    SURT.sinDatos.map(s => 
-      '<div class="block" style="border-left: 3px solid var(--text-mute); margin-bottom: 8px">' +
-      '<div class="block-title"><span>' + s.n + '</span>' +
-      '<span class="amount" style="color: var(--text-mute)">' + s.it + ' items · 0%</span></div>' +
-      '<div class="block-desc">Ningún costo cargado</div></div>'
-    ).join('') +
-    SURT.victor.map(s => 
-      '<div class="block" style="border-left: 3px solid var(--purple); margin-bottom: 8px">' +
-      '<div class="block-title"><span>' + s.n + '</span>' +
-      '<span class="amount" style="color: var(--purple)">Victor (' + s.pctMax + '%)</span></div>' +
-      '<div class="block-desc">Fabricado por Victor — sin costo calculable</div></div>'
-    ).join('');
-}
-
-function renderAcciones() {
-  const r = calcular();
-  const acciones = [
-    { tipo: 'invest', num: '1', title: 'Terminar la obra lo antes posible', desc: 'La obra te está comiendo ' + fmt$(r.obra + r.prestamos) + '/mes entre inversión directa y préstamos. Cada mes adicional son $16M que no vuelven al bolsillo. Acelerar = recuperar liquidez más rápido.', impacto: 'Al terminar: +$13-16M/mes libres' },
-    { tipo: 'family', num: '2', title: 'Renegociar con Victor ahora que estás en obra', desc: 'En este momento necesitás cash. Proponerle pasar del 100% al 30-40% te libera $5-6M/mes para acelerar la obra o bajar deuda. Contexto ideal: "papá, estoy construyendo la cede y necesito revisar los números un tiempo".', impacto: '+$60-72M/año' },
-    { tipo: 'urgent', num: '3', title: 'Subir precios 10%', desc: 'Pasás de ' + fmt$(r.quedaLibre) + '/mes libres a ~' + fmt$(r.quedaLibre + r.ventasTotal * 0.10) + '/mes. En ferretería y autopartes un 10% pasa desapercibido.', impacto: '+' + fmt$(r.ventasTotal * 0.10) + '/mes · +' + fmt$(r.ventasTotal * 0.10 * 12) + '/año' },
-    { tipo: 'soon', num: '4', title: 'No tomar más deuda hasta fin de obra', desc: 'Ya tenés $9.3M/mes de cuotas. Agregar más préstamos te puede ahogar si un mes baja la venta. Aguantá hasta diciembre.', impacto: 'Preservar oxígeno financiero' },
-    { tipo: 'good', num: '5', title: 'Planear qué hacer con los $13-16M/mes de 2027', desc: 'Cuando termine la obra vas a tener más disponible. Definí ya: (a) pagar el resto de deuda rápido, (b) invertir en stock, (c) retirar más para vos, (d) otra cede/local. Decidirlo con anticipación evita que se "evapore".', impacto: 'Planificación 2027' },
-    { tipo: 'good', num: '6', title: 'Empezar a registrar retiros personales', desc: 'Aunque saques poco, anotar fecha + monto te da claridad. En fase de obra es crucial saber cuánto sacás realmente.', impacto: 'Control y claridad' }
-  ];
-  document.getElementById('lista-acciones').innerHTML = acciones.map(a => 
-    '<div class="rec-item ' + a.tipo + '"><div class="rec-num">' + a.num + '</div><div style="flex: 1;"><div class="rec-title">' + a.title + '</div><div class="rec-desc">' + a.desc + '</div>' + (a.impacto ? '<div class="rec-impact">→ ' + a.impacto + '</div>' : '') + '</div></div>'
-  ).join('');
-}
-
-// Tabs
-function switchTab(name) {
-  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
-  document.querySelectorAll('.view').forEach(v => v.classList.toggle('active', v.id === 'view-' + name));
-}
-document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => switchTab(t.dataset.tab)));
-
-// Modo privado
-const btnModo = document.getElementById('btn-modo');
-let modoPublico = false;
-btnModo.addEventListener('click', () => {
-  modoPublico = !modoPublico;
-  if (modoPublico) {
-    document.body.classList.add('modo-publico');
-    btnModo.textContent = '🔓 Mostrar todo';
-    btnModo.classList.add('active');
-  } else {
-    document.body.classList.remove('modo-publico');
-    btnModo.textContent = '🔒 Modo privado';
-    btnModo.classList.remove('active');
-  }
-});
-
-// Filtros surtidos
-document.getElementById('search').addEventListener('input', renderSurtidos);
-document.getElementById('sort-by').addEventListener('change', renderSurtidos);
-document.getElementById('sort-by').addEventListener('change', e => { ordenBy = e.target.value; renderSurtidos(); });
-document.getElementById('f-conf').addEventListener('click', function() { filtroConf = !filtroConf; this.classList.toggle('active', filtroConf); if (filtroConf && filtroMx) { filtroMx = false; document.getElementById('f-mx').classList.remove('active'); } renderSurtidos(); });
-document.getElementById('f-mx').addEventListener('click', function() { filtroMx = !filtroMx; this.classList.toggle('active', filtroMx); if (filtroMx && filtroConf) { filtroConf = false; document.getElementById('f-conf').classList.remove('active'); } renderSurtidos(); });
-
-renderHero();
-renderWaterfall();
-renderVendedores();
-renderSurtidos();
-renderPendientes();
 renderAcciones();
 </script>
 </body>
