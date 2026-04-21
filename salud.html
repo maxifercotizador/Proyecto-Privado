@@ -187,6 +187,7 @@
 <div class="tabs">
   <button class="tab active" data-tab="dashboard">Diagnóstico</button>
   <button class="tab" data-tab="surtidos">Surtidos</button>
+  <button class="tab" data-tab="pendientes">Pendientes</button>
   <button class="tab" data-tab="obra">Obra</button>
   <button class="tab" data-tab="vendedores">Vendedores</button>
   <button class="tab" data-tab="victor">Victor</button>
@@ -234,27 +235,97 @@
 <div class="view" id="view-surtidos">
   <div class="card">
     <h3>
-      Ganancia por surtido · versión estándar
-      <span class="badge" style="background: var(--panel-2); color: var(--text-mute);">65 surtidos analizados</span>
+      Ganancia por surtido
+      <span class="badge" style="background: var(--panel-2); color: var(--text-mute);">65 surtidos totales</span>
     </h3>
 
-    <div class="hero-inner" style="grid-template-columns: repeat(3, 1fr); margin-bottom: 16px;">
+    <div class="hero-inner" style="grid-template-columns: repeat(5, 1fr); margin-bottom: 16px;">
       <div class="kpi good">
-        <div class="kpi-label">Con costo confiable</div>
-        <div class="kpi-value" id="s-conf">—</div>
-        <div class="kpi-sub">Productos con ≥80% de costos cargados</div>
+        <div class="kpi-label">Completos</div>
+        <div class="kpi-value">${SURT.completos.length}</div>
+        <div class="kpi-sub">100% items con costo</div>
       </div>
       <div class="kpi warn">
-        <div class="kpi-label">Con datos parciales</div>
-        <div class="kpi-value" id="s-parc">—</div>
-        <div class="kpi-sub">Entre 1% y 79% de costos cargados</div>
+        <div class="kpi-label">Cuasi-completos</div>
+        <div class="kpi-value">${SURT.cuasi.length}</div>
+        <div class="kpi-sub">≥90% cargado, faltan 1-6 items</div>
+      </div>
+      <div class="kpi" style="border-left: 3px solid var(--bad);">
+        <div class="kpi-label">Parciales</div>
+        <div class="kpi-value">${SURT.parciales.length}</div>
+        <div class="kpi-sub">Entre 1% y 89%</div>
+      </div>
+      <div class="kpi" style="border-left: 3px solid var(--text-mute);">
+        <div class="kpi-label">Sin datos</div>
+        <div class="kpi-value">${SURT.sinDatos.length}</div>
+        <div class="kpi-sub">0% cargado</div>
       </div>
       <div class="kpi" style="border-left: 3px solid var(--purple);">
-        <div class="kpi-label">Sin costo (fabricados)</div>
-        <div class="kpi-value" id="s-mx">—</div>
-        <div class="kpi-sub">Los que fabrica Victor (MAXIFER)</div>
+        <div class="kpi-label">De Victor</div>
+        <div class="kpi-value">${SURT.victor.length}</div>
+        <div class="kpi-sub">No calculables</div>
       </div>
     </div>
+
+    <div class="filter-bar">
+      <input type="text" id="search" class="search-input" placeholder="Buscar surtido...">
+      <select id="sort-by">
+        <option value="g46">Ordenar: Ganancia 46% (mayor)</option>
+        <option value="gMk">Ordenar: Ganancia Micky (mayor)</option>
+        <option value="m46">Ordenar: Margen % 46%</option>
+        <option value="vL">Ordenar: Precio lista</option>
+        <option value="n">Ordenar: Nombre (A-Z)</option>
+      </select>
+    </div>
+
+    <div class="table-wrap">
+      <table class="simple" id="tbl-surtidos">
+        <thead>
+          <tr>
+            <th>Surtido</th>
+            <th class="num">Items</th>
+            <th class="num">Lista</th>
+            <th class="num" title="Vendido al 46% desc (Maxi, Nadia)">46% Maxi</th>
+            <th class="num" title="Vendido por Micky (46% + 25%)">Micky</th>
+            <th class="num" title="Vendido al 15% (Fede/Edu/Mas)">15%</th>
+            <th class="num">Costo</th>
+            <th class="num">Ganancia 46%</th>
+            <th class="num">Ganancia Micky</th>
+          </tr>
+        </thead>
+        <tbody id="tbl-surtidos-body"></tbody>
+      </table>
+    </div>
+
+    <div class="hint" style="margin-top: 14px;">
+      <strong>Cálculo completo.</strong> Incluye el costo de las gavetas físicas y "Varios" (Ch/Gr) estimado con regla del 10% de ganancia:
+      Gaveta Chica $11.818 · Mediana $13.636 · Grande $14.545 · Varios Ch $15.273 · Varios Gr $27.273.
+      La ⚠️ marca surtidos donde <strong>Micky vende a pérdida</strong>.
+      Los surtidos incompletos están en "Pendientes de costo".
+    </div>
+  </div>
+</div>
+
+<div class="view" id="view-pendientes">
+  <div class="card">
+    <h3>Surtidos pendientes de cargar costos</h3>
+    <p style="color: var(--text-dim); font-size: 13px; line-height: 1.6; margin-bottom: 16px;">
+      Estos surtidos tienen algún item sin costo cargado. La prioridad son los <strong>cuasi-completos</strong> (faltan 1-6 items) porque con cargar esos, quedan listos para análisis.
+    </p>
+
+    <h3 style="color: var(--warn);">Cuasi-completos — faltan solo algunos items</h3>
+    <div id="lista-cuasi"></div>
+
+    <h3 style="margin-top: 24px; color: var(--bad);">Parciales — falta más trabajo</h3>
+    <div id="lista-parciales"></div>
+
+    <h3 style="margin-top: 24px; color: var(--text-mute);">Sin datos ni fabricados por Victor</h3>
+    <p style="font-size: 12px; color: var(--text-dim); margin-bottom: 10px;">
+      Los de Victor no se pueden calcular (vos decidiste no estimar). Los "sin datos" necesitan carga completa.
+    </p>
+    <div id="lista-sindatos-victor"></div>
+  </div>
+</div>
 
     <div class="filter-bar">
       <input type="text" id="search" class="search-input" placeholder="Buscar surtido...">
@@ -271,15 +342,16 @@
 
     <div class="table-wrap">
       <table class="simple" id="tbl-surtidos">
-        <thead>
+                <thead>
           <tr>
             <th>Surtido</th>
             <th class="num">Items</th>
-            <th class="num">Piezas std</th>
-            <th class="num">Precio lista</th>
-            <th class="num">Costo</th>
-            <th class="num">Ganancia</th>
-            <th class="num">Margen</th>
+            <th class="num">Lista</th>
+            <th class="num" title="Venta al 46% descuento (Maxi, Nadia, sin comisión)">46% Maxi</th>
+            <th class="num" title="Venta con descuento de Micky: 46% + 25% adicional">Micky</th>
+            <th class="num" title="Venta con descuento 15% adicional (Fed/Edu/Mas)">15%</th>
+            <th class="num">Gan. 46%</th>
+            <th class="num">Gan. Micky</th>
             <th class="num">Confianza</th>
           </tr>
         </thead>
@@ -288,7 +360,7 @@
     </div>
 
     <div class="hint" style="margin-top: 14px;">
-      <strong>Cómo leer esto:</strong> "Precio lista" es cuánto sumás si alguien te compra un surtido completo sin descuento. "Costo" es lo que pagaste por esa mercadería. "Ganancia" es la diferencia. Los surtidos con <strong>0% costo</strong> son los que fabrica Victor (no tienen costo cargado en el sistema porque la fabricación es "gratis" para vos, aunque la materia prima SÍ cuesta). El margen real de esos es menor que el 100% que muestra.
+      <strong>Cálculo real con descuentos:</strong> "46% Maxi" es el precio al que te compran cuando vendés vos directo, Nadia, Mayeski (aplicás 46% desc sobre lista). "Micky" suma su 25% adicional (46% + 25% anidado = 59.5% desc efectivo). "15%" es lo que aplicás a Federico, Eduardo, Mascio. La ⚠️ marca surtidos donde Micky vende a pérdida. Los fabricados por Victor (sin costo cargado) no muestran ganancia porque falta cargar el costo real de la materia prima.
     </div>
   </div>
 </div>
@@ -410,7 +482,7 @@ const DATA = {
 };
 
 // SURTIDOS
-const SURTIDOS = [{"n":"RESORTES COMPLETO","c":"RES. COMP.","it":277,"pS":829,"pR":791,"vS":2439584,"vR":2192035,"cS":245790,"cR":237953,"gS":2193794,"gR":1954082,"mS":89.9,"mR":89.1,"pc":50,"mx":false},{"n":"CLIPS IMPORTADOS COMPLETO","c":"CL. IMP COM","it":324,"pS":1299,"pR":978,"vS":1650521,"vR":1312890,"cS":0,"cR":0,"gS":1650521,"gR":1312890,"mS":100,"mR":100,"pc":0,"mx":false},{"n":"CONEXIONES DE ALUMINIO N°2 - Nuevo","c":"CONEX. ALUM. 2 Ult.","it":57,"pS":115,"pR":114,"vS":1455068,"vR":1439068,"cS":0,"cR":0,"gS":1455068,"gR":1439068,"mS":100,"mR":100,"pc":0,"mx":true},{"n":"CONEXIONES DE ALUMINIO N°1 - Nuevo","c":"CONEX. ALUM. 1 Ult.","it":78,"pS":157,"pR":157,"vS":1401320,"vR":1401320,"cS":0,"cR":0,"gS":1401320,"gR":1401320,"mS":100,"mR":100,"pc":0,"mx":true},{"n":"CONECTORES NEUMATICOS / COMPLETO","c":"CON. NEU. COMPL.","it":118,"pS":386,"pR":262,"vS":1558353,"vR":1175810,"cS":415105,"cR":307101,"gS":1143249,"gR":868708,"mS":73.4,"mR":73.9,"pc":98,"mx":false},{"n":"ARANDELAS co-fi-alum","c":"ARAN. CO-FI-AL","it":77,"pS":1184,"pR":379,"vS":1133220,"vR":475069,"cS":134807,"cR":52665,"gS":998414,"gR":422404,"mS":88.1,"mR":88.9,"pc":90,"mx":false},{"n":"CONECTORES DE COMBUSTIBLE Reducido","c":"Conec. Comb. Red.","it":33,"pS":96,"pR":65,"vS":1104711,"vR":752074,"cS":154808,"cR":103205,"gS":949903,"gR":648869,"mS":86,"mR":86.3,"pc":79,"mx":false},{"n":"ALUMINIO LINEA TEMPERATURA","c":"Conex. Alum. L. Temp.","it":29,"pS":57,"pR":57,"vS":935502,"vR":935502,"cS":0,"cR":0,"gS":935502,"gR":935502,"mS":100,"mR":100,"pc":0,"mx":true},{"n":"PERILLAS DE COCINA Completo","c":"PER. COMP.","it":62,"pS":185,"pR":125,"vS":1149643,"vR":797762,"cS":258120,"cR":172080,"gS":891523,"gR":625682,"mS":77.5,"mR":78.4,"pc":97,"mx":false},{"n":"RESORTES LP","c":"RES. LP","it":40,"pS":118,"pR":80,"vS":817647,"vR":570098,"cS":23511,"cR":15674,"gS":794136,"gR":554424,"mS":97.1,"mR":97.3,"pc":20,"mx":false},{"n":"TORNILLOS ESPECIALES + TR COMPLETO","c":"TR Espec. + Torn.","it":134,"pS":666,"pR":402,"vS":770602,"vR":500361,"cS":18140,"cR":10884,"gS":752462,"gR":489477,"mS":97.6,"mR":97.8,"pc":14,"mx":false},{"n":"TERMINALES completo","c":"TEM. COMP.","it":83,"pS":1746,"pR":527,"vS":902480,"vR":568940,"cS":174910,"cR":99165,"gS":727571,"gR":469775,"mS":80.6,"mR":82.6,"pc":93,"mx":false},{"n":"Oring completo","c":"OR. COMP.","it":148,"pS":1571,"pR":736,"vS":814977,"vR":597833,"cS":102287,"cR":71334,"gS":712690,"gR":526499,"mS":87.4,"mR":88.1,"pc":99,"mx":false},{"n":"CONECTORES NUEVA INCORPORACION","c":"CON. NEU. NUEV.","it":49,"pS":167,"pR":109,"vS":926800,"vR":634781,"cS":237928,"cR":157947,"gS":688872,"gR":476835,"mS":74.3,"mR":75.1,"pc":96,"mx":false},{"n":"TORNILLERIA ESPECIAL Y TR IMPORTADAS","c":"Torn. Esp. TR. IMP.","it":114,"pS":565,"pR":341,"vS":666432,"vR":432659,"cS":0,"cR":0,"gS":666432,"gR":432659,"mS":100,"mR":100,"pc":0,"mx":false},{"n":"RACORD completo","c":"RAC. GR.","it":63,"pS":172,"pR":125,"vS":870493,"vR":659933,"cS":210274,"cR":148553,"gS":660220,"gR":511380,"mS":75.8,"mR":77.5,"pc":90,"mx":false},{"n":"CLIPS LINEA NACIONAL COMPLETO","c":"PL Nac. 160 M.","it":162,"pS":647,"pR":327,"vS":785018,"vR":452509,"cS":139587,"cR":69793,"gS":645432,"gR":382716,"mS":82.2,"mR":84.6,"pc":98,"mx":false},{"n":"RESORTES LC","c":"RES. LC","it":111,"pS":441,"pR":332,"vS":689359,"vR":539519,"cS":47884,"cR":35913,"gS":641475,"gR":503607,"mS":93.1,"mR":93.3,"pc":31,"mx":false},{"n":"CONECTORES PLASTICOS MANGUERAS","c":"CONC. PL","it":78,"pS":384,"pR":232,"vS":661193,"vR":421436,"cS":25878,"cR":15527,"gS":635315,"gR":405909,"mS":96.1,"mR":96.3,"pc":28,"mx":false},{"n":"CONECTORES NEUMATICOS","c":"CON. NEU.","it":71,"pS":234,"pR":154,"vS":824756,"vR":571028,"cS":225268,"cR":149155,"gS":599487,"gR":421873,"mS":72.7,"mR":73.9,"pc":97,"mx":false},{"n":"RESORTES LF","c":"RES. LF","it":89,"pS":353,"pR":179,"vS":681191,"vR":385595,"cS":100551,"cR":50275,"gS":580640,"gR":335320,"mS":85.2,"mR":87,"pc":67,"mx":false},{"n":"ESPARRAGOS DE ACERO","c":"ESPARR.","it":49,"pS":285,"pR":144,"vS":718834,"vR":382817,"cS":143739,"cR":71869,"gS":575095,"gR":310948,"mS":80,"mR":81.2,"pc":96,"mx":false},{"n":"TAPONES DE CARTER","c":"TAP.CAR.","it":28,"pS":106,"pR":80,"vS":766328,"vR":582196,"cS":194765,"cR":146074,"gS":571563,"gR":436122,"mS":74.6,"mR":74.9,"pc":93,"mx":false},{"n":"CARBONES COMPLETO","c":"CARB. CPL","it":60,"pS":148,"pR":90,"vS":759403,"vR":480442,"cS":206556,"cR":123934,"gS":552847,"gR":356508,"mS":72.8,"mR":74.2,"pc":97,"mx":false},{"n":"ARANDELAS DE GOMA / COMPLETA","c":"ARAND. COMP.","it":79,"pS":1293,"pR":461,"vS":546014,"vR":282471,"cS":0,"cR":0,"gS":546014,"gR":282471,"mS":100,"mR":100,"pc":0,"mx":true},{"n":"TORNILLERIA ESPECIAL","c":"Torn. Esp.","it":80,"pS":472,"pR":316,"vS":520460,"vR":365573,"cS":0,"cR":0,"gS":520460,"gR":365573,"mS":100,"mR":100,"pc":0,"mx":false},{"n":"UNIONES ORIENTABLES","c":"Uni. Orient.","it":31,"pS":119,"pR":61,"vS":646500,"vR":347650,"cS":129540,"cR":64770,"gS":516960,"gR":282880,"mS":80,"mR":81.4,"pc":61,"mx":true},{"n":"RACORD chico","c":"RAC. CH.","it":37,"pS":165,"pR":107,"vS":679964,"vR":501440,"cS":170368,"cR":124822,"gS":509595,"gR":376618,"mS":74.9,"mR":75.1,"pc":95,"mx":false},{"n":"ABRAZADERAS C/ GOMA","c":"ABRA. GOMA","it":38,"pS":255,"pR":147,"vS":502176,"vR":312672,"cS":0,"cR":0,"gS":502176,"gR":312672,"mS":100,"mR":100,"pc":0,"mx":true},{"n":"PERILLAS DE COCINA Surtido 2","c":"PER. 2","it":32,"pS":93,"pR":63,"vS":591072,"vR":414714,"cS":129600,"cR":86400,"gS":461472,"gR":328314,"mS":78.1,"mR":79.2,"pc":94,"mx":false},{"n":"RESORTES LB","c":"RES. LB","it":38,"pS":113,"pR":113,"vS":564025,"vR":564025,"cS":110953,"cR":110953,"gS":453072,"gR":453072,"mS":80.3,"mR":80.3,"pc":95,"mx":false},{"n":"PERILLAS DE COCINA Surtido 1","c":"PER. 1","it":32,"pS":93,"pR":63,"vS":575371,"vR":399848,"cS":128520,"cR":85680,"gS":446851,"gR":314168,"mS":77.7,"mR":78.6,"pc":94,"mx":false},{"n":"ESPINAS ELASTICAS","c":"ESP. ELAS.","it":56,"pS":839,"pR":265,"vS":526226,"vR":258849,"cS":87828,"cR":40966,"gS":438398,"gR":217883,"mS":83.3,"mR":84.2,"pc":96,"mx":false},{"n":"SUPLEMENTO 0,2 - SUPLEMENTO 0,8","c":"SUPL.0,2-0,8","it":79,"pS":1903,"pR":633,"vS":795616,"vR":264326,"cS":357678,"cR":104548,"gS":437938,"gR":159778,"mS":55,"mR":60.4,"pc":96,"mx":true},{"n":"GANCHOS - CHAVETAS / COMPLETO","c":"GA+CH COMP.","it":44,"pS":193,"pR":131,"vS":424441,"vR":357182,"cS":0,"cR":0,"gS":424441,"gR":357182,"mS":100,"mR":100,"pc":0,"mx":true},{"n":"CONEXIÓN DE ALUMINIO 27 Med. Mayor Rot.","c":"Conex. Alum. Mayor Rot.","it":29,"pS":56,"pR":56,"vS":424029,"vR":424029,"cS":0,"cR":0,"gS":424029,"gR":424029,"mS":100,"mR":100,"pc":0,"mx":true},{"n":"TUERCAS RAPIDAS COMPLETO","c":"TR L. Compl.","it":56,"pS":327,"pR":219,"vS":444290,"vR":310460,"cS":21768,"cR":14512,"gS":422522,"gR":295948,"mS":95.1,"mR":95.3,"pc":34,"mx":false},{"n":"ORING inicial","c":"OR. CH.","it":94,"pS":1334,"pR":556,"vS":477561,"vR":268783,"cS":59745,"cR":29784,"gS":417816,"gR":239000,"mS":87.5,"mR":88.9,"pc":98,"mx":false},{"n":"TERMINALES LINEA INDUSTRIAL","c":"TERM. LI.","it":23,"pS":300,"pR":86,"vS":503088,"vR":321769,"cS":87143,"cR":39950,"gS":415945,"gR":281819,"mS":82.7,"mR":87.6,"pc":74,"mx":false},{"n":"PLASTICOS chico","c":"PL CH.","it":92,"pS":544,"pR":364,"vS":500300,"vR":354134,"cS":95225,"cR":63483,"gS":405075,"gR":290650,"mS":81,"mR":82.1,"pc":98,"mx":false},{"n":"TERMINALES nuevo","c":"TERM. NU.","it":31,"pS":137,"pR":90,"vS":470280,"vR":353856,"cS":83359,"cR":55724,"gS":386921,"gR":298132,"mS":82.3,"mR":84.3,"pc":81,"mx":false},{"n":"CARBONES N°1","c":"CARB. 1","it":42,"pS":102,"pR":62,"vS":509100,"vR":318580,"cS":141000,"cR":84600,"gS":368100,"gR":233980,"mS":72.3,"mR":73.4,"pc":95,"mx":false},{"n":"RESORTES LA","c":"RES. LA","it":52,"pS":154,"pR":104,"vS":467575,"vR":332317,"cS":110149,"cR":73433,"gS":357426,"gR":258884,"mS":76.4,"mR":77.9,"pc":85,"mx":false},{"n":"INTERRUPTORES Y PULSADORES","c":"INTERR.PULSA.","it":47,"pS":138,"pR":93,"vS":440406,"vR":314937,"cS":83569,"cR":55713,"gS":356837,"gR":259225,"mS":81,"mR":82.3,"pc":96,"mx":true},{"n":"Oring grande","c":"OR. GR.","it":56,"pS":313,"pR":165,"vS":407235,"vR":239008,"cS":52296,"cR":27908,"gS":354939,"gR":211100,"mS":87.2,"mR":88.3,"pc":96,"mx":false},{"n":"ARANDELAS DE INYECCION","c":"Arand. Inyec.","it":42,"pS":442,"pR":242,"vS":424819,"vR":246628,"cS":76164,"cR":41544,"gS":348655,"gR":205084,"mS":82.1,"mR":83.2,"pc":86,"mx":true},{"n":"PICOS PARA GAS","c":"INYEC. GAS. ENV.","it":56,"pS":219,"pR":165,"vS":414079,"vR":331422,"cS":71614,"cR":55665,"gS":342466,"gR":275757,"mS":82.7,"mR":83.2,"pc":96,"mx":false},{"n":"TUERCAS RAPIDAS IMPORTADAS","c":"TR IMPO.","it":37,"pS":212,"pR":142,"vS":332260,"vR":231440,"cS":0,"cR":0,"gS":332260,"gR":231440,"mS":100,"mR":100,"pc":0,"mx":false},{"n":"TERMINALES chico","c":"TERM. CH.","it":42,"pS":1491,"pR":382,"vS":406110,"vR":183395,"cS":82357,"cR":30531,"gS":323753,"gR":152864,"mS":79.7,"mR":83.4,"pc":95,"mx":false},{"n":"ACCESORIOS DE BRONCE UNION POLIAMIDA","c":"Uni. Poliam.","it":35,"pS":153,"pR":94,"vS":370020,"vR":240812,"cS":53516,"cR":33169,"gS":316504,"gR":207643,"mS":85.5,"mR":86.2,"pc":94,"mx":false},{"n":"ARANDELAS DE GOMA","c":"ARAND. CH.","it":50,"pS":1011,"pR":483,"vS":304966,"vR":169736,"cS":0,"cR":0,"gS":304966,"gR":169736,"mS":100,"mR":100,"pc":0,"mx":true},{"n":"TOPES Y TAPONES DE GOMA","c":"TOP. TAP. GOMA","it":28,"pS":132,"pR":80,"vS":320075,"vR":204765,"cS":15537,"cR":9322,"gS":304538,"gR":195443,"mS":95.1,"mR":95.4,"pc":93,"mx":false},{"n":"TUERCAS RAPIDAS","c":"TUER. RAP.","it":37,"pS":557,"pR":212,"vS":371461,"vR":174189,"cS":78197,"cR":32622,"gS":293264,"gR":141567,"mS":78.9,"mR":81.3,"pc":89,"mx":false},{"n":"TUERCAS RAPIDAS Y TUERCAS REMACHES","c":"T. REM.+T. RAP.","it":57,"pS":478,"pR":333,"vS":347784,"vR":281032,"cS":62943,"cR":48690,"gS":284841,"gR":232342,"mS":81.9,"mR":82.7,"pc":93,"mx":false},{"n":"CONEXIONES PLASTICAS IMPORTADAS","c":"Conex. Import.","it":32,"pS":182,"pR":182,"vS":262824,"vR":262824,"cS":0,"cR":0,"gS":262824,"gR":262824,"mS":100,"mR":100,"pc":0,"mx":false},{"n":"ARANDELAS DE GOMA LINEA PESADA","c":"ARAND. LP.","it":30,"pS":283,"pR":171,"vS":257848,"vR":178709,"cS":0,"cR":0,"gS":257848,"gR":178709,"mS":100,"mR":100,"pc":0,"mx":true},{"n":"REGATONES","c":"REGAT.","it":64,"pS":564,"pR":377,"vS":311331,"vR":272054,"cS":57712,"cR":46710,"gS":253619,"gR":225344,"mS":81.5,"mR":82.8,"pc":97,"mx":false},{"n":"SEEGER DIN 471 - 472","c":"SEEG.","it":61,"pS":443,"pR":298,"vS":281555,"vR":238351,"cS":31831,"cR":26180,"gS":249724,"gR":212171,"mS":88.7,"mR":89,"pc":97,"mx":false},{"n":"CHAVETAS","c":"CHA. CH.","it":32,"pS":150,"pR":124,"vS":242453,"vR":219293,"cS":0,"cR":0,"gS":242453,"gR":219293,"mS":100,"mR":100,"pc":0,"mx":true},{"n":"INSERTOS","c":"INS.","it":26,"pS":122,"pR":74,"vS":260600,"vR":168280,"cS":34296,"cR":20578,"gS":226304,"gR":147702,"mS":86.8,"mR":87.8,"pc":92,"mx":false},{"n":"TUERCAS REMACHES","c":"TER. REM.","it":22,"pS":352,"pR":202,"vS":263015,"vR":181538,"cS":41352,"cR":26780,"gS":221663,"gR":154758,"mS":84.3,"mR":85.2,"pc":91,"mx":false},{"n":"ALEMITES","c":"ALEM.","it":25,"pS":140,"pR":94,"vS":257010,"vR":181273,"cS":46208,"cR":30805,"gS":210802,"gR":150468,"mS":82,"mR":83,"pc":92,"mx":false},{"n":"TARUGOS ESTRIADOS","c":"TAR. ESTR.","it":17,"pS":1742,"pR":752,"vS":210402,"vR":110554,"cS":0,"cR":0,"gS":210402,"gR":110554,"mS":100,"mR":100,"pc":0,"mx":false},{"n":"RETENES DE SEGURIDAD - ARANLOCK","c":"RET. ARAN.","it":23,"pS":902,"pR":527,"vS":167628,"vR":126664,"cS":27104,"cR":19093,"gS":140524,"gR":107571,"mS":83.8,"mR":84.9,"pc":91,"mx":false},{"n":"CHAVETAS PARTIDAS","c":"CHA. PART.","it":32,"pS":962,"pR":452,"vS":121411,"vR":83510,"cS":17101,"cR":10026,"gS":104311,"gR":73484,"mS":85.9,"mR":88,"pc":94,"mx":false}];
+const SURT = {"completos":[{"n":"CONECTORES NEUMATICOS / COMPLETO","c":"CON. NEU. COMPL.","it":116,"pS":386,"pR":262,"gv":5,"vr":1,"vL":1558353,"v46":841511,"vMk":631133,"v15":715284,"co":510559,"coItems":415105,"coGav":68182,"coVar":27273,"g46":330952,"gMk":120574,"g15":204725,"m46":39.3,"mMk":19.1,"m15":28.6},{"n":"PERILLAS DE COCINA Completo","c":"PER. COMP.","it":60,"pS":185,"pR":125,"gv":4,"vr":1,"vL":1149643,"v46":620807,"vMk":465605,"v15":527686,"co":343575,"coItems":258120,"coGav":58182,"coVar":27273,"g46":277233,"gMk":122031,"g15":184112,"m46":44.7,"mMk":26.2,"m15":34.9},{"n":"Oring completo","c":"OR. COMP.","it":146,"pS":1571,"pR":736,"gv":5,"vr":1,"vL":814977,"v46":440087,"vMk":330066,"v15":374074,"co":197741,"coItems":102287,"coGav":68182,"coVar":27273,"g46":242346,"gMk":132324,"g15":176333,"m46":55.1,"mMk":40.1,"m15":47.1},{"n":"CONECTORES NUEVA INCORPORACION","c":"CON. NEU. NUEV.","it":47,"pS":167,"pR":109,"gv":2,"vr":1,"vL":926800,"v46":500472,"vMk":375354,"v15":425401,"co":292473,"coItems":237928,"coGav":27273,"coVar":27273,"g46":207999,"gMk":82881,"g15":132928,"m46":41.6,"mMk":22.1,"m15":31.2},{"n":"ESPARRAGOS DE ACERO","c":"ESPARR.","it":47,"pS":285,"pR":144,"gv":2,"vr":1,"vL":718834,"v46":388170,"vMk":291128,"v15":329945,"co":186284,"coItems":143739,"coGav":27273,"coVar":15273,"g46":201886,"gMk":104843,"g15":143660,"m46":52,"mMk":36,"m15":43.5},{"n":"TAPONES DE CARTER","c":"TAP.CAR.","it":26,"pS":106,"pR":80,"gv":1,"vr":1,"vL":766328,"v46":413817,"vMk":310363,"v15":351745,"co":221856,"coItems":194765,"coGav":11818,"coVar":15273,"g46":191961,"gMk":88507,"g15":129888,"m46":46.4,"mMk":28.5,"m15":36.9},{"n":"RACORD chico","c":"RAC. CH.","it":35,"pS":165,"pR":107,"gv":1,"vr":1,"vL":679964,"v46":367181,"vMk":275385,"v15":312103,"co":199278,"coItems":170368,"coGav":13636,"coVar":15273,"g46":167903,"gMk":76108,"g15":112826,"m46":45.7,"mMk":27.6,"m15":36.2},{"n":"ESPINAS ELASTICAS","c":"ESP. ELAS.","it":54,"pS":839,"pR":265,"gv":2,"vr":1,"vL":526226,"v46":284162,"vMk":213121,"v15":241538,"co":126737,"coItems":87828,"coGav":23636,"coVar":15273,"g46":157425,"gMk":86385,"g15":114801,"m46":55.4,"mMk":40.5,"m15":47.5},{"n":"CONECTORES NEUMATICOS","c":"CON. NEU.","it":69,"pS":234,"pR":154,"gv":3,"vr":1,"vL":824756,"v46":445368,"vMk":334026,"v15":378563,"co":293450,"coItems":225268,"coGav":40909,"coVar":27273,"g46":151918,"gMk":40576,"g15":85113,"m46":34.1,"mMk":12.1,"m15":22.5},{"n":"CARBONES COMPLETO","c":"CARB. CPL","it":58,"pS":148,"pR":90,"gv":2,"vr":1,"vL":759403,"v46":410078,"vMk":307558,"v15":348566,"co":262919,"coItems":206556,"coGav":29091,"coVar":27273,"g46":147158,"gMk":44639,"g15":85647,"m46":35.9,"mMk":14.5,"m15":24.6},{"n":"ORING inicial","c":"OR. CH.","it":92,"pS":1334,"pR":556,"gv":3,"vr":1,"vL":477561,"v46":257883,"vMk":193412,"v15":219200,"co":115927,"coItems":59745,"coGav":40909,"coVar":15273,"g46":141956,"gMk":77486,"g15":103274,"m46":55,"mMk":40.1,"m15":47.1},{"n":"PERILLAS DE COCINA Surtido 1","c":"PER. 1","it":30,"pS":93,"pR":63,"gv":2,"vr":1,"vL":575371,"v46":310701,"vMk":233025,"v15":264096,"co":172884,"coItems":128520,"coGav":29091,"coVar":15273,"g46":137817,"gMk":60142,"g15":91212,"m46":44.4,"mMk":25.8,"m15":34.5},{"n":"PERILLAS DE COCINA Surtido 2","c":"PER. 2","it":30,"pS":93,"pR":63,"gv":2,"vr":1,"vL":591072,"v46":319179,"vMk":239384,"v15":271302,"co":185964,"coItems":129600,"coGav":29091,"coVar":27273,"g46":133215,"gMk":53420,"g15":85338,"m46":41.7,"mMk":22.3,"m15":31.5},{"n":"TOPES Y TAPONES DE GOMA","c":"TOP. TAP. GOMA","it":26,"pS":132,"pR":80,"gv":1,"vr":1,"vL":320075,"v46":172840,"vMk":129630,"v15":146914,"co":44446,"coItems":15537,"coGav":13636,"coVar":15273,"g46":128394,"gMk":85184,"g15":102468,"m46":74.3,"mMk":65.7,"m15":69.7},{"n":"Oring grande","c":"OR. GR.","it":54,"pS":313,"pR":165,"gv":2,"vr":1,"vL":407235,"v46":219907,"vMk":164930,"v15":186921,"co":94842,"coItems":52296,"coGav":27273,"coVar":15273,"g46":125065,"gMk":70088,"g15":92079,"m46":56.9,"mMk":42.5,"m15":49.3},{"n":"ACCESORIOS DE BRONCE UNION POLIAMIDA","c":"Uni. Poliam.","it":33,"pS":153,"pR":94,"gv":1,"vr":1,"vL":370020,"v46":199811,"vMk":149858,"v15":169839,"co":80607,"coItems":53516,"coGav":11818,"coVar":15273,"g46":119204,"gMk":69251,"g15":89232,"m46":59.7,"mMk":46.2,"m15":52.5},{"n":"PLASTICOS chico","c":"PL CH.","it":90,"pS":544,"pR":364,"gv":3,"vr":1,"vL":500300,"v46":270162,"vMk":202622,"v15":229638,"co":151407,"coItems":95225,"coGav":40909,"coVar":15273,"g46":118755,"gMk":51215,"g15":78231,"m46":44,"mMk":25.3,"m15":34.1},{"n":"PICOS PARA GAS","c":"INYEC. GAS. ENV.","it":54,"pS":219,"pR":165,"gv":2,"vr":1,"vL":414079,"v46":223603,"vMk":167702,"v15":190062,"co":110523,"coItems":71614,"coGav":23636,"coVar":15273,"g46":113080,"gMk":57180,"g15":79540,"m46":50.6,"mMk":34.1,"m15":41.8},{"n":"RESORTES LB","c":"RES. LB","it":36,"pS":113,"pR":113,"gv":4,"vr":1,"vL":564025,"v46":304573,"vMk":228430,"v15":258887,"co":192771,"coItems":110953,"coGav":54545,"coVar":27273,"g46":111802,"gMk":35659,"g15":66116,"m46":36.7,"mMk":15.6,"m15":25.5},{"n":"CARBONES N°1","c":"CARB. 1","it":40,"pS":102,"pR":62,"gv":1,"vr":1,"vL":509100,"v46":274914,"vMk":206185,"v15":233677,"co":170818,"coItems":141000,"coGav":14545,"coVar":15273,"g46":104096,"gMk":35367,"g15":62859,"m46":37.9,"mMk":17.2,"m15":26.9},{"n":"TERMINALES chico","c":"TERM. CH.","it":40,"pS":1491,"pR":382,"gv":2,"vr":1,"vL":406110,"v46":219299,"vMk":164475,"v15":186405,"co":121267,"coItems":82357,"coGav":23636,"coVar":15273,"g46":98033,"gMk":43208,"g15":65138,"m46":44.7,"mMk":26.3,"m15":34.9},{"n":"INTERRUPTORES Y PULSADORES","c":"INTERR.PULSA.","it":45,"pS":138,"pR":93,"gv":2,"vr":1,"vL":440406,"v46":237819,"vMk":178365,"v15":202146,"co":139932,"coItems":83569,"coGav":29091,"coVar":27273,"g46":97887,"gMk":38432,"g15":62214,"m46":41.2,"mMk":21.5,"m15":30.8},{"n":"SEEGER DIN 471 - 472","c":"SEEG.","it":59,"pS":443,"pR":298,"gv":2,"vr":1,"vL":281555,"v46":152040,"vMk":114030,"v15":129234,"co":70740,"coItems":31831,"coGav":23636,"coVar":15273,"g46":81299,"gMk":43289,"g15":58493,"m46":53.5,"mMk":38,"m15":45.3},{"n":"INSERTOS","c":"INS.","it":24,"pS":122,"pR":74,"gv":1,"vr":1,"vL":260600,"v46":140724,"vMk":105543,"v15":119615,"co":61387,"coItems":34296,"coGav":11818,"coVar":15273,"g46":79337,"gMk":44156,"g15":58228,"m46":56.4,"mMk":41.8,"m15":48.7},{"n":"TUERCAS REMACHES","c":"TER. REM.","it":20,"pS":352,"pR":202,"gv":1,"vr":1,"vL":263015,"v46":142028,"vMk":106521,"v15":120724,"co":70261,"coItems":41352,"coGav":13636,"coVar":15273,"g46":71767,"gMk":36260,"g15":50463,"m46":50.5,"mMk":34,"m15":41.8},{"n":"ALEMITES","c":"ALEM.","it":23,"pS":140,"pR":94,"gv":1,"vr":1,"vL":257010,"v46":138785,"vMk":104089,"v15":117968,"co":73299,"coItems":46208,"coGav":11818,"coVar":15273,"g46":65487,"gMk":30790,"g15":44669,"m46":47.2,"mMk":29.6,"m15":37.9},{"n":"RETENES DE SEGURIDAD - ARANLOCK","c":"RET. ARAN.","it":21,"pS":902,"pR":527,"gv":1,"vr":1,"vL":167628,"v46":90519,"vMk":67889,"v15":76941,"co":54195,"coItems":27104,"coGav":11818,"coVar":15273,"g46":36324,"gMk":13694,"g15":22746,"m46":40.1,"mMk":20.2,"m15":29.6},{"n":"SUPLEMENTO 0,2 - SUPLEMENTO 0,8","c":"SUPL.0,2-0,8","it":76,"pS":1903,"pR":633,"gv":2,"vr":1,"vL":795616,"v46":429633,"vMk":322224,"v15":365188,"co":396587,"coItems":357678,"coGav":23636,"coVar":15273,"g46":33045,"gMk":-74363,"g15":-31400,"m46":7.7,"mMk":-23.1,"m15":-8.6},{"n":"REGATONES","c":"REGAT.","it":62,"pS":564,"pR":377,"gv":4,"vr":1,"vL":311331,"v46":168119,"vMk":126089,"v15":142901,"co":143167,"coItems":57712,"coGav":58182,"coVar":27273,"g46":24952,"gMk":-17078,"g15":-266,"m46":14.8,"mMk":-13.5,"m15":-0.2},{"n":"CHAVETAS PARTIDAS","c":"CHA. PART.","it":30,"pS":962,"pR":452,"gv":1,"vr":1,"vL":121411,"v46":65562,"vMk":49172,"v15":55728,"co":44192,"coItems":17101,"coGav":11818,"coVar":15273,"g46":21371,"gMk":4980,"g15":11536,"m46":32.6,"mMk":10.1,"m15":20.7}],"cuasi":[{"n":"TUERCAS RAPIDAS","it":35,"cg":33,"pct":94,"falta":[{"p":"TUERCAS RAPIDAS","n":"19","d":"Reten parker - Park 8 - 11 mm - 24 mm","f":"TOBAR"},{"p":"TUERCAS RAPIDAS","n":"35","d":"Aranlock 9x18","f":"TOBAR"}]},{"n":"TERMINALES completo","it":81,"cg":77,"pct":95,"falta":[{"p":"TERMINALES","n":"93","d":"Terminal cobre estañado ojal - Cable 70 - Ojal: 10mm","f":"LCT"},{"p":"TERMINALES","n":"94","d":"Terminal cobre estañado ojal - Cable 70 - Ojal: 11mm","f":"LCT"},{"p":"TERMINALES","n":"95","d":"Terminal cobre estañado ojal - Cable 95 - Ojal: 11mm","f":"LCT"},{"p":"TERMINALES","n":"96","d":"Terminal cobre estañado ojal - Cable 95 - Ojal: 13mm","f":"LCT"}]},{"n":"ARANDELAS co-fi-alum","it":75,"cg":69,"pct":92,"falta":[{"p":"ARANDELAS DE POLIPROPILENO","n":"1/8 3x8","d":"1/8 3x8","f":"KLOSTER"},{"p":"ARANDELAS DE POLIPROPILENO","n":"5/32 4x10","d":"5/32 4x10","f":"KLOSTER"},{"p":"ARANDELAS DE POLIPROPILENO","n":"3/16  5x12","d":"3/16  5x12","f":"KLOSTER"},{"p":"ARANDELAS DE POLIPROPILENO","n":"1/4  6,5x14","d":"1/4  6,5x14","f":"KLOSTER"},{"p":"ARANDELAS DE POLIPROPILENO","n":"5/16  8x16","d":"5/16  8x16","f":"KLOSTER"},{"p":"ARANDELAS DE POLIPROPILENO","n":"3/8  10x18","d":"3/8  10x18","f":"KLOSTER"}]},{"n":"RACORD completo","it":61,"cg":57,"pct":93,"falta":[{"p":"RACORD - ACOPLES - REDUCCIONES - ENTREROSCAS","n":"95","d":"Milimétricos 10x1,5 - M 6","f":"INSERTOS"},{"p":"RACORD - ACOPLES - REDUCCIONES - ENTREROSCAS","n":"96","d":"Milimétricos 10x1,5 - M 8","f":"INSERTOS"},{"p":"RACORD - ACOPLES - REDUCCIONES - ENTREROSCAS","n":"97","d":"Milimétricos 12x1,5 - M 6","f":"INSERTOS"},{"p":"RACORD - ACOPLES - REDUCCIONES - ENTREROSCAS","n":"98","d":"Milimétricos 12x1,5 - M 8","f":"INSERTOS"}]},{"n":"TUERCAS RAPIDAS Y TUERCAS REMACHES","it":55,"cg":53,"pct":96,"falta":[{"p":"TUERCAS RAPIDAS","n":"19","d":"Reten parker - Park 8 - 11 mm - 24 mm","f":"TOBAR"},{"p":"TUERCAS RAPIDAS","n":"35","d":"Aranlock 9x18","f":"TOBAR"}]},{"n":"ARANDELAS DE INYECCION","it":40,"cg":36,"pct":90,"falta":[{"p":"ARANDELAS DE INYECCION","n":"101","d":"7,5 x 15 x 3 - ","f":"DAHE.DIESEL"},{"p":"ARANDELAS DE INYECCION","n":"102","d":"8 x 13 x 2,5 - ","f":"DAHE.DIESEL"},{"p":"ARANDELAS DE INYECCION","n":"103","d":"14,5 x 21 x 2 - R 19 DIESEL","f":"DAHE.DIESEL"},{"p":"ARANDELAS DE INYECCION","n":"104","d":"16 x 21 x 2 - PEUGEOR 405 D","f":"DAHE.DIESEL"}]},{"n":"CLIPS LINEA NACIONAL COMPLETO","it":160,"cg":159,"pct":99,"falta":[{"p":"PLASTICOS","n":"398","d":"CLIP PRECINTO UNIVERSAL","f":"FADER"}]}],"parciales":[{"n":"RESORTES LF","it":87,"cg":60,"pct":69,"falta":[{"p":"RESORTES LINEA FERRETERIA","n":"2","d":"0,5 x 6 x 50 - Expansión","f":"RESORTES"},{"p":"RESORTES LINEA FERRETERIA","n":"7","d":"0,8 x 10 x 50 - Expansión","f":"RESORTES"},{"p":"RESORTES LINEA FERRETERIA","n":"28","d":"2,25 x 12 x 175 - Expansión","f":"RESORTES"},{"p":"RESORTES LINEA FERRETERIA","n":"31","d":"1 x 7 x 22 - Expansión","f":"RESORTES"},{"p":"RESORTES LINEA FERRETERIA","n":"32","d":"1 x 8 x 25 - Expansión","f":"RESORTES"},{"p":"RESORTES LINEA FERRETERIA","n":"34","d":"1,5 x  x  - Expansión","f":"RESORTES"},{"p":"RESORTES LINEA FERRETERIA","n":"35","d":"1,25 x 14-19 x 25 - Compresión","f":"RESORTES"},{"p":"RESORTES LINEA FERRETERIA","n":"36","d":"1,5 x .10-18 x 35 - Compresión","f":"RESORTES"},{"p":"RESORTES LINEA FERRETERIA","n":"37","d":"1,5 x .14-18 x 90 - Compresión","f":"RESORTES"},{"p":"RESORTES LINEA FERRETERIA","n":"38","d":"1 x 5 x 5 - Torsión","f":"RESORTES"}],"totalFaltan":27},{"n":"RESORTES LA","it":50,"cg":44,"pct":88,"falta":[{"p":"RESORTES LINEA AUTOMOTOR","n":"421","d":"RESORTES LINEA FIAT - CLIP P/CABLE COMANDO DE FRENO - FIAT 128","f":"RESORTESGENERALES"},{"p":"RESORTES LINEA AUTOMOTOR","n":"481","d":"RESORTES LINEA FIAT - SEGURO P/PERNO PASADOR PAST. F/ A DISCO FIAT 1500/1600/125/MULTICARGA","f":"RESORTESGENERALES"},{"p":"RESORTES LINEA AUTOMOTOR","n":"690","d":"RESORTES LINEA PEUGEOT - CILINDRO MAESTRO DE EMBRAGUE PEUGEOT 404/504/505","f":"RESORTESGENERALES"},{"p":"RESORTES LINEA AUTOMOTOR","n":"794","d":"UNIVERSALES - RESORTE DE EMBRAGUE UNIVERSAL MEDIANO","f":"RESORTESGENERALES"},{"p":"RESORTES LINEA AUTOMOTOR","n":"796","d":"UNIVERSALES - RESORTE ACELERADOR UNIVERSAL CORTO","f":"RESORTESGENERALES"},{"p":"RESORTES LINEA AUTOMOTOR","n":"797","d":"UNIVERSALES - RESORTE ACELERADOR UNIVERSAL MEDIANO","f":"RESORTESGENERALES"}],"totalFaltan":6},{"n":"RESORTES LC","it":109,"cg":34,"pct":31,"falta":[{"p":"RESORTES LINEA COMPLEMENTARIA","n":"270","d":"0,3 x 3 x 15 - Expansión","f":"RESORTES"},{"p":"RESORTES LINEA COMPLEMENTARIA","n":"271","d":"0,3 x 4,5 x 22 - Expansión","f":"RESORTES"},{"p":"RESORTES LINEA COMPLEMENTARIA","n":"272","d":"0,3 x 4,2 x 15 - Expansión","f":"RESORTES"},{"p":"RESORTES LINEA COMPLEMENTARIA","n":"284","d":"1,5 x 12 x 51 - Expansión","f":"RESORTES"},{"p":"RESORTES LINEA COMPLEMENTARIA","n":"285","d":"1,5 x 12 x 140 - Expansión","f":"RESORTES"},{"p":"RESORTES LINEA COMPLEMENTARIA","n":"288","d":"3 x 17 x 56 - Espansión","f":"RESORTES"},{"p":"RESORTES LINEA COMPLEMENTARIA","n":"290","d":"1,25 x 10 - Torsión","f":"RESORTES"},{"p":"RESORTES LINEA COMPLEMENTARIA","n":"291","d":"0,3 x 4 x 4,5 - Torsión","f":"RESORTES"},{"p":"RESORTES LINEA COMPLEMENTARIA","n":"292","d":"0,5 x 4,5 x 3 - Torsión","f":"RESORTES"},{"p":"RESORTES LINEA COMPLEMENTARIA","n":"294","d":"0,8 x 4,5 x 8 - Torsión","f":"RESORTES"}],"totalFaltan":75},{"n":"RESORTES LP","it":38,"cg":8,"pct":21,"falta":[{"p":"RESORTES LINEA PESADA","n":"110","d":"2 x 12 x 150 - Compresión","f":"RESORTES"},{"p":"RESORTES LINEA PESADA","n":"112","d":"2 x 18 x 130 - Compresión","f":"RESORTES"},{"p":"RESORTES LINEA PESADA","n":"120","d":"2 x 30 x 100 - Compresión","f":"RESORTES"},{"p":"RESORTES LINEA PESADA","n":"122","d":"2 x 34 x 42 - Compresión","f":"RESORTES"},{"p":"RESORTES LINEA PESADA","n":"124","d":"2,25 x 27 x 37 - Compresión","f":"RESORTES"},{"p":"RESORTES LINEA PESADA","n":"126","d":"2,5 x 25 x 55 - Compresión","f":"RESORTES"},{"p":"RESORTES LINEA PESADA","n":"128","d":"2,5 x 33 x 50 - Compresión","f":"RESORTES"},{"p":"RESORTES LINEA PESADA","n":"130","d":"2,5 x 37 x 50 - Compresión","f":"RESORTES"},{"p":"RESORTES LINEA PESADA","n":"134","d":"2,75 x 38 x 42 - Compresión","f":"RESORTES"},{"p":"RESORTES LINEA PESADA","n":"138","d":"3 x 18 x 150 - Compresión","f":"RESORTES"}],"totalFaltan":30},{"n":"RESORTES COMPLETO","it":270,"cg":138,"pct":51,"falta":[{"p":"RESORTES LINEA FERRETERIA","n":"2","d":"0,5 x 6 x 50 - Expansión","f":"RESORTES"},{"p":"RESORTES LINEA FERRETERIA","n":"7","d":"0,8 x 10 x 50 - Expansión","f":"RESORTES"},{"p":"RESORTES LINEA FERRETERIA","n":"28","d":"2,25 x 12 x 175 - Expansión","f":"RESORTES"},{"p":"RESORTES LINEA FERRETERIA","n":"31","d":"1 x 7 x 22 - Expansión","f":"RESORTES"},{"p":"RESORTES LINEA FERRETERIA","n":"32","d":"1 x 8 x 25 - Expansión","f":"RESORTES"},{"p":"RESORTES LINEA FERRETERIA","n":"34","d":"1,5 x  x  - Expansión","f":"RESORTES"},{"p":"RESORTES LINEA FERRETERIA","n":"35","d":"1,25 x 14-19 x 25 - Compresión","f":"RESORTES"},{"p":"RESORTES LINEA FERRETERIA","n":"36","d":"1,5 x .10-18 x 35 - Compresión","f":"RESORTES"},{"p":"RESORTES LINEA FERRETERIA","n":"37","d":"1,5 x .14-18 x 90 - Compresión","f":"RESORTES"},{"p":"RESORTES LINEA FERRETERIA","n":"38","d":"1 x 5 x 5 - Torsión","f":"RESORTES"}],"totalFaltan":132},{"n":"CONECTORES PLASTICOS MANGUERAS","it":76,"cg":22,"pct":29,"falta":[{"p":"CONECTORES PLASTICOS MANGUERAS","n":"2","d":"Niple plástico para unir manguera de 5mm","f":"JORGEMANGUERA"},{"p":"CONECTORES PLASTICOS MANGUERAS","n":"3","d":"Niple plástico para unir manguera de 6mm","f":"JORGEMANGUERA"},{"p":"CONECTORES PLASTICOS MANGUERAS","n":"4","d":"Niple plástico para unir manguera de 8 mm","f":"JORGEMANGUERA"},{"p":"CONECTORES PLASTICOS MANGUERAS","n":"5","d":"Niple plástico para unir manguera de 10 mm","f":"JORGEMANGUERA"},{"p":"CONECTORES PLASTICOS MANGUERAS","n":"7","d":"Niple plástico para unir manguera de 13 mm","f":"JORGEMANGUERA"},{"p":"CONECTORES PLASTICOS MANGUERAS","n":"8","d":"Niple plástico para unir manguera de16 mm","f":"JORGEMANGUERA"},{"p":"CONECTORES PLASTICOS MANGUERAS","n":"9","d":"Niple plástico para unir manguera de 19 mm","f":"JORGEMANGUERA"},{"p":"CONECTORES PLASTICOS MANGUERAS","n":"10","d":"Niple plástico para unir manguera de 22 mm","f":"JORGEMANGUERA"},{"p":"CONECTORES PLASTICOS MANGUERAS","n":"12","d":"Conector 3 Vías limpiaparabrisas 5 mm","f":"JORGEMANGUERA"},{"p":"CONECTORES PLASTICOS MANGUERAS","n":"20","d":"Conector de calefacción purgador plástico de P 505","f":"JORGEMANGUERA"}],"totalFaltan":54},{"n":"TERMINALES nuevo","it":29,"cg":25,"pct":86,"falta":[{"p":"TERMINALES","n":"93","d":"Terminal cobre estañado ojal - Cable 70 - Ojal: 10mm","f":"LCT"},{"p":"TERMINALES","n":"94","d":"Terminal cobre estañado ojal - Cable 70 - Ojal: 11mm","f":"LCT"},{"p":"TERMINALES","n":"95","d":"Terminal cobre estañado ojal - Cable 95 - Ojal: 11mm","f":"LCT"},{"p":"TERMINALES","n":"96","d":"Terminal cobre estañado ojal - Cable 95 - Ojal: 13mm","f":"LCT"}],"totalFaltan":4},{"n":"TERMINALES LINEA INDUSTRIAL","it":21,"cg":17,"pct":81,"falta":[{"p":"TERMINALES","n":"93","d":"Terminal cobre estañado ojal - Cable 70 - Ojal: 10mm","f":"LCT"},{"p":"TERMINALES","n":"94","d":"Terminal cobre estañado ojal - Cable 70 - Ojal: 11mm","f":"LCT"},{"p":"TERMINALES","n":"95","d":"Terminal cobre estañado ojal - Cable 95 - Ojal: 11mm","f":"LCT"},{"p":"TERMINALES","n":"96","d":"Terminal cobre estañado ojal - Cable 95 - Ojal: 13mm","f":"LCT"}],"totalFaltan":4},{"n":"UNIONES ORIENTABLES","it":29,"cg":19,"pct":66,"falta":[{"p":"UNIONES ORIENTABLES","n":"2","d":" Bulon 8 x 075 x 25 mm bomba rotat diesel ","f":"DAHE.DIESEL"},{"p":"UNIONES ORIENTABLES","n":"5","d":" Bulon 8 x 1 x 33 doble ","f":"DAHE.DIESEL"},{"p":"UNIONES ORIENTABLES","n":"10","d":" Bulon 10 x 1 x 25 mm (2 salidas) bombas de freno","f":"DAHE.DIESEL"},{"p":"UNIONES ORIENTABLES","n":"11","d":" Bulon 10 x 1 x 25 mm (3 salidas) ","f":"DAHE.DIESEL"},{"p":"UNIONES ORIENTABLES","n":"13","d":" Bulon 10 x 1 x 35 mm doble ","f":"DAHE.DIESEL"},{"p":"UNIONES ORIENTABLES","n":"21","d":" Bulon 12 x 1,5 x 27 mm bombas rotativas","f":"DAHE.DIESEL"},{"p":"UNIONES ORIENTABLES","n":"40","d":" Union orientable 8 mm (nucleo) 6.4mm(vastago) ","f":"DAHE.DIESEL"},{"p":"UNIONES ORIENTABLES","n":"41","d":" Union orientable 10 mm x 6,4 mm ","f":"DAHE.DIESEL"},{"p":"UNIONES ORIENTABLES","n":"42","d":" Union orientable 8 mm x 8,5 mm ","f":"DAHE.DIESEL"},{"p":"UNIONES ORIENTABLES","n":"43","d":" Union orientable 10 mm x 8,5 mm ","f":"DAHE.DIESEL"}],"totalFaltan":10},{"n":"CONECTORES DE COMBUSTIBLE Reducido","it":31,"cg":26,"pct":84,"falta":[{"p":"CONECTORES DE COMBUSTIBLE","n":"1","d":"SAE 7.89 ID-6 - Acople recto","f":"ALNAT"},{"p":"CONECTORES DE COMBUSTIBLE","n":"18","d":"SAE 7.89 ID-10 - Codo 90°","f":"ALNAT"},{"p":"CONECTORES DE COMBUSTIBLE","n":"52","d":"SAE 9.89 ID-6 - Acople recto","f":"ALNAT"},{"p":"CONECTORES DE COMBUSTIBLE","n":"53","d":"SAE 9.89 ID-6 - Codo 90°","f":"ALNAT"},{"p":"CONECTORES DE COMBUSTIBLE","n":"59","d":"SAE 9.89 ID-6 - Conector macho","f":"ALNAT"}],"totalFaltan":5},{"n":"TUERCAS RAPIDAS COMPLETO","it":54,"cg":19,"pct":35,"falta":[{"p":"TUERCAS RAPIDAS NUEVAS","n":"75","d":"M 5 - 3/16- PARK 8/10 (25 x 18)","f":""},{"p":"TUERCAS RAPIDAS NUEVAS","n":"76","d":"M 5 - 3/16- PARK  8/10 (cuerpo GR)","f":""},{"p":"TUERCAS RAPIDAS NUEVAS","n":"77","d":"M 6 - 1/4- PARK 12 (20 x 20)","f":""},{"p":"TUERCAS RAPIDAS NUEVAS","n":"78","d":"M 6 - 1/4- PARK 12  (22 x 16)","f":""},{"p":"TUERCAS RAPIDAS NUEVAS","n":"79","d":"M 6 - 1/4- PARK 12 (16 x 28)","f":""},{"p":"TUERCAS RAPIDAS NUEVAS","n":"80","d":"M 6 - 1/4- PARK 12 (cuerpo Grande)","f":""},{"p":"TUERCAS RAPIDAS NUEVAS","n":"81","d":"M 6 con Tuerca de acero (28 x 19)","f":""},{"p":"TUERCAS RAPIDAS NUEVAS","n":"82","d":"PARK 6 (11 x 17 mm)","f":""},{"p":"TUERCAS RAPIDAS NUEVAS","n":"83","d":"PARK 6 (11 x 25 mm)","f":""},{"p":"TUERCAS RAPIDAS NUEVAS","n":"84","d":"PARK 6 (16 x 19 mm)","f":""}],"totalFaltan":35},{"n":"TORNILLOS ESPECIALES + TR COMPLETO","it":132,"cg":19,"pct":14,"falta":[{"p":"TORNILLERIA ESPECIAL","n":"1","d":"5 x 12 negro","f":""},{"p":"TORNILLERIA ESPECIAL","n":"3","d":"6 x 13 estañado","f":""},{"p":"TORNILLERIA ESPECIAL","n":"4","d":"6 x 12 negro","f":""},{"p":"TORNILLERIA ESPECIAL","n":"5","d":"6 x 14 negro","f":""},{"p":"TORNILLERIA ESPECIAL","n":"6","d":"6 x 16 negro c/arand","f":""},{"p":"TORNILLERIA ESPECIAL","n":"7","d":"6 x 16 estañado","f":""},{"p":"TORNILLERIA ESPECIAL","n":"9","d":"6 x 18 negro c/arand","f":""},{"p":"TORNILLERIA ESPECIAL","n":"13","d":"6 x 25 negro c/arand","f":""},{"p":"TORNILLERIA ESPECIAL","n":"14","d":"6 x 60 negro c/arand","f":""},{"p":"TORNILLERIA ESPECIAL","n":"16","d":"Park 6x10 neg c/aran","f":""}],"totalFaltan":113}],"sinDatos":[{"n":"TARUGOS ESTRIADOS","it":15},{"n":"CLIPS IMPORTADOS COMPLETO","it":322},{"n":"TORNILLERIA ESPECIAL","it":78},{"n":"TUERCAS RAPIDAS IMPORTADAS","it":35},{"n":"TORNILLERIA ESPECIAL Y TR IMPORTADAS","it":112},{"n":"CONEXIONES PLASTICAS IMPORTADAS","it":30}],"victor":[{"n":"GANCHOS - CHAVETAS / COMPLETO","it":44,"pctMax":95},{"n":"CHAVETAS","it":32,"pctMax":94},{"n":"ARANDELAS DE GOMA","it":50,"pctMax":96},{"n":"ARANDELAS DE GOMA LINEA PESADA","it":30,"pctMax":93},{"n":"ARANDELAS DE GOMA / COMPLETA","it":79,"pctMax":96},{"n":"ABRAZADERAS C/ GOMA","it":38,"pctMax":95},{"n":"CONEXIONES DE ALUMINIO N°1 - Nuevo","it":78,"pctMax":99},{"n":"CONEXIONES DE ALUMINIO N°2 - Nuevo","it":57,"pctMax":98},{"n":"CONEXIÓN DE ALUMINIO 27 Med. Mayor Rot.","it":29,"pctMax":97},{"n":"ALUMINIO LINEA TEMPERATURA","it":29,"pctMax":52}]};
 
 function fmt$(n) {
   if (n == null || isNaN(n)) return '—';
@@ -499,68 +571,99 @@ function renderVendedores() {
   }).join('') + '<tr style="border-top: 2px solid var(--border-strong); font-weight: 600;"><td>TOTAL</td><td class="num">' + fmt$(tn) + '</td><td class="num"></td><td class="num" style="color: var(--bad);">' + fmt$(ts) + '</td><td class="num" style="color: var(--good);">' + fmt$(tm) + '</td></tr>';
 }
 
-// SURTIDOS - render
-let filtroSearch = '', filtroConf = false, filtroMx = false, ordenBy = 'gS';
 function renderSurtidos() {
-  // KPIs
-  const conf = SURTIDOS.filter(s => s.pc >= 80 && !s.mx).length;
-  const parc = SURTIDOS.filter(s => s.pc > 0 && s.pc < 80).length;
-  const mx = SURTIDOS.filter(s => s.mx).length;
-  document.getElementById('s-conf').textContent = conf;
-  document.getElementById('s-parc').textContent = parc;
-  document.getElementById('s-mx').textContent = mx;
+  let lista = SURT.completos.slice();
+  const q = document.getElementById('search').value.toLowerCase();
+  if (q) lista = lista.filter(s => s.n.toLowerCase().includes(q));
 
-  let lista = SURTIDOS.slice();
-  if (filtroSearch) {
-    const q = filtroSearch.toLowerCase();
-    lista = lista.filter(s => s.n.toLowerCase().includes(q));
-  }
-  if (filtroConf) lista = lista.filter(s => s.pc >= 80);
-  if (filtroMx) lista = lista.filter(s => s.mx);
-
+  const ordenBy = document.getElementById('sort-by').value;
   lista.sort((a, b) => {
-    if (ordenBy === 'nombre' || ordenBy === 'n') return a.n.localeCompare(b.n);
-    if (ordenBy === 'gananciaStd') return b.gS - a.gS;
-    if (ordenBy === 'margenStdPct') return b.mS - a.mS;
-    if (ordenBy === 'precioStd') return b.vS - a.vS;
-    if (ordenBy === 'pctCostoConocido') return b.pc - a.pc;
-    return 0;
+    if (ordenBy === 'n') return a.n.localeCompare(b.n);
+    return (b[ordenBy] || 0) - (a[ordenBy] || 0);
   });
 
-  function margenClass(pct, pc) {
-    if (pc < 50) return 'medio'; // poco confiable
-    if (pct >= 90) return 'excel';
-    if (pct >= 80) return 'muy-bueno';
-    if (pct >= 70) return 'bueno';
-    if (pct >= 50) return 'medio';
-    return 'bajo';
-  }
-
-  function confBar(pc) {
-    const cls = pc >= 80 ? '' : pc >= 50 ? 'mid' : 'low';
-    return '<span class="mono" style="font-size:11px;color:var(--text-dim);">' + pc + '%</span><span class="cost-bar"><span class="cost-bar-fill ' + cls + '" style="width:' + pc + '%"></span></span>';
+  function margenChip(pct) {
+    let cls;
+    if (pct < 0) cls = 'bajo';
+    else if (pct >= 50) cls = 'excel';
+    else if (pct >= 35) cls = 'muy-bueno';
+    else if (pct >= 20) cls = 'bueno';
+    else if (pct >= 10) cls = 'medio';
+    else cls = 'bajo';
+    return '<span class="margen-chip ' + cls + '" style="font-size:10px">' + pct.toFixed(1) + '%</span>';
   }
 
   const tbody = document.getElementById('tbl-surtidos-body');
   tbody.innerHTML = lista.map(s => {
-    const mxBadge = s.mx ? '<span class="mx-pill">FAB VICTOR</span>' : '';
-    const margenCls = margenClass(s.mS, s.pc);
-    const margenLabel = s.pc === 0 ? 'sin costo' : s.mS.toFixed(1) + '%';
+    const alertMk = s.gMk < 0 ? ' ⚠️' : '';
+    const g46Color = s.g46 < 0 ? 'var(--bad)' : s.g46 > 150000 ? 'var(--good)' : 'var(--text)';
+    const gMkColor = s.gMk < 0 ? 'var(--bad)' : s.gMk > 100000 ? 'var(--good)' : 'var(--text)';
+    
+    const costoDesglose = 'Items $' + s.coItems.toLocaleString('es-AR') +
+      (s.gv ? ' · ' + s.gv + ' gavetas $' + s.coGav.toLocaleString('es-AR') : '') +
+      (s.vr ? ' · ' + s.vr + ' varios $' + s.coVar.toLocaleString('es-AR') : '');
+
     return '<tr>' +
-      '<td><div class="surtido-nombre">' + s.n + mxBadge + '</div></td>' +
+      '<td><div class="surtido-nombre">' + s.n + alertMk + '</div>' +
+      '<div style="font-size:10px;color:var(--text-mute)">' + s.it + ' productos' + (s.gv ? ' + ' + s.gv + ' gav' : '') + (s.vr ? ' + ' + s.vr + ' var' : '') + '</div></td>' +
       '<td class="num">' + s.it + '</td>' +
-      '<td class="num">' + s.pS + '</td>' +
-      '<td class="num">' + fmt$(s.vS) + '</td>' +
-      '<td class="num" style="color:var(--text-dim)">' + (s.pc === 0 ? '—' : fmt$(s.cS)) + '</td>' +
-      '<td class="num" style="font-weight:600;color:' + (s.pc >= 50 ? 'var(--good)' : 'var(--text-dim)') + '">' + fmt$(s.gS) + '</td>' +
-      '<td class="num"><span class="margen-chip ' + margenCls + '">' + margenLabel + '</span></td>' +
-      '<td class="num">' + confBar(s.pc) + '</td>' +
+      '<td class="num" style="color:var(--text-mute)">' + fmt$(s.vL) + '</td>' +
+      '<td class="num">' + fmt$(s.v46) + '</td>' +
+      '<td class="num">' + fmt$(s.vMk) + '</td>' +
+      '<td class="num">' + fmt$(s.v15) + '</td>' +
+      '<td class="num" title="' + costoDesglose + '">' + fmt$(s.co) + '</td>' +
+      '<td class="num" style="color:' + g46Color + ';font-weight:600"><div>' + fmt$(s.g46) + '</div>' + margenChip(s.m46) + '</td>' +
+      '<td class="num" style="color:' + gMkColor + ';font-weight:600"><div>' + fmt$(s.gMk) + '</div>' + margenChip(s.mMk) + '</td>' +
     '</tr>';
   }).join('');
 
   if (lista.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:30px;color:var(--text-mute)">Sin resultados</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:30px;color:var(--text-mute)">Sin resultados</td></tr>';
   }
+}
+
+function renderPendientes() {
+  // Cuasi-completos
+  document.getElementById('lista-cuasi').innerHTML = SURT.cuasi.map(s => 
+    '<div class="block" style="border-left: 3px solid var(--warn)">' +
+    '<div class="block-title"><span>' + s.n + '</span>' +
+    '<span class="amount" style="color: var(--warn)">' + s.cg + '/' + s.it + ' items · ' + s.pct + '%</span></div>' +
+    '<div class="block-desc">Faltan cargar:<ul style="margin:6px 0 0 18px;padding:0;list-style:disc">' +
+    s.falta.map(f => '<li><strong>' + f.p + '</strong> N°' + f.n + ' "' + (f.d || '') + '" <span style="color:var(--text-mute)">[' + (f.f || 'sin fábrica') + ']</span></li>').join('') +
+    '</ul></div></div>'
+  ).join('');
+
+  // Parciales agrupados por fábrica mayoritaria faltante
+  document.getElementById('lista-parciales').innerHTML = SURT.parciales.map(s => {
+    const porFab = {};
+    s.falta.forEach(f => {
+      const k = f.f || '(sin fábrica)';
+      if (!porFab[k]) porFab[k] = [];
+      porFab[k].push(f);
+    });
+    const resumen = Object.entries(porFab).sort((a,b) => b[1].length - a[1].length)
+      .map(([f, items]) => items.length + '× ' + f)
+      .join(' · ');
+    return '<div class="block" style="border-left: 3px solid var(--bad)">' +
+      '<div class="block-title"><span>' + s.n + '</span>' +
+      '<span class="amount" style="color: var(--bad)">' + s.cg + '/' + s.it + ' items · ' + s.pct + '%</span></div>' +
+      '<div class="block-desc">Faltan ' + s.falta.length + ' items: ' + resumen + '</div></div>';
+  }).join('');
+
+  // Sin datos + Victor
+  document.getElementById('lista-sindatos-victor').innerHTML = 
+    SURT.sinDatos.map(s => 
+      '<div class="block" style="border-left: 3px solid var(--text-mute); margin-bottom: 8px">' +
+      '<div class="block-title"><span>' + s.n + '</span>' +
+      '<span class="amount" style="color: var(--text-mute)">' + s.it + ' items · 0%</span></div>' +
+      '<div class="block-desc">Ningún costo cargado</div></div>'
+    ).join('') +
+    SURT.victor.map(s => 
+      '<div class="block" style="border-left: 3px solid var(--purple); margin-bottom: 8px">' +
+      '<div class="block-title"><span>' + s.n + '</span>' +
+      '<span class="amount" style="color: var(--purple)">Victor (' + s.pctMax + '%)</span></div>' +
+      '<div class="block-desc">Fabricado por Victor — sin costo calculable</div></div>'
+    ).join('');
 }
 
 function renderAcciones() {
@@ -602,7 +705,8 @@ btnModo.addEventListener('click', () => {
 });
 
 // Filtros surtidos
-document.getElementById('search').addEventListener('input', e => { filtroSearch = e.target.value; renderSurtidos(); });
+document.getElementById('search').addEventListener('input', renderSurtidos);
+document.getElementById('sort-by').addEventListener('change', renderSurtidos);
 document.getElementById('sort-by').addEventListener('change', e => { ordenBy = e.target.value; renderSurtidos(); });
 document.getElementById('f-conf').addEventListener('click', function() { filtroConf = !filtroConf; this.classList.toggle('active', filtroConf); if (filtroConf && filtroMx) { filtroMx = false; document.getElementById('f-mx').classList.remove('active'); } renderSurtidos(); });
 document.getElementById('f-mx').addEventListener('click', function() { filtroMx = !filtroMx; this.classList.toggle('active', filtroMx); if (filtroMx && filtroConf) { filtroConf = false; document.getElementById('f-conf').classList.remove('active'); } renderSurtidos(); });
@@ -611,6 +715,323 @@ renderHero();
 renderWaterfall();
 renderVendedores();
 renderSurtidos();
+renderPendientes();
+renderAcciones();
+</script>
+</body>
+</html> + s.coItems.toLocaleString('es-AR') + (s.gv ? ' · ' + s.gv + ' gavetas: 
+
+function renderPendientes() {
+  // Cuasi-completos
+  document.getElementById('lista-cuasi').innerHTML = SURT.cuasi.map(s => 
+    '<div class="block" style="border-left: 3px solid var(--warn)">' +
+    '<div class="block-title"><span>' + s.n + '</span>' +
+    '<span class="amount" style="color: var(--warn)">' + s.cg + '/' + s.it + ' items · ' + s.pct + '%</span></div>' +
+    '<div class="block-desc">Faltan cargar:<ul style="margin:6px 0 0 18px;padding:0;list-style:disc">' +
+    s.falta.map(f => '<li><strong>' + f.p + '</strong> N°' + f.n + ' "' + (f.d || '') + '" <span style="color:var(--text-mute)">[' + (f.f || 'sin fábrica') + ']</span></li>').join('') +
+    '</ul></div></div>'
+  ).join('');
+
+  // Parciales agrupados por fábrica mayoritaria faltante
+  document.getElementById('lista-parciales').innerHTML = SURT.parciales.map(s => {
+    const porFab = {};
+    s.falta.forEach(f => {
+      const k = f.f || '(sin fábrica)';
+      if (!porFab[k]) porFab[k] = [];
+      porFab[k].push(f);
+    });
+    const resumen = Object.entries(porFab).sort((a,b) => b[1].length - a[1].length)
+      .map(([f, items]) => items.length + '× ' + f)
+      .join(' · ');
+    return '<div class="block" style="border-left: 3px solid var(--bad)">' +
+      '<div class="block-title"><span>' + s.n + '</span>' +
+      '<span class="amount" style="color: var(--bad)">' + s.cg + '/' + s.it + ' items · ' + s.pct + '%</span></div>' +
+      '<div class="block-desc">Faltan ' + s.falta.length + ' items: ' + resumen + '</div></div>';
+  }).join('');
+
+  // Sin datos + Victor
+  document.getElementById('lista-sindatos-victor').innerHTML = 
+    SURT.sinDatos.map(s => 
+      '<div class="block" style="border-left: 3px solid var(--text-mute); margin-bottom: 8px">' +
+      '<div class="block-title"><span>' + s.n + '</span>' +
+      '<span class="amount" style="color: var(--text-mute)">' + s.it + ' items · 0%</span></div>' +
+      '<div class="block-desc">Ningún costo cargado</div></div>'
+    ).join('') +
+    SURT.victor.map(s => 
+      '<div class="block" style="border-left: 3px solid var(--purple); margin-bottom: 8px">' +
+      '<div class="block-title"><span>' + s.n + '</span>' +
+      '<span class="amount" style="color: var(--purple)">Victor (' + s.pctMax + '%)</span></div>' +
+      '<div class="block-desc">Fabricado por Victor — sin costo calculable</div></div>'
+    ).join('');
+}
+
+function renderAcciones() {
+  const r = calcular();
+  const acciones = [
+    { tipo: 'invest', num: '1', title: 'Terminar la obra lo antes posible', desc: 'La obra te está comiendo ' + fmt$(r.obra + r.prestamos) + '/mes entre inversión directa y préstamos. Cada mes adicional son $16M que no vuelven al bolsillo. Acelerar = recuperar liquidez más rápido.', impacto: 'Al terminar: +$13-16M/mes libres' },
+    { tipo: 'family', num: '2', title: 'Renegociar con Victor ahora que estás en obra', desc: 'En este momento necesitás cash. Proponerle pasar del 100% al 30-40% te libera $5-6M/mes para acelerar la obra o bajar deuda. Contexto ideal: "papá, estoy construyendo la cede y necesito revisar los números un tiempo".', impacto: '+$60-72M/año' },
+    { tipo: 'urgent', num: '3', title: 'Subir precios 10%', desc: 'Pasás de ' + fmt$(r.quedaLibre) + '/mes libres a ~' + fmt$(r.quedaLibre + r.ventasTotal * 0.10) + '/mes. En ferretería y autopartes un 10% pasa desapercibido.', impacto: '+' + fmt$(r.ventasTotal * 0.10) + '/mes · +' + fmt$(r.ventasTotal * 0.10 * 12) + '/año' },
+    { tipo: 'soon', num: '4', title: 'No tomar más deuda hasta fin de obra', desc: 'Ya tenés $9.3M/mes de cuotas. Agregar más préstamos te puede ahogar si un mes baja la venta. Aguantá hasta diciembre.', impacto: 'Preservar oxígeno financiero' },
+    { tipo: 'good', num: '5', title: 'Planear qué hacer con los $13-16M/mes de 2027', desc: 'Cuando termine la obra vas a tener más disponible. Definí ya: (a) pagar el resto de deuda rápido, (b) invertir en stock, (c) retirar más para vos, (d) otra cede/local. Decidirlo con anticipación evita que se "evapore".', impacto: 'Planificación 2027' },
+    { tipo: 'good', num: '6', title: 'Empezar a registrar retiros personales', desc: 'Aunque saques poco, anotar fecha + monto te da claridad. En fase de obra es crucial saber cuánto sacás realmente.', impacto: 'Control y claridad' }
+  ];
+  document.getElementById('lista-acciones').innerHTML = acciones.map(a => 
+    '<div class="rec-item ' + a.tipo + '"><div class="rec-num">' + a.num + '</div><div style="flex: 1;"><div class="rec-title">' + a.title + '</div><div class="rec-desc">' + a.desc + '</div>' + (a.impacto ? '<div class="rec-impact">→ ' + a.impacto + '</div>' : '') + '</div></div>'
+  ).join('');
+}
+
+// Tabs
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
+  document.querySelectorAll('.view').forEach(v => v.classList.toggle('active', v.id === 'view-' + name));
+}
+document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => switchTab(t.dataset.tab)));
+
+// Modo privado
+const btnModo = document.getElementById('btn-modo');
+let modoPublico = false;
+btnModo.addEventListener('click', () => {
+  modoPublico = !modoPublico;
+  if (modoPublico) {
+    document.body.classList.add('modo-publico');
+    btnModo.textContent = '🔓 Mostrar todo';
+    btnModo.classList.add('active');
+  } else {
+    document.body.classList.remove('modo-publico');
+    btnModo.textContent = '🔒 Modo privado';
+    btnModo.classList.remove('active');
+  }
+});
+
+// Filtros surtidos
+document.getElementById('search').addEventListener('input', renderSurtidos);
+document.getElementById('sort-by').addEventListener('change', renderSurtidos);
+document.getElementById('sort-by').addEventListener('change', e => { ordenBy = e.target.value; renderSurtidos(); });
+document.getElementById('f-conf').addEventListener('click', function() { filtroConf = !filtroConf; this.classList.toggle('active', filtroConf); if (filtroConf && filtroMx) { filtroMx = false; document.getElementById('f-mx').classList.remove('active'); } renderSurtidos(); });
+document.getElementById('f-mx').addEventListener('click', function() { filtroMx = !filtroMx; this.classList.toggle('active', filtroMx); if (filtroMx && filtroConf) { filtroConf = false; document.getElementById('f-conf').classList.remove('active'); } renderSurtidos(); });
+
+renderHero();
+renderWaterfall();
+renderVendedores();
+renderSurtidos();
+renderPendientes();
+renderAcciones();
+</script>
+</body>
+</html> + s.coGav.toLocaleString('es-AR') : '') + (s.vr ? ' · ' + s.vr + ' varios: 
+
+function renderPendientes() {
+  // Cuasi-completos
+  document.getElementById('lista-cuasi').innerHTML = SURT.cuasi.map(s => 
+    '<div class="block" style="border-left: 3px solid var(--warn)">' +
+    '<div class="block-title"><span>' + s.n + '</span>' +
+    '<span class="amount" style="color: var(--warn)">' + s.cg + '/' + s.it + ' items · ' + s.pct + '%</span></div>' +
+    '<div class="block-desc">Faltan cargar:<ul style="margin:6px 0 0 18px;padding:0;list-style:disc">' +
+    s.falta.map(f => '<li><strong>' + f.p + '</strong> N°' + f.n + ' "' + (f.d || '') + '" <span style="color:var(--text-mute)">[' + (f.f || 'sin fábrica') + ']</span></li>').join('') +
+    '</ul></div></div>'
+  ).join('');
+
+  // Parciales agrupados por fábrica mayoritaria faltante
+  document.getElementById('lista-parciales').innerHTML = SURT.parciales.map(s => {
+    const porFab = {};
+    s.falta.forEach(f => {
+      const k = f.f || '(sin fábrica)';
+      if (!porFab[k]) porFab[k] = [];
+      porFab[k].push(f);
+    });
+    const resumen = Object.entries(porFab).sort((a,b) => b[1].length - a[1].length)
+      .map(([f, items]) => items.length + '× ' + f)
+      .join(' · ');
+    return '<div class="block" style="border-left: 3px solid var(--bad)">' +
+      '<div class="block-title"><span>' + s.n + '</span>' +
+      '<span class="amount" style="color: var(--bad)">' + s.cg + '/' + s.it + ' items · ' + s.pct + '%</span></div>' +
+      '<div class="block-desc">Faltan ' + s.falta.length + ' items: ' + resumen + '</div></div>';
+  }).join('');
+
+  // Sin datos + Victor
+  document.getElementById('lista-sindatos-victor').innerHTML = 
+    SURT.sinDatos.map(s => 
+      '<div class="block" style="border-left: 3px solid var(--text-mute); margin-bottom: 8px">' +
+      '<div class="block-title"><span>' + s.n + '</span>' +
+      '<span class="amount" style="color: var(--text-mute)">' + s.it + ' items · 0%</span></div>' +
+      '<div class="block-desc">Ningún costo cargado</div></div>'
+    ).join('') +
+    SURT.victor.map(s => 
+      '<div class="block" style="border-left: 3px solid var(--purple); margin-bottom: 8px">' +
+      '<div class="block-title"><span>' + s.n + '</span>' +
+      '<span class="amount" style="color: var(--purple)">Victor (' + s.pctMax + '%)</span></div>' +
+      '<div class="block-desc">Fabricado por Victor — sin costo calculable</div></div>'
+    ).join('');
+}
+
+function renderAcciones() {
+  const r = calcular();
+  const acciones = [
+    { tipo: 'invest', num: '1', title: 'Terminar la obra lo antes posible', desc: 'La obra te está comiendo ' + fmt$(r.obra + r.prestamos) + '/mes entre inversión directa y préstamos. Cada mes adicional son $16M que no vuelven al bolsillo. Acelerar = recuperar liquidez más rápido.', impacto: 'Al terminar: +$13-16M/mes libres' },
+    { tipo: 'family', num: '2', title: 'Renegociar con Victor ahora que estás en obra', desc: 'En este momento necesitás cash. Proponerle pasar del 100% al 30-40% te libera $5-6M/mes para acelerar la obra o bajar deuda. Contexto ideal: "papá, estoy construyendo la cede y necesito revisar los números un tiempo".', impacto: '+$60-72M/año' },
+    { tipo: 'urgent', num: '3', title: 'Subir precios 10%', desc: 'Pasás de ' + fmt$(r.quedaLibre) + '/mes libres a ~' + fmt$(r.quedaLibre + r.ventasTotal * 0.10) + '/mes. En ferretería y autopartes un 10% pasa desapercibido.', impacto: '+' + fmt$(r.ventasTotal * 0.10) + '/mes · +' + fmt$(r.ventasTotal * 0.10 * 12) + '/año' },
+    { tipo: 'soon', num: '4', title: 'No tomar más deuda hasta fin de obra', desc: 'Ya tenés $9.3M/mes de cuotas. Agregar más préstamos te puede ahogar si un mes baja la venta. Aguantá hasta diciembre.', impacto: 'Preservar oxígeno financiero' },
+    { tipo: 'good', num: '5', title: 'Planear qué hacer con los $13-16M/mes de 2027', desc: 'Cuando termine la obra vas a tener más disponible. Definí ya: (a) pagar el resto de deuda rápido, (b) invertir en stock, (c) retirar más para vos, (d) otra cede/local. Decidirlo con anticipación evita que se "evapore".', impacto: 'Planificación 2027' },
+    { tipo: 'good', num: '6', title: 'Empezar a registrar retiros personales', desc: 'Aunque saques poco, anotar fecha + monto te da claridad. En fase de obra es crucial saber cuánto sacás realmente.', impacto: 'Control y claridad' }
+  ];
+  document.getElementById('lista-acciones').innerHTML = acciones.map(a => 
+    '<div class="rec-item ' + a.tipo + '"><div class="rec-num">' + a.num + '</div><div style="flex: 1;"><div class="rec-title">' + a.title + '</div><div class="rec-desc">' + a.desc + '</div>' + (a.impacto ? '<div class="rec-impact">→ ' + a.impacto + '</div>' : '') + '</div></div>'
+  ).join('');
+}
+
+// Tabs
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
+  document.querySelectorAll('.view').forEach(v => v.classList.toggle('active', v.id === 'view-' + name));
+}
+document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => switchTab(t.dataset.tab)));
+
+// Modo privado
+const btnModo = document.getElementById('btn-modo');
+let modoPublico = false;
+btnModo.addEventListener('click', () => {
+  modoPublico = !modoPublico;
+  if (modoPublico) {
+    document.body.classList.add('modo-publico');
+    btnModo.textContent = '🔓 Mostrar todo';
+    btnModo.classList.add('active');
+  } else {
+    document.body.classList.remove('modo-publico');
+    btnModo.textContent = '🔒 Modo privado';
+    btnModo.classList.remove('active');
+  }
+});
+
+// Filtros surtidos
+document.getElementById('search').addEventListener('input', renderSurtidos);
+document.getElementById('sort-by').addEventListener('change', renderSurtidos);
+document.getElementById('sort-by').addEventListener('change', e => { ordenBy = e.target.value; renderSurtidos(); });
+document.getElementById('f-conf').addEventListener('click', function() { filtroConf = !filtroConf; this.classList.toggle('active', filtroConf); if (filtroConf && filtroMx) { filtroMx = false; document.getElementById('f-mx').classList.remove('active'); } renderSurtidos(); });
+document.getElementById('f-mx').addEventListener('click', function() { filtroMx = !filtroMx; this.classList.toggle('active', filtroMx); if (filtroMx && filtroConf) { filtroConf = false; document.getElementById('f-conf').classList.remove('active'); } renderSurtidos(); });
+
+renderHero();
+renderWaterfall();
+renderVendedores();
+renderSurtidos();
+renderPendientes();
+renderAcciones();
+</script>
+</body>
+</html> + s.coVar.toLocaleString('es-AR') : '');
+
+    return '<tr>' +
+      '<td><div class="surtido-nombre">' + s.n + alertMk + '</div>' +
+      '<div style="font-size:10px;color:var(--text-mute)">' + s.it + ' productos' + (s.gv ? ' + ' + s.gv + ' gavetas' : '') + (s.vr ? ' + ' + s.vr + ' varios' : '') + '</div></td>' +
+      '<td class="num">' + s.it + '</td>' +
+      '<td class="num" style="color:var(--text-mute)">' + fmt$(s.vL) + '</td>' +
+      '<td class="num">' + fmt$(s.v46) + '</td>' +
+      '<td class="num">' + fmt$(s.vMk) + '</td>' +
+      '<td class="num">' + fmt$(s.v15) + '</td>' +
+      '<td class="num" title="' + costoDesglose + '">' + fmt$(s.co) + '</td>' +
+      '<td class="num" style="color:' + g46Color + ';font-weight:600"><div>' + fmt$(s.g46) + '</div>' + margenChip(s.m46) + '</td>' +
+      '<td class="num" style="color:' + gMkColor + ';font-weight:600"><div>' + fmt$(s.gMk) + '</div>' + margenChip(s.mMk) + '</td>' +
+    '</tr>';
+  }).join('');
+
+  if (lista.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:30px;color:var(--text-mute)">Sin resultados</td></tr>';
+  }
+}
+
+function renderPendientes() {
+  // Cuasi-completos
+  document.getElementById('lista-cuasi').innerHTML = SURT.cuasi.map(s => 
+    '<div class="block" style="border-left: 3px solid var(--warn)">' +
+    '<div class="block-title"><span>' + s.n + '</span>' +
+    '<span class="amount" style="color: var(--warn)">' + s.cg + '/' + s.it + ' items · ' + s.pct + '%</span></div>' +
+    '<div class="block-desc">Faltan cargar:<ul style="margin:6px 0 0 18px;padding:0;list-style:disc">' +
+    s.falta.map(f => '<li><strong>' + f.p + '</strong> N°' + f.n + ' "' + (f.d || '') + '" <span style="color:var(--text-mute)">[' + (f.f || 'sin fábrica') + ']</span></li>').join('') +
+    '</ul></div></div>'
+  ).join('');
+
+  // Parciales agrupados por fábrica mayoritaria faltante
+  document.getElementById('lista-parciales').innerHTML = SURT.parciales.map(s => {
+    const porFab = {};
+    s.falta.forEach(f => {
+      const k = f.f || '(sin fábrica)';
+      if (!porFab[k]) porFab[k] = [];
+      porFab[k].push(f);
+    });
+    const resumen = Object.entries(porFab).sort((a,b) => b[1].length - a[1].length)
+      .map(([f, items]) => items.length + '× ' + f)
+      .join(' · ');
+    return '<div class="block" style="border-left: 3px solid var(--bad)">' +
+      '<div class="block-title"><span>' + s.n + '</span>' +
+      '<span class="amount" style="color: var(--bad)">' + s.cg + '/' + s.it + ' items · ' + s.pct + '%</span></div>' +
+      '<div class="block-desc">Faltan ' + s.falta.length + ' items: ' + resumen + '</div></div>';
+  }).join('');
+
+  // Sin datos + Victor
+  document.getElementById('lista-sindatos-victor').innerHTML = 
+    SURT.sinDatos.map(s => 
+      '<div class="block" style="border-left: 3px solid var(--text-mute); margin-bottom: 8px">' +
+      '<div class="block-title"><span>' + s.n + '</span>' +
+      '<span class="amount" style="color: var(--text-mute)">' + s.it + ' items · 0%</span></div>' +
+      '<div class="block-desc">Ningún costo cargado</div></div>'
+    ).join('') +
+    SURT.victor.map(s => 
+      '<div class="block" style="border-left: 3px solid var(--purple); margin-bottom: 8px">' +
+      '<div class="block-title"><span>' + s.n + '</span>' +
+      '<span class="amount" style="color: var(--purple)">Victor (' + s.pctMax + '%)</span></div>' +
+      '<div class="block-desc">Fabricado por Victor — sin costo calculable</div></div>'
+    ).join('');
+}
+
+function renderAcciones() {
+  const r = calcular();
+  const acciones = [
+    { tipo: 'invest', num: '1', title: 'Terminar la obra lo antes posible', desc: 'La obra te está comiendo ' + fmt$(r.obra + r.prestamos) + '/mes entre inversión directa y préstamos. Cada mes adicional son $16M que no vuelven al bolsillo. Acelerar = recuperar liquidez más rápido.', impacto: 'Al terminar: +$13-16M/mes libres' },
+    { tipo: 'family', num: '2', title: 'Renegociar con Victor ahora que estás en obra', desc: 'En este momento necesitás cash. Proponerle pasar del 100% al 30-40% te libera $5-6M/mes para acelerar la obra o bajar deuda. Contexto ideal: "papá, estoy construyendo la cede y necesito revisar los números un tiempo".', impacto: '+$60-72M/año' },
+    { tipo: 'urgent', num: '3', title: 'Subir precios 10%', desc: 'Pasás de ' + fmt$(r.quedaLibre) + '/mes libres a ~' + fmt$(r.quedaLibre + r.ventasTotal * 0.10) + '/mes. En ferretería y autopartes un 10% pasa desapercibido.', impacto: '+' + fmt$(r.ventasTotal * 0.10) + '/mes · +' + fmt$(r.ventasTotal * 0.10 * 12) + '/año' },
+    { tipo: 'soon', num: '4', title: 'No tomar más deuda hasta fin de obra', desc: 'Ya tenés $9.3M/mes de cuotas. Agregar más préstamos te puede ahogar si un mes baja la venta. Aguantá hasta diciembre.', impacto: 'Preservar oxígeno financiero' },
+    { tipo: 'good', num: '5', title: 'Planear qué hacer con los $13-16M/mes de 2027', desc: 'Cuando termine la obra vas a tener más disponible. Definí ya: (a) pagar el resto de deuda rápido, (b) invertir en stock, (c) retirar más para vos, (d) otra cede/local. Decidirlo con anticipación evita que se "evapore".', impacto: 'Planificación 2027' },
+    { tipo: 'good', num: '6', title: 'Empezar a registrar retiros personales', desc: 'Aunque saques poco, anotar fecha + monto te da claridad. En fase de obra es crucial saber cuánto sacás realmente.', impacto: 'Control y claridad' }
+  ];
+  document.getElementById('lista-acciones').innerHTML = acciones.map(a => 
+    '<div class="rec-item ' + a.tipo + '"><div class="rec-num">' + a.num + '</div><div style="flex: 1;"><div class="rec-title">' + a.title + '</div><div class="rec-desc">' + a.desc + '</div>' + (a.impacto ? '<div class="rec-impact">→ ' + a.impacto + '</div>' : '') + '</div></div>'
+  ).join('');
+}
+
+// Tabs
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
+  document.querySelectorAll('.view').forEach(v => v.classList.toggle('active', v.id === 'view-' + name));
+}
+document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => switchTab(t.dataset.tab)));
+
+// Modo privado
+const btnModo = document.getElementById('btn-modo');
+let modoPublico = false;
+btnModo.addEventListener('click', () => {
+  modoPublico = !modoPublico;
+  if (modoPublico) {
+    document.body.classList.add('modo-publico');
+    btnModo.textContent = '🔓 Mostrar todo';
+    btnModo.classList.add('active');
+  } else {
+    document.body.classList.remove('modo-publico');
+    btnModo.textContent = '🔒 Modo privado';
+    btnModo.classList.remove('active');
+  }
+});
+
+// Filtros surtidos
+document.getElementById('search').addEventListener('input', renderSurtidos);
+document.getElementById('sort-by').addEventListener('change', renderSurtidos);
+document.getElementById('sort-by').addEventListener('change', e => { ordenBy = e.target.value; renderSurtidos(); });
+document.getElementById('f-conf').addEventListener('click', function() { filtroConf = !filtroConf; this.classList.toggle('active', filtroConf); if (filtroConf && filtroMx) { filtroMx = false; document.getElementById('f-mx').classList.remove('active'); } renderSurtidos(); });
+document.getElementById('f-mx').addEventListener('click', function() { filtroMx = !filtroMx; this.classList.toggle('active', filtroMx); if (filtroMx && filtroConf) { filtroConf = false; document.getElementById('f-conf').classList.remove('active'); } renderSurtidos(); });
+
+renderHero();
+renderWaterfall();
+renderVendedores();
+renderSurtidos();
+renderPendientes();
 renderAcciones();
 </script>
 </body>
