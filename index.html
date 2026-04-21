@@ -29,6 +29,10 @@
     --bad-dim: rgba(255,71,71,0.12);
     --info: #5aa8ff;
     --info-dim: rgba(90,168,255,0.12);
+    --teal: #2dd4bf;
+    --teal-dim: rgba(45,212,191,0.15);
+    --purple: #b58aff;
+    --purple-dim: rgba(181,138,255,0.12);
   }
   html, body {
     background: var(--bg);
@@ -169,6 +173,8 @@
   .module.costos::before { background: var(--info); }
   .module.pedidos::before { background: var(--accent); }
   .module.gastos::before { background: var(--warn); }
+  .module.ventas::before { background: var(--teal); }
+  .module.salud::before { background: var(--good); }
   .module.disabled { cursor: not-allowed; opacity: 0.55; }
   .module.disabled:hover { transform: none; box-shadow: none; }
 
@@ -197,6 +203,8 @@
   .module.costos .module-icon { background: var(--info-dim); color: var(--info); }
   .module.pedidos .module-icon { background: var(--accent-dim); color: var(--accent); }
   .module.gastos .module-icon { background: var(--warn-dim); color: var(--warn); }
+  .module.ventas .module-icon { background: var(--teal-dim); color: var(--teal); }
+  .module.salud .module-icon { background: var(--good-dim); color: var(--good); }
 
   .module-desc {
     color: var(--text-dim);
@@ -598,6 +606,34 @@
       </div>
     </a>
 
+    <!-- ANÁLISIS DE VENTAS -->
+    <a href="./analisis_ventas.html" class="module ventas" data-module="ventas" id="mod-ventas">
+      <div class="module-head">
+        <div>
+          <div class="module-title">Análisis de Ventas</div>
+        </div>
+        <div class="module-icon">↗</div>
+      </div>
+      <div class="module-desc">Pedidos del Monday cruzados con costos. Ranking de surtidos, clientes y vendedores con ganancia estimada.</div>
+      <div class="module-kpis">
+        <div class="module-kpi">
+          <div class="kpi-label">Ventas</div>
+          <div class="kpi-value" data-kpi="ventas-total">567</div>
+        </div>
+        <div class="module-kpi">
+          <div class="kpi-label">Período</div>
+          <div class="kpi-value" data-kpi="ventas-periodo" style="font-size:12px">Ene–Abr 26</div>
+        </div>
+      </div>
+      <div class="module-footer">
+        <div>
+          <div>Abrir módulo</div>
+          <div class="last-update" data-update="ventas" style="color: var(--text-mute);">datos estáticos · pedir update</div>
+        </div>
+        <span class="arrow">→</span>
+      </div>
+    </a>
+
     <!-- SALUD FINANCIERA -->
     <a href="#" class="module salud" data-module="salud" id="mod-salud">
       <div class="module-head">
@@ -621,34 +657,6 @@
         <div>
           <div>Abrir módulo</div>
           <div class="last-update" data-update="salud" style="color: var(--text-mute);">sin archivo de datos</div>
-        </div>
-        <span class="arrow">→</span>
-      </div>
-    </a>
-
-    <!-- SURTIDOS -->
-    <a href="#" class="module surtidos" data-module="surtidos" id="mod-surtidos">
-      <div class="module-head">
-        <div>
-          <div class="module-title">Análisis de Surtidos</div>
-        </div>
-        <div class="module-icon">+</div>
-      </div>
-      <div class="module-desc">Ganancia por surtido, detalle por producto, clasificación por completitud y filtros avanzados.</div>
-      <div class="module-kpis">
-        <div class="module-kpi">
-          <div class="kpi-label">Surtidos OK</div>
-          <div class="kpi-value">30</div>
-        </div>
-        <div class="module-kpi">
-          <div class="kpi-label">Pendientes</div>
-          <div class="kpi-value" style="color: var(--warn);">19</div>
-        </div>
-      </div>
-      <div class="module-footer">
-        <div>
-          <div>Abrir módulo</div>
-          <div class="last-update" style="color: var(--text-mute);">65 surtidos analizados</div>
         </div>
         <span class="arrow">→</span>
       </div>
@@ -681,8 +689,8 @@ const MODULE_PATHS = {
   costos: './costos.html',
   pedidos: './pedidos.html',
   gastos: './gastos.html',
+  ventas: './analisis_ventas.html',
   salud: './salud.html',
-  surtidos: './surtidos.html',
 };
 
 // Storage keys compartidos con los módulos
