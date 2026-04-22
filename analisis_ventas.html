@@ -683,7 +683,7 @@
       <span class="caption">qué mejorar en la base de datos de costos</span>
     </div>
     <div class="rank-grid">
-      <div class="rank-card"><h3>Sin precio cargado <span class="count-badge" id="badgeSinPrecio">0</span></h3><div class="rank-caption">matchean con un surtido del Excel, pero el Excel no tiene precio consolidado. Al cargarlo, cubren estas ventas automáticamente.</div><div class="rank-list" id="sinPrecioList"></div></div>
+      <div class="rank-card"><h3>Sin precio cargado <span class="count-badge" id="badgeSinPrecio">0</span></h3><div class="rank-caption">surtidos con costos incompletos en el Excel de costos. Mostramos cuántas piezas faltan cargar. Al completarlas, la ganancia queda exacta.</div><div class="rank-list" id="sinPrecioList"></div></div>
       <div class="rank-card"><h3>En observación <span class="count-badge" id="badgeObservacion">0</span></h3><div class="rank-caption">nombres que no matchean ningún surtido del Excel. Definir qué son: crear en el Excel, usar un nombre existente en Monday, o mapear como sinónimo.</div><div class="rank-list" id="observacionList"></div></div>
     </div>
   </div>
@@ -1338,17 +1338,28 @@ function renderTable(rows){
 }
 
 function renderProblems(allEnriched){
-  const sinPrecio = allEnriched.filter(r => r.status === 'sinPrecio');
+  // "Sin precio cargado" AMPLIADO:
+  // Incluye tanto los surtidos con pLista=0 como los que tienen costos parciales
+  // (algunas piezas sin costo cargado en el Excel de costos)
+  const conProblemaCosto = allEnriched.filter(r =>
+    r.status === 'sinPrecio' ||
+    (r.status === 'ok' && r.itemsTotal > 0 && r.itemsMatched < r.itemsTotal)
+  );
   const observacion = allEnriched.filter(r => r.status === 'observacion');
-  document.getElementById('badgeSinPrecio').textContent = sinPrecio.length;
+  document.getElementById('badgeSinPrecio').textContent = conProblemaCosto.length;
   document.getElementById('badgeObservacion').textContent = observacion.length;
 
-  // Agrupar por "surtido original" para sinPrecio (muestra el nombre tal como está en Monday)
-  const agruparPrecio = (rows) => {
+  // Agrupar por surtido_original (o match) y calcular stats de piezas
+  const agruparCosto = (rows) => {
     const m = {};
     rows.forEach(r => {
       const key = r.surtido + (r.match && r.match !== r.surtido ? ' → ' + r.match : '');
-      if(!m[key]) m[key] = { surtido: r.surtido, match: r.match, cant: 0 };
+      if(!m[key]) m[key] = {
+        surtido: r.surtido, match: r.match, cant: 0,
+        itemsTotal: r.itemsTotal || 0,
+        itemsMatched: r.itemsMatched || 0,
+        sinPrecio: r.status === 'sinPrecio'
+      };
       m[key].cant += 1;
     });
     return Object.values(m).sort((a,b) => b.cant - a.cant);
@@ -1359,13 +1370,25 @@ function renderProblems(allEnriched){
     return Object.entries(m).map(([k,v]) => ({ key:k, cant:v })).sort((a,b) => b.cant - a.cant);
   };
 
-  const sp = agruparPrecio(sinPrecio);
+  const sp = agruparCosto(conProblemaCosto);
   const spMax = Math.max(...sp.map(x=>x.cant), 1);
-  document.getElementById('sinPrecioList').innerHTML = sp.length ? sp.slice(0,20).map((it,i) => {
-    const subtitle = (it.match && it.match !== it.surtido) ? `<span style="color:var(--text-mute);font-size:10px;font-family:'JetBrains Mono',monospace"> → ${escHtml(it.match)}</span>` : '';
-    return `<div class="rank-item clickable" data-type="surtido" data-value="${escHtml(it.surtido)}">
+  document.getElementById('sinPrecioList').innerHTML = sp.length ? sp.slice(0,30).map((it,i) => {
+    const subtitle = (it.match && it.match !== it.surtido)
+      ? `<span style="color:var(--text-mute);font-size:10px;font-family:'JetBrains Mono',monospace"> → ${escHtml(it.match)}</span>`
+      : '';
+    // Detalle de piezas
+    let detallePiezas = '';
+    if (it.sinPrecio) {
+      detallePiezas = `<span style="color:var(--bad);font-size:10px;font-family:'JetBrains Mono',monospace;display:block;margin-top:3px">SIN PRECIO LISTA · ${it.itemsTotal} piezas</span>`;
+    } else if (it.itemsTotal > 0) {
+      const faltan = it.itemsTotal - it.itemsMatched;
+      const pct = Math.round(it.itemsMatched / it.itemsTotal * 100);
+      const color = pct >= 90 ? 'var(--good)' : pct >= 50 ? 'var(--warn)' : 'var(--bad)';
+      detallePiezas = `<span style="color:${color};font-size:10px;font-family:'JetBrains Mono',monospace;display:block;margin-top:3px">${it.itemsMatched}/${it.itemsTotal} piezas con costo · faltan ${faltan} (${pct}%)</span>`;
+    }
+    return `<div class="rank-item clickable" data-type="surtido" data-value="${escHtml(it.surtido)}" style="min-height:44px">
       <div class="n">${String(i+1).padStart(2,'0')}</div>
-      <div class="name" title="${escHtml(it.surtido)}">${escHtml(it.surtido)}${subtitle}</div>
+      <div class="name" title="${escHtml(it.surtido)}">${escHtml(it.surtido)}${subtitle}${detallePiezas}</div>
       <div class="val">${it.cant} ventas</div>
       <div class="bar"><div class="fill" style="width:${it.cant/spMax*100}%;background:var(--info)"></div></div>
     </div>`;
