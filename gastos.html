@@ -591,6 +591,299 @@
   ::-webkit-scrollbar-track { background: var(--bg); }
   ::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 4px; }
 
+  /* ============================== CALENDARIO ============================== */
+  .cal-top {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .cal-nav {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .cal-btn {
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    padding: 8px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s;
+    letter-spacing: 0.04em;
+  }
+  .cal-btn:hover {
+    border-color: var(--warn);
+    color: var(--warn);
+  }
+  .cal-btn.cal-toggle {
+    margin-left: auto;
+    border-color: var(--warn);
+    color: var(--warn);
+  }
+  .cal-btn.cal-toggle.active {
+    background: var(--warn-dim);
+  }
+  .cal-btn.cal-today {
+    background: var(--panel-2);
+    border-color: var(--border-strong);
+  }
+  .cal-range {
+    font-family: 'Instrument Serif', serif;
+    font-style: italic;
+    font-size: 22px;
+    color: var(--text);
+    min-width: 280px;
+    text-align: center;
+  }
+  .cal-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 18px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+  }
+  .cal-filter-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .cal-filter-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--text-mute);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-right: 2px;
+  }
+  .cal-chip {
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    padding: 5px 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 11px;
+    color: var(--text-dim);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    user-select: none;
+    transition: all 0.15s;
+  }
+  .cal-chip:hover { border-color: var(--border-strong); color: var(--text); }
+  .cal-chip input { accent-color: var(--warn); cursor: pointer; }
+  .cal-chip:has(input:checked) {
+    border-color: var(--warn);
+    color: var(--text);
+  }
+
+  .cal-grid-section { padding: 0; overflow: hidden; }
+
+  .cal-weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    border-bottom: 1px solid var(--border);
+    background: var(--panel-2);
+  }
+  .cal-weekday {
+    padding: 10px 12px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--text-mute);
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    text-align: center;
+    border-right: 1px solid var(--border);
+  }
+  .cal-weekday:last-child { border-right: none; }
+
+  .cal-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+  }
+  .cal-grid.mode-week { grid-auto-rows: minmax(280px, auto); }
+  .cal-grid.mode-month { grid-auto-rows: minmax(140px, auto); }
+
+  .cal-day {
+    border-right: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+    background: var(--panel);
+  }
+  .cal-day:nth-child(7n) { border-right: none; }
+  .cal-day.other-month { background: #0d0d0d; opacity: 0.5; }
+  .cal-day.today { background: var(--warn-dim); }
+  .cal-day.weekend { background: #111; }
+  .cal-day.today.weekend { background: var(--warn-dim); }
+
+  .cal-day-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 6px;
+    margin-bottom: 2px;
+  }
+  .cal-day-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+  }
+  .cal-day.today .cal-day-num {
+    color: var(--warn);
+  }
+  .cal-day-dow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    color: var(--text-mute);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+
+  .cal-items {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    flex: 1;
+    overflow-y: auto;
+    min-height: 0;
+  }
+  .cal-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 6px;
+    border-radius: 3px;
+    background: var(--panel-2);
+    border-left: 2px solid var(--text-mute);
+    font-size: 10px;
+    line-height: 1.25;
+    cursor: default;
+  }
+  .cal-item.cat-sueldos { border-left-color: var(--cat-sueldos); }
+  .cal-item.cat-gfijos { border-left-color: var(--cat-gfijos); }
+  .cal-item.cat-mercaderia { border-left-color: var(--cat-merca); }
+  .cal-item.cat-gvarios { border-left-color: var(--cat-gvarios); }
+  .cal-item.pendiente { opacity: 1; border-left-style: dashed; }
+  .cal-item.pagado::after {
+    content: '✓';
+    color: var(--good);
+    font-size: 9px;
+    margin-left: auto;
+    font-weight: 700;
+  }
+  .cal-item-desc {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--text-dim);
+  }
+  .cal-item-amt {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 600;
+    color: var(--text);
+    font-size: 10px;
+  }
+
+  .cal-day-totals {
+    margin-top: auto;
+    padding-top: 6px;
+    border-top: 1px dashed var(--border);
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .cal-day-total-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+  }
+  .cal-day-total-row .label {
+    color: var(--text-mute);
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+  .cal-day-total-row.day {
+    color: var(--warn);
+  }
+  .cal-day-total-row.day .val {
+    font-weight: 700;
+    font-size: 12px;
+  }
+  .cal-day-total-row.acum {
+    color: var(--info);
+  }
+  .cal-day-total-row.acum .val {
+    font-weight: 600;
+  }
+  .cal-day-total-row.empty .val { color: var(--text-mute); }
+
+  .cal-grid.mode-month .cal-items {
+    max-height: 70px;
+  }
+  .cal-grid.mode-month .cal-item {
+    font-size: 9px;
+    padding: 2px 4px;
+  }
+  .cal-grid.mode-month .cal-item-desc { display: none; }
+  .cal-grid.mode-month .cal-day-total-row.day .val { font-size: 11px; }
+  .cal-grid.mode-month .cal-day-totals { padding-top: 4px; }
+
+  .cal-more {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    color: var(--text-mute);
+    padding: 2px 6px;
+    text-align: center;
+  }
+
+  .cal-legend {
+    display: flex;
+    gap: 16px;
+    padding: 12px 20px;
+    background: var(--panel-2);
+    border-top: 1px solid var(--border);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--text-dim);
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .cal-legend .dot {
+    display: inline-block;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    margin-right: 6px;
+    vertical-align: middle;
+  }
+  .cal-legend .dot.sueldos { background: var(--cat-sueldos); }
+  .cal-legend .dot.gfijos { background: var(--cat-gfijos); }
+  .cal-legend .dot.mercaderia { background: var(--cat-merca); }
+  .cal-legend .dot.gvarios { background: var(--cat-gvarios); }
+  .cal-legend-sep { color: var(--text-mute); margin: 0 4px; }
+
+  @media (max-width: 900px) {
+    .cal-range { font-size: 16px; min-width: 180px; }
+    .cal-btn { font-size: 10px; padding: 6px 10px; }
+    .cal-day { padding: 6px; }
+    .cal-day-num { font-size: 12px; }
+    .cal-item-desc { font-size: 9px; }
+    .cal-filters { flex-direction: column; gap: 10px; }
+  }
+  /* ========================== FIN CALENDARIO ========================== */
+
   @media (max-width: 640px) {
     header { padding: 12px 14px; gap: 8px; }
     .logo { font-size: 17px; }
@@ -627,6 +920,7 @@
   <button class="tab active" data-view="dashboard">Dashboard</button>
   <button class="tab" data-view="movimientos">Movimientos</button>
   <button class="tab" data-view="proyeccion">Proyección</button>
+  <button class="tab" data-view="calendario">Calendario</button>
   <button class="tab" data-view="evolucion">Evolución</button>
 </div>
 
@@ -727,6 +1021,47 @@
   </div>
 
   <!-- ===== EVOLUCIÓN ===== -->
+  <div class="view" id="view-calendario">
+    <div class="section cal-top">
+      <div class="cal-nav">
+        <button class="cal-btn" id="cal-prev" title="Anterior">◀</button>
+        <div class="cal-range" id="cal-range">—</div>
+        <button class="cal-btn" id="cal-next" title="Siguiente">▶</button>
+        <button class="cal-btn cal-toggle" id="cal-toggle-mode">Ver mes completo</button>
+        <button class="cal-btn cal-today" id="cal-today">Hoy</button>
+      </div>
+      <div class="cal-filters">
+        <div class="cal-filter-group">
+          <span class="cal-filter-label">Categorías:</span>
+          <label class="cal-chip"><input type="checkbox" data-cat="Sueldos" checked> Sueldos</label>
+          <label class="cal-chip"><input type="checkbox" data-cat="GFijos" checked> GFijos</label>
+          <label class="cal-chip"><input type="checkbox" data-cat="Mercaderia" checked> Mercadería</label>
+          <label class="cal-chip"><input type="checkbox" data-cat="GVarios" checked> GVarios</label>
+        </div>
+        <div class="cal-filter-group">
+          <span class="cal-filter-label">Estado pago (SI):</span>
+          <label class="cal-chip"><input type="radio" name="cal-estado" value="todos" checked> Todos</label>
+          <label class="cal-chip"><input type="radio" name="cal-estado" value="pagado"> Solo pagados (SI)</label>
+          <label class="cal-chip"><input type="radio" name="cal-estado" value="pendiente"> Solo pendientes (sin SI)</label>
+        </div>
+      </div>
+    </div>
+
+    <div class="section cal-grid-section">
+      <div id="cal-weekdays" class="cal-weekdays"></div>
+      <div id="cal-grid" class="cal-grid"></div>
+      <div class="cal-legend">
+        <span><i class="dot sueldos"></i>Sueldos</span>
+        <span><i class="dot gfijos"></i>GFijos</span>
+        <span><i class="dot mercaderia"></i>Mercadería</span>
+        <span><i class="dot gvarios"></i>GVarios</span>
+        <span class="cal-legend-sep">·</span>
+        <span><b style="color:var(--warn)">Total día</b> en amarillo</span>
+        <span><b style="color:var(--info)">Acumulado del mes</b> en azul</span>
+      </div>
+    </div>
+  </div>
+
   <div class="view" id="view-evolucion">
     <div class="section">
       <div class="section-head">
@@ -784,6 +1119,14 @@ const state = {
   sortKey: 'fecha',
   sortDir: 'desc',
   filters: { search: '', categoria: '', mes: '', rango: 'mes-10', estado: '' },
+  calendario: {
+    fechaActual: new Date(),   // fecha de referencia (cualquier día dentro de la semana/mes visible)
+    modo: 'week',              // 'week' | 'month'
+    filtros: {
+      cats: new Set(['Sueldos','GFijos','Mercaderia','GVarios']),
+      estado: 'todos',         // 'todos' | 'pagado' | 'pendiente'
+    },
+  },
 };
 
 // ============================= UTILS =============================
@@ -1349,12 +1692,260 @@ function renderEvolucion() {
 }
 
 // ============================= INIT / CARGA =============================
+// ============================ CALENDARIO ============================
+// Devuelve las 7 fechas de la semana (lun a dom) que contiene `fecha`
+function getWeekDates(fecha) {
+  const d = new Date(fecha);
+  d.setHours(0, 0, 0, 0);
+  // getDay(): 0=dom, 1=lun, ... 6=sab  → queremos lunes como inicio
+  const dow = d.getDay();
+  const diffToMonday = (dow === 0 ? -6 : 1 - dow);
+  d.setDate(d.getDate() + diffToMonday);
+  const out = [];
+  for (let i = 0; i < 7; i++) {
+    const x = new Date(d);
+    x.setDate(d.getDate() + i);
+    out.push(x);
+  }
+  return out;
+}
+
+// Devuelve 42 fechas (6 filas x 7 días) para la grilla mensual,
+// incluyendo días del mes anterior/posterior para llenar la grilla
+function getMonthDates(fecha) {
+  const y = fecha.getFullYear();
+  const m = fecha.getMonth();
+  const primero = new Date(y, m, 1);
+  // Empezar desde el lunes de la semana del 1° del mes
+  const dow = primero.getDay();
+  const diffToMonday = (dow === 0 ? -6 : 1 - dow);
+  const start = new Date(primero);
+  start.setDate(primero.getDate() + diffToMonday);
+  const out = [];
+  for (let i = 0; i < 42; i++) {
+    const x = new Date(start);
+    x.setDate(start.getDate() + i);
+    out.push(x);
+  }
+  return out;
+}
+
+// Devuelve solo fecha (sin hora) para comparar
+function sameDay(a, b) {
+  return a.getFullYear() === b.getFullYear()
+    && a.getMonth() === b.getMonth()
+    && a.getDate() === b.getDate();
+}
+
+// Aplica filtros del calendario a la lista de movimientos
+function calFiltrar(movs) {
+  const f = state.calendario.filtros;
+  return movs.filter(m => {
+    if (!f.cats.has(m.categoria)) return false;
+    if (f.estado === 'pagado' && m.estado !== 'pagado') return false;
+    if (f.estado === 'pendiente' && m.estado !== 'pendiente') return false;
+    return true;
+  });
+}
+
+// Devuelve array de mov que caen en `fecha` (según filtros)
+function calMovDelDia(fecha, movsFiltrados) {
+  return movsFiltrados.filter(m => sameDay(m.fecha, fecha));
+}
+
+// Calcula total del día
+function calTotalDia(fecha, movsFiltrados) {
+  return calMovDelDia(fecha, movsFiltrados).reduce((s, m) => s + m.importe, 0);
+}
+
+// Calcula acumulado del mes desde el día 1 hasta `fecha` inclusive
+// Solo suma los días que caen dentro del mismo mes que `fecha`
+function calAcumuladoMes(fecha, movsFiltrados) {
+  const y = fecha.getFullYear();
+  const m = fecha.getMonth();
+  let acum = 0;
+  for (const mov of movsFiltrados) {
+    if (mov.fecha.getFullYear() !== y || mov.fecha.getMonth() !== m) continue;
+    if (mov.fecha > fecha) continue;
+    acum += mov.importe;
+  }
+  return acum;
+}
+
+// Formato corto para importes: $12.3M, $450k, $1.2k, $99
+function fmtCompact(n) {
+  if (!n) return '—';
+  const abs = Math.abs(n);
+  if (abs >= 1_000_000) return '$' + (n / 1_000_000).toFixed(1) + 'M';
+  if (abs >= 10_000) return '$' + Math.round(n / 1_000) + 'k';
+  if (abs >= 1_000) return '$' + (n / 1_000).toFixed(1) + 'k';
+  return '$' + Math.round(n);
+}
+
+const DOW_LABELS = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
+
+function renderCalendario() {
+  if (!state.movimientos.length) {
+    document.getElementById('cal-range').textContent = 'Cargando…';
+    return;
+  }
+
+  const cal = state.calendario;
+  const modo = cal.modo;
+  const fecha = cal.fechaActual;
+  const hoy = new Date();
+  hoy.setHours(0, 0, 0, 0);
+
+  // Pintar header de días de la semana (solo una vez pero es barato)
+  const wd = document.getElementById('cal-weekdays');
+  wd.innerHTML = DOW_LABELS.map(d => `<div class="cal-weekday">${d}</div>`).join('');
+
+  // Obtener fechas según modo
+  const fechas = modo === 'week' ? getWeekDates(fecha) : getMonthDates(fecha);
+
+  // Label de rango
+  const rangeEl = document.getElementById('cal-range');
+  if (modo === 'week') {
+    const ini = fechas[0];
+    const fin = fechas[6];
+    if (ini.getMonth() === fin.getMonth()) {
+      rangeEl.textContent = `${ini.getDate()}–${fin.getDate()} ${MESES_LARGO[ini.getMonth()]} ${ini.getFullYear()}`;
+    } else {
+      rangeEl.textContent = `${ini.getDate()} ${MESES_CORTO[ini.getMonth()]} – ${fin.getDate()} ${MESES_CORTO[fin.getMonth()]} ${fin.getFullYear()}`;
+    }
+  } else {
+    rangeEl.textContent = `${MESES_LARGO[fecha.getMonth()]} ${fecha.getFullYear()}`;
+  }
+
+  // Botón toggle estado
+  const btnToggle = document.getElementById('cal-toggle-mode');
+  btnToggle.textContent = modo === 'week' ? 'Ver mes completo' : 'Ver semana';
+  btnToggle.classList.toggle('active', modo === 'month');
+
+  // Movimientos filtrados (globales, porque el acumulado arranca del 1° de cada mes)
+  const movsF = calFiltrar(state.movimientos);
+
+  // Mes foco (el mes de referencia del modo)
+  // Para week: el mes del primer día de la semana (si cruza meses, para acumulado
+  // cada día se calcula respecto a su propio mes naturalmente)
+  const mesFoco = modo === 'month' ? fecha.getMonth() : null;
+  const anioFoco = modo === 'month' ? fecha.getFullYear() : null;
+
+  // Pre-calcular acumulado por fecha (eficiencia: agrupamos por mes)
+  // Para cada fecha en la grilla, calculamos acumulado del 1° de SU mes hasta esa fecha
+  const grid = document.getElementById('cal-grid');
+  grid.className = 'cal-grid ' + (modo === 'week' ? 'mode-week' : 'mode-month');
+
+  const maxItemsWeek = 12;   // en modo semana podés scrollear, pero limitamos visibles
+  const maxItemsMonth = 4;   // en modo mes hacemos "X más"
+
+  grid.innerHTML = fechas.map(f => {
+    const isToday = sameDay(f, hoy);
+    const isWeekend = f.getDay() === 0 || f.getDay() === 6;
+    const isOtherMonth = modo === 'month' && f.getMonth() !== mesFoco;
+
+    const movsDia = calMovDelDia(f, movsF);
+    const totalDia = movsDia.reduce((s, m) => s + m.importe, 0);
+    const acum = calAcumuladoMes(f, movsF);
+
+    const classes = ['cal-day'];
+    if (isToday) classes.push('today');
+    if (isWeekend) classes.push('weekend');
+    if (isOtherMonth) classes.push('other-month');
+
+    // Items
+    const maxItems = modo === 'week' ? maxItemsWeek : maxItemsMonth;
+    const itemsVisibles = movsDia.slice(0, maxItems);
+    const restantes = movsDia.length - itemsVisibles.length;
+
+    const itemsHtml = itemsVisibles.map(m => {
+      const catKey = m.categoria === 'Mercaderia' ? 'mercaderia' : m.categoria.toLowerCase();
+      const estadoKey = m.estado === 'pagado' ? 'pagado' : 'pendiente';
+      const descEsc = (m.descripcion || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
+      const title = `${m.categoria} · ${descEsc} · ${fmt$(m.importe)} · ${m.estado === 'pagado' ? 'Pagado' : 'Pendiente'}`;
+      return `<div class="cal-item cat-${catKey} ${estadoKey}" title="${title}">
+        <span class="cal-item-desc">${descEsc}</span>
+        <span class="cal-item-amt">${fmtCompact(m.importe)}</span>
+      </div>`;
+    }).join('');
+
+    const moreHtml = restantes > 0 ? `<div class="cal-more">+ ${restantes} más</div>` : '';
+
+    // Totales: día + acumulado (siempre se muestra acumulado si hay algún movimiento ese mes)
+    let totalsHtml = '';
+    if (totalDia > 0) {
+      totalsHtml = `
+        <div class="cal-day-totals">
+          <div class="cal-day-total-row day">
+            <span class="label">Día</span>
+            <span class="val">${fmtCompact(totalDia)}</span>
+          </div>
+          <div class="cal-day-total-row acum">
+            <span class="label">Acum mes</span>
+            <span class="val">${fmtCompact(acum)}</span>
+          </div>
+        </div>`;
+    } else if (acum > 0 && !isOtherMonth) {
+      // Día sin gastos pero con acumulado del mes → mostrar solo acum
+      totalsHtml = `
+        <div class="cal-day-totals">
+          <div class="cal-day-total-row day empty">
+            <span class="label">Día</span>
+            <span class="val">—</span>
+          </div>
+          <div class="cal-day-total-row acum">
+            <span class="label">Acum mes</span>
+            <span class="val">${fmtCompact(acum)}</span>
+          </div>
+        </div>`;
+    }
+
+    return `<div class="${classes.join(' ')}">
+      <div class="cal-day-head">
+        <span class="cal-day-num">${f.getDate()}</span>
+        <span class="cal-day-dow">${DOW_LABELS[(f.getDay() + 6) % 7]}</span>
+      </div>
+      <div class="cal-items">
+        ${itemsHtml}
+        ${moreHtml}
+      </div>
+      ${totalsHtml}
+    </div>`;
+  }).join('');
+}
+
+function calMover(delta) {
+  const cal = state.calendario;
+  const d = new Date(cal.fechaActual);
+  if (cal.modo === 'week') {
+    d.setDate(d.getDate() + (delta * 7));
+  } else {
+    d.setMonth(d.getMonth() + delta);
+    d.setDate(1);
+  }
+  cal.fechaActual = d;
+  renderCalendario();
+}
+
+function calToday() {
+  state.calendario.fechaActual = new Date();
+  renderCalendario();
+}
+
+function calToggleModo() {
+  state.calendario.modo = state.calendario.modo === 'week' ? 'month' : 'week';
+  renderCalendario();
+}
+
+// ============================ FIN CALENDARIO ============================
+
 function switchTab(view) {
   document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.view === view));
   document.querySelectorAll('.view').forEach(v => v.classList.toggle('active', v.id === 'view-' + view));
   if (view === 'dashboard') renderDashboard();
   if (view === 'movimientos') renderMovimientos();
   if (view === 'proyeccion') renderProyeccion();
+  if (view === 'calendario') renderCalendario();
   if (view === 'evolucion') renderEvolucion();
 }
 
@@ -1440,6 +2031,32 @@ function setupEvents() {
         state.sortDir = k === 'fecha' || k === 'importe' ? 'desc' : 'asc';
       }
       renderMovimientos();
+    });
+  });
+
+  // ===== Handlers del Calendario =====
+  document.getElementById('cal-prev').addEventListener('click', () => calMover(-1));
+  document.getElementById('cal-next').addEventListener('click', () => calMover(1));
+  document.getElementById('cal-today').addEventListener('click', calToday);
+  document.getElementById('cal-toggle-mode').addEventListener('click', calToggleModo);
+
+  // Filtros por categoría (checkboxes)
+  document.querySelectorAll('#view-calendario input[type="checkbox"][data-cat]').forEach(cb => {
+    cb.addEventListener('change', e => {
+      const cat = e.target.dataset.cat;
+      if (e.target.checked) state.calendario.filtros.cats.add(cat);
+      else state.calendario.filtros.cats.delete(cat);
+      renderCalendario();
+    });
+  });
+
+  // Filtro de estado (radios)
+  document.querySelectorAll('#view-calendario input[type="radio"][name="cal-estado"]').forEach(rb => {
+    rb.addEventListener('change', e => {
+      if (e.target.checked) {
+        state.calendario.filtros.estado = e.target.value;
+        renderCalendario();
+      }
     });
   });
 }
