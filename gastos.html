@@ -683,9 +683,18 @@
 
   .cal-grid-section { padding: 0; overflow: hidden; }
 
+  .cal-scroll {
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+  }
+  .cal-scroll-inner {
+    min-width: 100%;
+  }
+
   .cal-weekdays {
     display: grid;
-    grid-template-columns: repeat(7, 1fr);
+    grid-template-columns: repeat(7, minmax(0, 1fr));
     border-bottom: 1px solid var(--border);
     background: var(--panel-2);
   }
@@ -703,10 +712,10 @@
 
   .cal-grid {
     display: grid;
-    grid-template-columns: repeat(7, 1fr);
+    grid-template-columns: repeat(7, minmax(0, 1fr));
   }
   .cal-grid.mode-week { grid-auto-rows: minmax(280px, auto); }
-  .cal-grid.mode-month { grid-auto-rows: minmax(140px, auto); }
+  .cal-grid.mode-month { grid-auto-rows: minmax(160px, auto); }
 
   .cal-day {
     border-right: 1px solid var(--border);
@@ -758,39 +767,61 @@
   }
   .cal-item {
     display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 3px 6px;
+    flex-direction: column;
+    gap: 2px;
+    padding: 4px 6px;
     border-radius: 3px;
     background: var(--panel-2);
     border-left: 2px solid var(--text-mute);
     font-size: 10px;
     line-height: 1.25;
-    cursor: default;
+    cursor: pointer;
+    transition: background 0.1s;
   }
+  .cal-item:hover { background: #252525; }
   .cal-item.cat-sueldos { border-left-color: var(--cat-sueldos); }
   .cal-item.cat-gfijos { border-left-color: var(--cat-gfijos); }
   .cal-item.cat-mercaderia { border-left-color: var(--cat-merca); }
   .cal-item.cat-gvarios { border-left-color: var(--cat-gvarios); }
-  .cal-item.pendiente { opacity: 1; border-left-style: dashed; }
-  .cal-item.pagado::after {
-    content: '✓';
-    color: var(--good);
-    font-size: 9px;
-    margin-left: auto;
-    font-weight: 700;
-  }
-  .cal-item-desc {
-    flex: 1;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    color: var(--text-dim);
+  .cal-item.pendiente { border-left-style: dashed; }
+
+  .cal-item-top {
+    display: flex;
+    align-items: center;
+    gap: 4px;
   }
   .cal-item-amt {
     font-family: 'JetBrains Mono', monospace;
     font-weight: 600;
     color: var(--text);
+    font-size: 11px;
+    flex: 1;
+  }
+  .cal-item-check {
+    color: var(--good);
+    font-size: 10px;
+    font-weight: 700;
+  }
+  .cal-item-cat {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 1px 4px;
+    border-radius: 2px;
+    font-weight: 600;
+    align-self: flex-start;
+  }
+  .cal-item-cat.cat-sueldos { background: rgba(90,168,255,0.15); color: var(--cat-sueldos); }
+  .cal-item-cat.cat-gfijos { background: rgba(245,180,0,0.15); color: var(--cat-gfijos); }
+  .cal-item-cat.cat-mercaderia { background: rgba(255,106,0,0.15); color: var(--cat-merca); }
+  .cal-item-cat.cat-gvarios { background: rgba(181,138,255,0.15); color: var(--cat-gvarios); }
+
+  .cal-item-desc {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--text-dim);
     font-size: 10px;
   }
 
@@ -806,6 +837,7 @@
     display: flex;
     justify-content: space-between;
     align-items: baseline;
+    gap: 6px;
     font-family: 'JetBrains Mono', monospace;
     font-size: 10px;
   }
@@ -815,29 +847,16 @@
     text-transform: uppercase;
     letter-spacing: 0.08em;
   }
-  .cal-day-total-row.day {
-    color: var(--warn);
-  }
-  .cal-day-total-row.day .val {
-    font-weight: 700;
-    font-size: 12px;
-  }
-  .cal-day-total-row.acum {
-    color: var(--info);
-  }
-  .cal-day-total-row.acum .val {
-    font-weight: 600;
-  }
+  .cal-day-total-row.day { color: var(--warn); }
+  .cal-day-total-row.day .val { font-weight: 700; font-size: 12px; }
+  .cal-day-total-row.acum { color: var(--info); }
+  .cal-day-total-row.acum .val { font-weight: 600; }
   .cal-day-total-row.empty .val { color: var(--text-mute); }
 
-  .cal-grid.mode-month .cal-items {
-    max-height: 70px;
-  }
-  .cal-grid.mode-month .cal-item {
-    font-size: 9px;
-    padding: 2px 4px;
-  }
+  .cal-grid.mode-month .cal-items { max-height: 90px; }
+  .cal-grid.mode-month .cal-item { padding: 2px 5px; }
   .cal-grid.mode-month .cal-item-desc { display: none; }
+  .cal-grid.mode-month .cal-item-cat { display: none; }
   .cal-grid.mode-month .cal-day-total-row.day .val { font-size: 11px; }
   .cal-grid.mode-month .cal-day-totals { padding-top: 4px; }
 
@@ -874,13 +893,126 @@
   .cal-legend .dot.gvarios { background: var(--cat-gvarios); }
   .cal-legend-sep { color: var(--text-mute); margin: 0 4px; }
 
+  /* ================ MODAL DETALLE DE GASTO ================ */
+  .cal-modal-bg {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 1000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    backdrop-filter: blur(4px);
+  }
+  .cal-modal-bg.show { display: flex; }
+  .cal-modal {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    max-width: 500px;
+    width: 100%;
+    padding: 24px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+  }
+  .cal-modal-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .cal-modal-title {
+    font-family: 'Instrument Serif', serif;
+    font-style: italic;
+    font-size: 22px;
+    color: var(--text);
+    line-height: 1.25;
+    word-break: break-word;
+  }
+  .cal-modal-close {
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-size: 18px;
+    cursor: pointer;
+    padding: 4px 10px;
+    border-radius: 4px;
+    line-height: 1;
+    flex-shrink: 0;
+  }
+  .cal-modal-close:hover { background: var(--border-strong); }
+  .cal-modal-amt {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 6px;
+  }
+  .cal-modal-sub {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text-mute);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 20px;
+  }
+  .cal-modal-fields {
+    display: grid;
+    gap: 12px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+  }
+  .cal-modal-field {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    align-items: baseline;
+  }
+  .cal-modal-field .k {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--text-mute);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    flex-shrink: 0;
+  }
+  .cal-modal-field .v {
+    color: var(--text);
+    font-size: 13px;
+    text-align: right;
+    word-break: break-word;
+  }
+  .cal-modal-tag {
+    display: inline-block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-weight: 600;
+  }
+  .cal-modal-tag.cat-sueldos { background: rgba(90,168,255,0.15); color: var(--cat-sueldos); }
+  .cal-modal-tag.cat-gfijos { background: rgba(245,180,0,0.15); color: var(--cat-gfijos); }
+  .cal-modal-tag.cat-mercaderia { background: rgba(255,106,0,0.15); color: var(--cat-merca); }
+  .cal-modal-tag.cat-gvarios { background: rgba(181,138,255,0.15); color: var(--cat-gvarios); }
+  .cal-modal-tag.estado-pagado { background: var(--good-dim); color: var(--good); }
+  .cal-modal-tag.estado-pendiente { background: var(--bad-dim); color: var(--bad); }
+
   @media (max-width: 900px) {
     .cal-range { font-size: 16px; min-width: 180px; }
     .cal-btn { font-size: 10px; padding: 6px 10px; }
-    .cal-day { padding: 6px; }
-    .cal-day-num { font-size: 12px; }
-    .cal-item-desc { font-size: 9px; }
+    /* Scroll horizontal: cada día tiene ancho mínimo para que no se corten importes */
+    .cal-scroll-inner {
+      min-width: 1050px;  /* 7 días * 150px */
+    }
+    .cal-grid.mode-week .cal-day,
+    .cal-grid.mode-month .cal-day {
+      min-width: 150px;
+    }
     .cal-filters { flex-direction: column; gap: 10px; }
+    .cal-modal { padding: 18px; }
+    .cal-modal-title { font-size: 18px; }
+    .cal-modal-amt { font-size: 26px; }
   }
   /* ========================== FIN CALENDARIO ========================== */
 
@@ -1048,8 +1180,12 @@
     </div>
 
     <div class="section cal-grid-section">
-      <div id="cal-weekdays" class="cal-weekdays"></div>
-      <div id="cal-grid" class="cal-grid"></div>
+      <div class="cal-scroll">
+        <div class="cal-scroll-inner">
+          <div id="cal-weekdays" class="cal-weekdays"></div>
+          <div id="cal-grid" class="cal-grid"></div>
+        </div>
+      </div>
       <div class="cal-legend">
         <span><i class="dot sueldos"></i>Sueldos</span>
         <span><i class="dot gfijos"></i>GFijos</span>
@@ -1058,6 +1194,8 @@
         <span class="cal-legend-sep">·</span>
         <span><b style="color:var(--warn)">Total día</b> en amarillo</span>
         <span><b style="color:var(--info)">Acumulado del mes</b> en azul</span>
+        <span class="cal-legend-sep">·</span>
+        <span style="color:var(--text-mute)">Tocá cualquier gasto para ver el detalle</span>
       </div>
     </div>
   </div>
@@ -1104,6 +1242,36 @@
     </div>
   </div>
 </main>
+
+<!-- Modal de detalle de gasto del calendario -->
+<div class="cal-modal-bg" id="cal-modal-bg">
+  <div class="cal-modal">
+    <div class="cal-modal-head">
+      <div class="cal-modal-title" id="cal-modal-title">—</div>
+      <button class="cal-modal-close" id="cal-modal-close">×</button>
+    </div>
+    <div class="cal-modal-amt" id="cal-modal-amt">$0</div>
+    <div class="cal-modal-sub" id="cal-modal-sub">—</div>
+    <div class="cal-modal-fields">
+      <div class="cal-modal-field">
+        <span class="k">Categoría</span>
+        <span class="v" id="cal-modal-cat">—</span>
+      </div>
+      <div class="cal-modal-field">
+        <span class="k">Fecha</span>
+        <span class="v" id="cal-modal-fecha">—</span>
+      </div>
+      <div class="cal-modal-field">
+        <span class="k">Estado</span>
+        <span class="v" id="cal-modal-estado">—</span>
+      </div>
+      <div class="cal-modal-field" id="cal-modal-extra-row" style="display:none">
+        <span class="k">Facturado</span>
+        <span class="v" id="cal-modal-extra">—</span>
+      </div>
+    </div>
+  </div>
+</div>
 
 <div class="status-bar" id="status-bar"></div>
 
@@ -1858,14 +2026,26 @@ function renderCalendario() {
     const itemsVisibles = movsDia.slice(0, maxItems);
     const restantes = movsDia.length - itemsVisibles.length;
 
-    const itemsHtml = itemsVisibles.map(m => {
+    const itemsHtml = itemsVisibles.map((m, idx) => {
       const catKey = m.categoria === 'Mercaderia' ? 'mercaderia' : m.categoria.toLowerCase();
       const estadoKey = m.estado === 'pagado' ? 'pagado' : 'pendiente';
       const descEsc = (m.descripcion || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
-      const title = `${m.categoria} · ${descEsc} · ${fmt$(m.importe)} · ${m.estado === 'pagado' ? 'Pagado' : 'Pendiente'}`;
-      return `<div class="cal-item cat-${catKey} ${estadoKey}" title="${title}">
-        <span class="cal-item-desc">${descEsc}</span>
-        <span class="cal-item-amt">${fmtCompact(m.importe)}</span>
+      const catLabelMap = { sueldos: 'Sueldos', gfijos: 'GFijos', mercaderia: 'Merc.', gvarios: 'GVarios' };
+      const catLabel = catLabelMap[catKey] || m.categoria;
+      // Guardamos el índice global del movimiento para poder abrir el modal después
+      const globalIdx = state.movimientos.indexOf(m);
+      const checkHtml = m.estado === 'pagado' ? '<span class="cal-item-check">✓</span>' : '';
+      // Chip de categoría SIEMPRE en pendientes; en pagados no se muestra para ahorrar espacio
+      const chipHtml = m.estado === 'pendiente'
+        ? `<span class="cal-item-cat cat-${catKey}">${catLabel}</span>`
+        : '';
+      return `<div class="cal-item cat-${catKey} ${estadoKey}" data-mov-idx="${globalIdx}">
+        <div class="cal-item-top">
+          <span class="cal-item-amt">${fmtCompact(m.importe)}</span>
+          ${checkHtml}
+        </div>
+        <div class="cal-item-desc">${descEsc}</div>
+        ${chipHtml}
       </div>`;
     }).join('');
 
@@ -1935,6 +2115,42 @@ function calToday() {
 function calToggleModo() {
   state.calendario.modo = state.calendario.modo === 'week' ? 'month' : 'week';
   renderCalendario();
+}
+
+// Modal de detalle de gasto
+function calOpenModal(mov) {
+  if (!mov) return;
+  const catKey = mov.categoria === 'Mercaderia' ? 'mercaderia' : mov.categoria.toLowerCase();
+  const catLabelMap = { sueldos: 'Sueldos', gfijos: 'Gastos Fijos', mercaderia: 'Mercadería', gvarios: 'Gastos Varios' };
+  const catLabel = catLabelMap[catKey] || mov.categoria;
+  const estadoKey = mov.estado === 'pagado' ? 'estado-pagado' : 'estado-pendiente';
+  const estadoLabel = mov.estado === 'pagado' ? '✓ Pagado (SI)' : '⏳ Pendiente (sin SI)';
+
+  document.getElementById('cal-modal-title').textContent = mov.descripcion || '(sin descripción)';
+  document.getElementById('cal-modal-amt').textContent = fmt$(mov.importe);
+  document.getElementById('cal-modal-sub').textContent = `${catLabel} · ${mov.estado === 'pagado' ? 'Pagado' : 'Pendiente'}`;
+  document.getElementById('cal-modal-cat').innerHTML = `<span class="cal-modal-tag cat-${catKey}">${catLabel}</span>`;
+  document.getElementById('cal-modal-estado').innerHTML = `<span class="cal-modal-tag ${estadoKey}">${estadoLabel}</span>`;
+
+  const fechaLabel = mov.fecha.toLocaleDateString('es-AR', {
+    weekday: 'long', day: '2-digit', month: 'long', year: 'numeric'
+  });
+  document.getElementById('cal-modal-fecha').textContent = fechaLabel;
+
+  // Campo extra: facturado (solo para Mercadería y GVarios)
+  const extraRow = document.getElementById('cal-modal-extra-row');
+  if (mov.extra && typeof mov.extra.facturado === 'boolean') {
+    extraRow.style.display = '';
+    document.getElementById('cal-modal-extra').textContent = mov.extra.facturado ? 'SI (facturado)' : 'NO (no facturado)';
+  } else {
+    extraRow.style.display = 'none';
+  }
+
+  document.getElementById('cal-modal-bg').classList.add('show');
+}
+
+function calCloseModal() {
+  document.getElementById('cal-modal-bg').classList.remove('show');
 }
 
 // ============================ FIN CALENDARIO ============================
@@ -2058,6 +2274,25 @@ function setupEvents() {
         renderCalendario();
       }
     });
+  });
+
+  // Click en item del calendario → abrir modal (event delegation)
+  document.getElementById('cal-grid').addEventListener('click', e => {
+    const item = e.target.closest('.cal-item');
+    if (!item) return;
+    const idx = parseInt(item.dataset.movIdx, 10);
+    if (isNaN(idx)) return;
+    const mov = state.movimientos[idx];
+    if (mov) calOpenModal(mov);
+  });
+
+  // Cerrar modal
+  document.getElementById('cal-modal-close').addEventListener('click', calCloseModal);
+  document.getElementById('cal-modal-bg').addEventListener('click', e => {
+    if (e.target.id === 'cal-modal-bg') calCloseModal();
+  });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') calCloseModal();
   });
 }
 
