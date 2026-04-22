@@ -264,6 +264,7 @@
   }
   .rank-item .val .cant { color: var(--text-mute); font-weight: 400; margin-left: 4px; }
   .rank-item .val.positive { color: var(--good); }
+  .rank-item .val.negative { color: var(--bad); font-weight: 600; }
   .rank-item .val.emph { color: var(--text); font-weight: 600; }
   .rank-item .bar {
     position: absolute; bottom: 0; left: 0; right: 0; height: 2px;
@@ -1072,6 +1073,12 @@ const COMISIONES_DEFAULT = {
   'Rafael Bonet': 0,
 };
 
+// Vendedores que representan pérdida pura para la empresa
+// (mercadería que sale, no genera facturación, costo total es pérdida)
+const VENDEDORES_PERDIDA = new Set([
+  'Victor Gordillo',
+]);
+
 // ========== UTILS ==========
 const fmt = (n) => {
   if (!isFinite(n)) return '—';
@@ -1130,6 +1137,10 @@ const state = {
 // ========== CALCULATION ==========
 function calcRow(v){
   const row = { ...v };
+  // Detectar si es vendedor de pérdida (Victor)
+  const esPerdida = VENDEDORES_PERDIDA.has(v.vendedor);
+  row.esPerdida = esPerdida;
+
   if(v.status === 'sinClasif' || v.status === 'observacion'){
     row.precioNeto = null; row.ganancia = null; row.margen = null;
     row.comisionAplicada = 0;
@@ -1140,6 +1151,18 @@ function calcRow(v){
     row.comisionAplicada = 0;
     return row;
   }
+
+  if(esPerdida){
+    // Víctor: la empresa pierde el costo completo, no hay facturación real
+    row.precioNeto = 0;           // no hay ingreso
+    row.ganancia = -v.costo;      // pérdida = costo de la mercadería
+    row.gananciaBruta = -v.costo;
+    row.margen = -100;
+    row.comisionAplicada = 0;
+    row.comisionMonto = 0;
+    return row;
+  }
+
   const precioNeto = v.pLista * (1 - state.dto/100);
   const ganBruta = precioNeto - v.costo;
   const comisionPct = state.comisiones[v.vendedor] ?? 0;
@@ -1278,11 +1301,14 @@ function renderRankList(elId, items, valueKey, valueFmt, drawerType){
   el.innerHTML = items.map((it, i) => {
     const pct = Math.abs(it[valueKey]) / max * 100;
     const topClass = i === 0 ? 'top-1' : '';
+    const isNeg = it[valueKey] < 0;
+    const valClass = isNeg ? 'negative' : (it[valueKey] > 0 ? 'positive' : '');
+    const fillColor = isNeg ? 'var(--bad)' : 'var(--teal)';
     return `<div class="rank-item clickable ${topClass}" data-type="${drawerType}" data-value="${escHtml(it.key)}">
       <div class="n">${String(i+1).padStart(2,'0')}</div>
       <div class="name" title="${escHtml(it.key)}">${escHtml(it.key)}</div>
-      <div class="val ${it[valueKey] > 0 ? 'positive' : ''} ${i===0?'emph':''}">${valueFmt(it[valueKey])} <span class="cant">· ${it.cant}x</span></div>
-      <div class="bar"><div class="fill" style="width:${pct}%"></div></div>
+      <div class="val ${valClass} ${i===0 && !isNeg?'emph':''}">${valueFmt(it[valueKey])} <span class="cant">· ${it.cant}x</span></div>
+      <div class="bar"><div class="fill" style="width:${pct}%;background:${fillColor}"></div></div>
     </div>`;
   }).join('');
   // Bind click
@@ -1295,7 +1321,8 @@ function renderRankings(rows){
   renderRankList('rankSurtidosCant', groupRank(rows, 'surtido', 10, 'cant'), 'cant', v => v + ' ventas', 'surtido');
   renderRankList('rankSurtidosGan', groupRank(rows.filter(r => r.ganancia > 0), 'surtido', 10, 'ganancia'), 'ganancia', fmt, 'surtido');
   renderRankList('rankClientes', groupRank(rows.filter(r => r.ganancia > 0), 'cliente', 10, 'ganancia'), 'ganancia', fmt, 'cliente');
-  renderRankList('rankVendedores', groupRank(rows.filter(r => r.ganancia > 0), 'vendedor', 10, 'ganancia'), 'ganancia', fmt, 'vendedor');
+  // Vendedores: incluir todos (incluso los de pérdida), ordenado por ganancia (negativos van al final naturalmente)
+  renderRankList('rankVendedores', groupRank(rows.filter(r => r.ganancia != null), 'vendedor', 10, 'ganancia'), 'ganancia', fmt, 'vendedor');
 }
 
 function renderChart(rows){
@@ -1494,8 +1521,15 @@ function renderComisionesUI(){
   const vendedores = [...new Set(VENTAS.map(v => v.vendedor))].sort();
   const cont = document.getElementById('comisionMini');
   cont.innerHTML = vendedores.map(v => {
+    const short = escHtml(v.split(' ')[0].substring(0,10));
+    if (VENDEDORES_PERDIDA.has(v)) {
+      // Víctor: chip distinto, no editable, indica pérdida pura
+      return `<label class="comision-chip" style="background:var(--bad-dim);border-color:var(--bad);color:var(--bad)" title="Las ventas de ${escHtml(v)} son pérdida pura: mercadería que sale sin retorno para la empresa.">
+        ${short} <span style="color:var(--bad);font-weight:600;font-size:10px;letter-spacing:0.04em">PÉRDIDA</span>
+      </label>`;
+    }
     const val = state.comisiones[v] ?? 0;
-    return `<label class="comision-chip">${escHtml(v.split(' ')[0].substring(0,10))} <input type="number" min="0" max="100" step="0.5" value="${val}" data-vendedor="${escHtml(v)}"></label>`;
+    return `<label class="comision-chip">${short} <input type="number" min="0" max="100" step="0.5" value="${val}" data-vendedor="${escHtml(v)}"></label>`;
   }).join('');
   cont.querySelectorAll('input').forEach(inp => {
     inp.oninput = (e) => {
@@ -1604,10 +1638,32 @@ function openDrawer(type, value){
     // Qué vende este vendedor
     const bySurtido = groupRank(relevant, 'surtido', 15, 'ganancia');
     const byCliente = groupRank(relevant.filter(r => r.ganancia != null), 'cliente', 15, 'ganancia');
+    const esPerdida = VENDEDORES_PERDIDA.has(value);
     const comisionPct = state.comisiones[value] ?? 0;
     const gananciaBruta = relevant.reduce((s,r) => s + (r.gananciaBruta || 0), 0);
     const comisionTotal = relevant.reduce((s,r) => s + (r.comisionMonto || 0), 0);
-    sectionsHTML += `
+    const perdidaTotal = relevant.reduce((s,r) => s + (r.costo || 0), 0);
+
+    if(esPerdida){
+      sectionsHTML += `
+      <div style="background:var(--bad-dim);border:1px solid var(--bad);border-radius:8px;padding:14px;margin-bottom:16px">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--bad);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:6px">⚠ Pérdida pura · Mercadería que sale sin retorno</div>
+        <div style="font-size:14px;color:var(--text);line-height:1.5">Todo lo que vende este vendedor es <b style="color:var(--bad)">pérdida total para la empresa</b>: la mercadería sale, no hay facturación real, y el costo completo se descuenta del resultado global.</div>
+      </div>
+      <div class="drawer-kpis">
+        <div class="drawer-kpi" style="border-color:var(--bad)">
+          <div class="l">Pérdida total</div>
+          <div class="v" style="color:var(--bad)">-${fmt(perdidaTotal)}</div>
+          <div class="h">costo de mercadería entregada</div>
+        </div>
+        <div class="drawer-kpi">
+          <div class="l">Pedidos</div>
+          <div class="v">${cant}</div>
+          <div class="h">en el período filtrado</div>
+        </div>
+      </div>`;
+    } else {
+      sectionsHTML += `
       <div class="drawer-kpis">
         <div class="drawer-kpi">
           <div class="l">Comisión aplicada</div>
@@ -1619,13 +1675,16 @@ function openDrawer(type, value){
           <div class="v good">${fmt(comisionTotal)}</div>
           <div class="h">sobre ${fmt(gananciaBruta)} bruto</div>
         </div>
-      </div>
+      </div>`;
+    }
+
+    sectionsHTML += `
       <div class="drawer-section-title">Clientes que atiende (top 15)</div>
       <div class="drawer-list">
         ${byCliente.map(c => `
           <div class="drawer-row">
             <div class="name">${escHtml(c.key)}<span class="s">${c.cant} pedido${c.cant>1?'s':''} · ${fmt(c.vendido)}</span></div>
-            <div class="v emph">${fmt(c.ganancia)}</div>
+            <div class="v ${c.ganancia < 0 ? '' : 'emph'}" style="${c.ganancia < 0 ? 'color:var(--bad);font-weight:600' : ''}">${fmt(c.ganancia)}</div>
           </div>
         `).join('')}
       </div>
@@ -1634,7 +1693,7 @@ function openDrawer(type, value){
         ${bySurtido.map(s => `
           <div class="drawer-row">
             <div class="name">${escHtml(s.key)}<span class="s">${s.cant} pedido${s.cant>1?'s':''}</span></div>
-            <div class="v ${s.ganancia>0?'positive':''}">${fmt(s.ganancia)}</div>
+            <div class="v ${s.ganancia>0?'positive':''}" style="${s.ganancia < 0 ? 'color:var(--bad);font-weight:600' : ''}">${fmt(s.ganancia)}</div>
           </div>
         `).join('')}
       </div>`;
