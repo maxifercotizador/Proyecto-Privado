@@ -727,6 +727,37 @@
   </div>
 </div>
 
+<!-- MODAL piezas faltantes -->
+<div class="modal-bg" id="piezasModal" onclick="if(event.target===this)closePiezas()">
+  <div class="modal" style="max-width: 720px;">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:14px">
+      <div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--teal);text-transform:uppercase;letter-spacing:0.12em;margin-bottom:4px">Piezas sin costo cargado</div>
+        <h3 style="margin-bottom:0" id="piezasTitle">—</h3>
+        <div id="piezasSubtitle" style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-mute);margin-top:4px"></div>
+      </div>
+      <button class="drawer-close" onclick="closePiezas()">×</button>
+    </div>
+    <p style="font-size:12px;color:var(--text-mute);margin-bottom:12px">Estas piezas <b style="color:var(--text)">no están en el Excel de costos</b>. Para que la ganancia sea exacta, cargalas en <code>01 COMPRAS - COSTOS - FABRICAS.xlsm</code> hoja <code>CODIGOS Y COSTOS</code> con la clave <b style="color:var(--teal)">Producto + N°</b> tal como se muestra abajo.</p>
+    <div style="max-height: 50vh; overflow-y: auto; border: 1px solid var(--border); border-radius: 6px;">
+      <table style="width:100%;font-size:12px">
+        <thead>
+          <tr>
+            <th>Producto + N°</th>
+            <th style="text-align:left">Descripción</th>
+            <th class="right">Cant.</th>
+          </tr>
+        </thead>
+        <tbody id="piezasBody"></tbody>
+      </table>
+    </div>
+    <div class="btn-row">
+      <button class="btn-header" onclick="copiarPiezas()" id="btnCopiarPiezas">📋 Copiar lista</button>
+      <button class="btn-header" onclick="closePiezas()">Cerrar</button>
+    </div>
+  </div>
+</div>
+
 <script>
 // ========== CONFIGURACIÓN ==========
 // Los archivos se leen del mismo directorio donde está este HTML (relative)
@@ -887,7 +918,13 @@ function calcularCostoSurtido(surtido, costos, usarReducida = false) {
       costo_total += costo_unit * cant;
       items_matched++;
     } else {
-      items_sin_costo.push(`${item.producto} n°${item.numero}`);
+      items_sin_costo.push({
+        producto: item.producto,
+        numero: item.numero,
+        desc: item.desc || '',
+        cant: cant,
+        claveCostos: item.producto + item.numero
+      });
     }
   }
   return { costo_total: Math.round(costo_total), items_matched, items_total, items_sin_costo };
@@ -976,6 +1013,7 @@ async function loadData() {
       row.costo = costoCalc.costo_total;
       row.itemsMatched = costoCalc.items_matched;
       row.itemsTotal = costoCalc.items_total;
+      row.itemsSinCosto = costoCalc.items_sin_costo;
       row.coberturaCosto = costoCalc.items_total > 0 ? costoCalc.items_matched / costoCalc.items_total : 0;
 
       if (pLista === 0) {
@@ -1358,6 +1396,7 @@ function renderProblems(allEnriched){
         surtido: r.surtido, match: r.match, cant: 0,
         itemsTotal: r.itemsTotal || 0,
         itemsMatched: r.itemsMatched || 0,
+        itemsSinCosto: r.itemsSinCosto || [],
         sinPrecio: r.status === 'sinPrecio'
       };
       m[key].cant += 1;
@@ -1372,29 +1411,44 @@ function renderProblems(allEnriched){
 
   const sp = agruparCosto(conProblemaCosto);
   const spMax = Math.max(...sp.map(x=>x.cant), 1);
+  // Guardar items globalmente para que openPiezas pueda leerlos
+  window._piezasMap = {};
+  sp.forEach(it => { window._piezasMap[it.surtido] = it; });
+
   document.getElementById('sinPrecioList').innerHTML = sp.length ? sp.slice(0,30).map((it,i) => {
     const subtitle = (it.match && it.match !== it.surtido)
       ? `<span style="color:var(--text-mute);font-size:10px;font-family:'JetBrains Mono',monospace"> → ${escHtml(it.match)}</span>`
       : '';
-    // Detalle de piezas
+    // Detalle de piezas - clickeable para abrir modal si hay faltantes
     let detallePiezas = '';
     if (it.sinPrecio) {
-      detallePiezas = `<span style="color:var(--bad);font-size:10px;font-family:'JetBrains Mono',monospace;display:block;margin-top:3px">SIN PRECIO LISTA · ${it.itemsTotal} piezas</span>`;
+      detallePiezas = `<span class="piezas-btn" data-surtido="${escHtml(it.surtido)}" style="color:var(--bad);font-size:10px;font-family:'JetBrains Mono',monospace;display:inline-block;margin-top:3px;cursor:pointer;border-bottom:1px dashed var(--bad);padding-bottom:1px">SIN PRECIO LISTA · ${it.itemsTotal} piezas →</span>`;
     } else if (it.itemsTotal > 0) {
       const faltan = it.itemsTotal - it.itemsMatched;
       const pct = Math.round(it.itemsMatched / it.itemsTotal * 100);
       const color = pct >= 90 ? 'var(--good)' : pct >= 50 ? 'var(--warn)' : 'var(--bad)';
-      detallePiezas = `<span style="color:${color};font-size:10px;font-family:'JetBrains Mono',monospace;display:block;margin-top:3px">${it.itemsMatched}/${it.itemsTotal} piezas con costo · faltan ${faltan} (${pct}%)</span>`;
+      const clickeable = faltan > 0;
+      detallePiezas = clickeable
+        ? `<span class="piezas-btn" data-surtido="${escHtml(it.surtido)}" style="color:${color};font-size:10px;font-family:'JetBrains Mono',monospace;display:inline-block;margin-top:3px;cursor:pointer;border-bottom:1px dashed ${color};padding-bottom:1px">${it.itemsMatched}/${it.itemsTotal} piezas con costo · faltan ${faltan} (${pct}%) →</span>`
+        : `<span style="color:${color};font-size:10px;font-family:'JetBrains Mono',monospace;display:block;margin-top:3px">${it.itemsMatched}/${it.itemsTotal} piezas con costo (${pct}%)</span>`;
     }
-    return `<div class="rank-item clickable" data-type="surtido" data-value="${escHtml(it.surtido)}" style="min-height:44px">
+    return `<div class="rank-item" style="min-height:44px;cursor:default">
       <div class="n">${String(i+1).padStart(2,'0')}</div>
-      <div class="name" title="${escHtml(it.surtido)}">${escHtml(it.surtido)}${subtitle}${detallePiezas}</div>
+      <div class="name" title="${escHtml(it.surtido)}">
+        <span class="surtido-name-btn" data-value="${escHtml(it.surtido)}" style="cursor:pointer">${escHtml(it.surtido)}${subtitle}</span>
+        <br>${detallePiezas}
+      </div>
       <div class="val">${it.cant} ventas</div>
       <div class="bar"><div class="fill" style="width:${it.cant/spMax*100}%;background:var(--info)"></div></div>
     </div>`;
   }).join('') : '<div class="empty">Nada por acá ✓</div>';
-  document.querySelectorAll('#sinPrecioList .rank-item.clickable').forEach(item => {
-    item.onclick = () => openDrawer(item.dataset.type, item.dataset.value);
+  // Click en nombre del surtido → drawer
+  document.querySelectorAll('#sinPrecioList .surtido-name-btn').forEach(el => {
+    el.onclick = (e) => { e.stopPropagation(); openDrawer('surtido', el.dataset.value); };
+  });
+  // Click en bloque de piezas faltantes → modal de piezas
+  document.querySelectorAll('#sinPrecioList .piezas-btn').forEach(el => {
+    el.onclick = (e) => { e.stopPropagation(); openPiezas(el.dataset.surtido); };
   });
 
   const obs = agruparSimple(observacion);
@@ -1644,6 +1698,65 @@ function clearFilters(){
 function openRefresh(){ document.getElementById('refreshModal').classList.add('show'); }
 function closeRefresh(){ document.getElementById('refreshModal').classList.remove('show'); }
 
+// Modal de piezas faltantes
+function openPiezas(surtido){
+  const data = window._piezasMap && window._piezasMap[surtido];
+  if (!data) return;
+
+  document.getElementById('piezasTitle').textContent = surtido + (data.match && data.match !== surtido ? ' → ' + data.match : '');
+
+  let subtitleText;
+  if (data.sinPrecio) {
+    subtitleText = `Surtido sin precio de lista · ${data.itemsTotal} piezas totales`;
+  } else {
+    const faltan = data.itemsTotal - data.itemsMatched;
+    subtitleText = `${data.itemsMatched}/${data.itemsTotal} piezas con costo · faltan ${faltan} (${Math.round(data.itemsMatched/data.itemsTotal*100)}%)`;
+  }
+  document.getElementById('piezasSubtitle').textContent = subtitleText;
+
+  // Si el surtido no tiene precio de lista, necesitamos listar TODOS sus items (no hay sinCosto porque nunca se calculó)
+  // En ese caso los items vienen en 0 — muestro un mensaje alternativo
+  let items = data.itemsSinCosto || [];
+
+  const body = document.getElementById('piezasBody');
+  if (!items.length) {
+    body.innerHTML = '<tr><td colspan="3" class="empty">No hay datos de piezas disponibles para este surtido.</td></tr>';
+  } else {
+    body.innerHTML = items.map(p => `
+      <tr>
+        <td class="mono emph" style="color:var(--teal)">${escHtml(p.claveCostos)}</td>
+        <td>${escHtml(p.desc || '—')}</td>
+        <td class="right">${p.cant}</td>
+      </tr>`).join('');
+  }
+
+  document.getElementById('piezasModal').classList.add('show');
+}
+
+function closePiezas(){
+  document.getElementById('piezasModal').classList.remove('show');
+}
+
+function copiarPiezas(){
+  const rows = document.querySelectorAll('#piezasBody tr');
+  const txt = ['Producto+N°\tDescripción\tCantidad'];
+  rows.forEach(tr => {
+    const cells = tr.querySelectorAll('td');
+    if (cells.length === 3) {
+      txt.push(`${cells[0].textContent}\t${cells[1].textContent}\t${cells[2].textContent}`);
+    }
+  });
+  const text = txt.join('\n');
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(text).then(() => {
+      const btn = document.getElementById('btnCopiarPiezas');
+      const oldTxt = btn.textContent;
+      btn.textContent = '✓ Copiado';
+      setTimeout(() => btn.textContent = oldTxt, 1500);
+    });
+  }
+}
+
 function init(){
   renderComisionesUI();
 
@@ -1693,6 +1806,7 @@ function init(){
     if(e.key === 'Escape'){
       closeDrawer();
       closeRefresh();
+      closePiezas();
     }
   });
 
