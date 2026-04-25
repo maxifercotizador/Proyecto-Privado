@@ -766,6 +766,25 @@ const FILE_SURTIDOS = 'Precio Surtidos.xlsx';
 const FILE_COSTOS = '01 COMPRAS - COSTOS - FABRICAS.xlsm';
 const FILE_VENTAS = 'ventas_monday.json';
 
+// ========== OVERRIDES DE COSTOS (HARDCODED) ==========
+// Regla de negocio confirmada por Maxi (Abr 2026):
+// VARIOS CH y VARIOS GR son los "gastos varios" del exhibidor chico/grande que
+// se incluyen en CADA surtido. En la hoja "CODIGOS Y COSTOS" del Excel de costos
+// figuran con COSTO = 0 (no se cargan ahí), pero en la hoja "Costos Fabricas"
+// SÍ tienen VENTA NETA cargada.
+//
+// Costo real a usar = VENTA NETA / 2 (la mitad de la venta neta).
+// Valores tomados de "Costos Fabricas" filas 2826 y 2827:
+//   Varios Ch: VENTA NETA = 9.072  → costo = 4.536
+//   Varios Gr: VENTA NETA = 16.200 → costo = 8.100
+//
+// Las keys son las de la hoja CODIGOS Y COSTOS (Producto y N°) en UPPERCASE,
+// que es como se construyen las keys del map de costos.
+const OVERRIDE_COSTOS = {
+  'VARIOS CHVARIOS': 4536,   // Varios Ch (Gastos Varios Exhibidor Chico) = 9072 / 2
+  'VARIOS GRVARIOS': 8100,   // Varios Gr (Gastos Varios Exhibidor Grande) = 16200 / 2
+};
+
 // Datos cargados — se inicializan vacíos y se llenan en loadData()
 let VENTAS = [];
 let UPDATED_AT = '—';
@@ -899,6 +918,10 @@ function parseCostosWB(wb) {
     const key = String(prod_num).trim().toUpperCase();
     costos[key] = parseFloat(costo);
   }
+  // Aplicar overrides hardcoded (VARIOS CH/GR — ver nota arriba)
+  for (const [key, val] of Object.entries(OVERRIDE_COSTOS)) {
+    costos[key] = val;
+  }
   return costos;
 }
 
@@ -915,7 +938,9 @@ function calcularCostoSurtido(surtido, costos, usarReducida = false) {
     items_total++;
     const key = (item.producto + item.numero).toUpperCase();
     const costo_unit = costos[key];
-    if (costo_unit != null) {
+    // Considerar válido sólo si hay un número > 0. Un costo en 0 (cargado vacío
+    // en el Excel) se trata como faltante para que aparezca en "sin precio".
+    if (costo_unit != null && costo_unit > 0) {
       costo_total += costo_unit * cant;
       items_matched++;
     } else {
