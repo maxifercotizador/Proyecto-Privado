@@ -761,8 +761,11 @@
 
 <script>
 // ========== CONFIGURACIÓN ==========
-// Los archivos se leen del mismo directorio donde está este HTML (relative)
-const FILE_SURTIDOS = 'Precio Surtidos.xlsx';
+// Precio Surtidos.xlsx vive en el repo `Presupuestador` (fuente unica de verdad).
+// Se lee remoto via raw.githubusercontent.com para que cuando Max actualice los
+// precios alla, todas las apps (Consultor, Catalogo de Exhibidores y este analisis)
+// agarren la version nueva sin tener que sincronizar copias.
+const FILE_SURTIDOS = 'https://raw.githubusercontent.com/maxifercotizador/Presupuestador/main/Precio%20Surtidos.xlsx';
 const FILE_COSTOS = '01 COMPRAS - COSTOS - FABRICAS.xlsm';
 const FILE_VENTAS = 'ventas_monday.json';
 
@@ -867,13 +870,22 @@ async function fetchJson(url) {
 
 function parseSurtidosWB(wb) {
   // Parsea Precio_Surtidos.xlsx hoja 'BD' → { nombre: { items: [{producto, numero, cant_std, cant_red}], precio_std, precio_red, codigo } }
+  // Lee por NOMBRE de columna (no por posicion) para tolerar reordenamientos del Excel.
+  // En la version actual del xlsx la columna "Descripción" no existe; queda como string vacio.
   const ws = wb.Sheets['BD'];
   if (!ws) throw new Error('No se encontró hoja "BD" en Precio_Surtidos.xlsx');
-  const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: null });
-  // Headers: [Codigo, NOMBRE SURTIDO, Cantidad stándar, N°, Descripción, Producto, Precio Estándar, Cantidad Reducidas, Precio Reducido, ...]
+  const rows = XLSX.utils.sheet_to_json(ws, { defval: null });
   const surtidos = {};
-  for (let i = 1; i < rows.length; i++) {
-    const [codigo, nombre, cant_std, numero, desc, producto, precio_std, cant_red, precio_red] = rows[i];
+  for (const r of rows) {
+    const codigo = r['Codigo'];
+    const nombre = r['NOMBRE SURTIDO'];
+    const cant_std = r['Cantidad stándar'] ?? r['Cantidad standar'] ?? r['Cantidad estándar'];
+    const numero = r['N°'] ?? r['Numero'] ?? r['N'];
+    const desc = r['Descripción'] ?? r['Descripcion'] ?? '';
+    const producto = r['Producto'];
+    const precio_std = r['Precio Estándar'] ?? r['Precio Estandar'];
+    const cant_red = r['Cantidad Reducidas'] ?? r['Cantidad Reducida'];
+    const precio_red = r['Precio Reducido'];
     if (!nombre || !producto || numero === null || numero === undefined) continue;
     if (!surtidos[nombre]) {
       surtidos[nombre] = {
