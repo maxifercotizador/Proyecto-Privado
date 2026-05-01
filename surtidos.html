@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>MAXIFER — Análisis de Surtidos</title>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Instrument+Serif&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
@@ -451,18 +452,51 @@ async function _fetchJson(url) {
   if (!r.ok) throw new Error(url + ': HTTP ' + r.status);
   return r.json();
 }
-
-function _isExtra(numero) {
-  const n = String(numero||'').toLowerCase().trim();
-  return n.includes('gaveta') || n.includes('varios');
+async function _fetchXlsx(url) {
+  const r = await fetch(url + '?v=' + Date.now(), { cache: 'no-cache' });
+  if (!r.ok) throw new Error(url + ': HTTP ' + r.status);
+  const ab = await r.arrayBuffer();
+  return XLSX.read(ab, { type: 'array' });
 }
 
-function _buildSurt(productos, surtidos) {
-  // Lookup por (producto normalizado, numero normalizado) -> {pl, pc, prov}
+// Costos hardcoded para items "VARIOS" (gastos administrativos por exhibidor)
+// Mismos valores que usa analisis_ventas.html
+const _OVERRIDE_COSTOS = {
+  'VARIOS CHVARIOS': 4536,
+  'VARIOS GRVARIOS': 8100,
+};
+
+function _parseCostosWB(wb) {
+  // Hoja 'CODIGOS Y COSTOS': key = (Producto + N°).toUpperCase() -> costo unitario
+  const ws = wb.Sheets['CODIGOS Y COSTOS'];
+  if (!ws) throw new Error('No se encontró hoja "CODIGOS Y COSTOS" en el Excel de costos');
+  const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: null });
+  const costos = {};
+  for (let i = 1; i < rows.length; i++) {
+    const [fab, prod_num, codigo, desc, costo] = rows[i];
+    if (!prod_num || costo == null) continue;
+    const key = String(prod_num).trim().toUpperCase();
+    const v = parseFloat(costo);
+    if (!isNaN(v)) costos[key] = v;
+  }
+  for (const [k, v] of Object.entries(_OVERRIDE_COSTOS)) costos[k] = v;
+  return costos;
+}
+
+function _buildSurt(productos, surtidos, costos) {
+  // costos: { "PRODUCTON°".toUpperCase(): costo_unitario } desde el Excel de costos
+  // productos: fallback por si el Excel de costos no tiene el item
   function norm(s){ return String(s||'').trim().toLowerCase().replace(/\s+/g,' '); }
-  const idx = new Map();
+  const idxProd = new Map();
   for (const p of productos) {
-    idx.set(norm(p.p)+'|'+norm(p.n), { pl: p.pl||0, pc: p.pc||0, prov: p.prov||'' });
+    idxProd.set(norm(p.p)+'|'+norm(p.n), { pl: p.pl||0, pc: p.pc||0, prov: p.prov||'' });
+  }
+  function getCosto(prod, num) {
+    const key = String(prod||'').trim().toUpperCase() + String(num||'').trim().toUpperCase();
+    if (costos[key] != null && costos[key] > 0) return costos[key];
+    // fallback a productos.json
+    const f = idxProd.get(norm(prod)+'|'+norm(num));
+    return (f && f.pc > 0) ? f.pc : 0;
   }
   const out = [];
   for (const code in surtidos) {
@@ -475,9 +509,9 @@ function _buildSurt(productos, surtidos) {
     for (const i of (s.i||[])) {
       const cs = i.cs||0, cr = i.cr||0;
       const pl = i.pl||0;
-      const lookup = idx.get(norm(i.p)+'|'+norm(i.n)) || {};
-      const pc = lookup.pc || 0;
-      const prov = lookup.prov || '';
+      const fProd = idxProd.get(norm(i.p)+'|'+norm(i.n)) || {};
+      const pc = getCosto(i.p, i.n);
+      const prov = fProd.prov || '';
       const isMaxifer = prov.toUpperCase().includes('MAXIFER');
       const numLow = String(i.n||'').toLowerCase();
       const isGav = numLow.includes('gaveta');
@@ -486,9 +520,7 @@ function _buildSurt(productos, surtidos) {
       if (isGav) gv++;
       else if (isVar) vr++;
       else { it++; if (pc>0) itC++; if (isMaxifer) pMaxiferItems++; }
-      if (!isExtra) {
-        pS += cs; pR += cr;
-      }
+      if (!isExtra) { pS += cs; pR += cr; }
       vL += pl * cs;
       const itemCost = pc * cs;
       if (isGav) coG += itemCost;
@@ -509,7 +541,7 @@ function _buildSurt(productos, surtidos) {
       n: s.n||code, c: code, cat,
       it, itC, pct, pM, gv, vr,
       pS, pR,
-      vL, co: cat==='sin_datos'||cat==='victor'?null:co,
+      vL, co: (cat==='sin_datos' || cat==='victor') ? null : co,
       coI, coG, coV,
       items
     });
@@ -518,16 +550,18 @@ function _buildSurt(productos, surtidos) {
 }
 
 async function loadCatalog() {
-  const base = 'https://maxifercotizador.github.io/Presupuestador/';
-  const [productos, surtidos] = await Promise.all([
-    _fetchJson(base+'productos.json'),
-    _fetchJson(base+'surtidos.json'),
+  const basePresu = 'https://maxifercotizador.github.io/Presupuestador/';
+  const [productos, surtidos, costosWB] = await Promise.all([
+    _fetchJson(basePresu + 'productos.json'),
+    _fetchJson(basePresu + 'surtidos.json'),
+    _fetchXlsx('01 COMPRAS - COSTOS - FABRICAS.xlsm'),
   ]);
-  SURT = _buildSurt(productos, surtidos);
+  const costos = _parseCostosWB(costosWB);
+  SURT = _buildSurt(productos, surtidos, costos);
   DATA_READY = true;
   document.dispatchEvent(new Event('catalog-ready'));
   const ld = document.getElementById('catalog-loader');
-  if (ld) ld.style.display='none';
+  if (ld) ld.style.display = 'none';
   if (typeof render === 'function') render();
 }
 loadCatalog().catch(e => {
