@@ -517,6 +517,7 @@ function _buildSurt(productos, surtidos, costos) {
       const isGav = numLow.includes('gaveta');
       const isVar = numLow.includes('varios');
       const isExtra = isGav || isVar;
+      const extraTag = isGav ? 'gaveta' : (isVar ? 'varios' : null);
       if (isGav) gv++;
       else if (isVar) vr++;
       else { it++; if (pc>0) itC++; if (isMaxifer) pMaxiferItems++; }
@@ -526,7 +527,18 @@ function _buildSurt(productos, surtidos, costos) {
       if (isGav) coG += itemCost;
       else if (isVar) coV += itemCost;
       else coI += itemCost;
-      items.push({...i, pc, prov, isMaxifer});
+      // Item con nombres cortos esperados por la tabla del detalle:
+      //   n=numero, d=descripcion, c=cantidad std, pU=precio unitario,
+      //   cU=costo unitario (null si falta), f=fabrica/proveedor, e=extra, ok=tiene costo
+      items.push({
+        n: i.n, d: i.d || '',
+        c: cs,
+        pU: pl,
+        cU: pc > 0 ? pc : null,
+        f: prov,
+        e: extraTag,
+        ok: pc > 0 ? 1 : 0
+      });
     }
     const co = coI + coG + coV;
     const pct = it > 0 ? Math.round((itC/it)*100) : 0;
