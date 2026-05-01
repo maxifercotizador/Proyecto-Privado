@@ -574,6 +574,8 @@ async function loadCatalog() {
   document.dispatchEvent(new Event('catalog-ready'));
   const ld = document.getElementById('catalog-loader');
   if (ld) ld.style.display = 'none';
+  if (typeof updateKPIs === 'function') updateKPIs();
+  if (typeof updateVentaHeader === 'function') updateVentaHeader();
   if (typeof render === 'function') render();
 }
 loadCatalog().catch(e => {
