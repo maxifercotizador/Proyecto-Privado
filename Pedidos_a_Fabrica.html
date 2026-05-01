@@ -499,6 +499,65 @@
 <body>
 <a id="btn-volver-menu" href="https://maxifercotizador.github.io/Temporales/Index_general.html" title="Volver al menú general" style="display:none;position:fixed;top:8px;left:8px;z-index:99998;background:rgba(15,23,42,0.92);color:#f1f5f9;padding:6px 12px;border-radius:20px;font-size:11px;text-decoration:none;box-shadow:0 1px 4px rgba(0,0,0,0.3);font-family:system-ui;">← Menú</a><script id="btn-volver-menu-script">(function(){try{var p=new URLSearchParams(location.search);if(p.get("from")==="menu"){sessionStorage.setItem("maxifer_from_menu","1");p.delete("from");var s=p.toString();history.replaceState(null,"",location.pathname+(s?"?"+s:"")+location.hash);}if(sessionStorage.getItem("maxifer_from_menu")==="1"){var b=document.getElementById("btn-volver-menu");if(b)b.style.display="inline-block";}}catch(e){}})();</script>
 
+<details id="info-fuentes" style="margin:8px 12px;background:rgba(15,23,42,0.55);border:1px solid rgba(255,255,255,0.08);border-radius:8px;overflow:hidden;font-family:system-ui,-apple-system,sans-serif;font-size:13px;color:#cbd5e1;">
+  <summary style="padding:10px 14px;cursor:pointer;user-select:none;display:flex;align-items:center;gap:8px;font-weight:600;color:#f1f5f9;">
+    <span>ℹ️ Sobre este análisis</span>
+    <span style="font-weight:400;color:#94a3b8;font-size:12px;margin-left:auto;">tocá para ver fuentes</span>
+  </summary>
+  <div style="padding:0 14px 12px;">
+    <div style="margin-bottom:10px;line-height:1.5;color:#cbd5e1;">Estado de pedidos pendientes a cada fábrica/proveedor: importes, formas de pago, deudas y calendario de cheques.</div>
+    <div style="font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:#94a3b8;margin-bottom:6px;">Fuentes</div>
+    <div style="display:flex;flex-direction:column;gap:6px;">
+      <div class="info-row">
+        <span class="info-icon">📂</span>
+        <span class="info-file"><a href="https://github.com/maxifercotizador/Proyecto-Privado/blob/main/03%20Pedidos%20Fabricas.xlsm" target="_blank">03 Pedidos Fabricas.xlsm</a></span>
+        <span class="info-detail">pedidos por fábrica + INDICE de deudas</span>
+        <span class="info-date" data-repo="maxifercotizador/Proyecto-Privado" data-path="03 Pedidos Fabricas.xlsm">consultando…</span>
+      </div>
+    </div>
+  </div>
+</details>
+<style>
+  #info-fuentes .info-row { display:flex; flex-wrap:wrap; gap:6px 10px; align-items:center; padding:6px 8px; background:rgba(255,255,255,0.03); border-radius:6px; }
+  #info-fuentes .info-icon { font-size:14px; }
+  #info-fuentes .info-file a { color:#fbbf24; text-decoration:none; font-weight:600; font-family:'JetBrains Mono',monospace; font-size:12px; }
+  #info-fuentes .info-file a:hover { text-decoration:underline; }
+  #info-fuentes .info-detail { color:#94a3b8; font-size:12px; flex:1; min-width:120px; }
+  #info-fuentes .info-date { color:#10b981; font-size:11px; font-weight:600; white-space:nowrap; }
+  #info-fuentes .info-date.stale { color:#f59e0b; }
+  #info-fuentes .info-date.error { color:#ef4444; }
+</style>
+<script>
+(async function(){
+  function fmtRel(d){
+    if (!d) return 'sin datos';
+    var ms = Date.now() - d.getTime(); var days = Math.floor(ms/86400000);
+    if (days < 1) return 'actualizado hoy';
+    if (days < 2) return 'ayer';
+    if (days < 30) return 'hace ' + days + ' días';
+    if (days < 365) return 'hace ' + Math.floor(days/30) + ' meses';
+    return 'hace ' + Math.floor(days/365) + ' años';
+  }
+  var rows = document.querySelectorAll('#info-fuentes .info-date');
+  for (var i=0; i<rows.length; i++) {
+    var el = rows[i];
+    try {
+      var url = 'https://api.github.com/repos/' + el.dataset.repo + '/commits?path=' + encodeURIComponent(el.dataset.path) + '&per_page=1';
+      var r = await fetch(url);
+      if (!r.ok) { el.textContent = 'API limit'; el.classList.add('error'); continue; }
+      var j = await r.json();
+      if (Array.isArray(j) && j.length && j[0].commit) {
+        var d = new Date(j[0].commit.author.date);
+        el.textContent = fmtRel(d);
+        var days = Math.floor((Date.now()-d.getTime())/86400000);
+        if (days > 30) el.classList.add('stale');
+      } else { el.textContent = 'sin datos'; }
+    } catch(e) { el.textContent = 'error'; el.classList.add('error'); }
+  }
+})();
+</script>
+
+
 <header>
   <div class="logo"><span class="dot"></span> MAXIFER</div>
   <div class="subtitle">Pedidos a Fábrica</div>
