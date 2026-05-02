@@ -1527,7 +1527,7 @@
         <span class="v" id="cal-modal-estado">—</span>
       </div>
       <div class="cal-modal-field" id="cal-modal-extra-row" style="display:none">
-        <span class="k">Facturado</span>
+        <span class="k" id="cal-modal-extra-key">Facturado</span>
         <span class="v" id="cal-modal-extra">—</span>
       </div>
     </div>
@@ -1539,6 +1539,7 @@
 <script>
 // ============================= CONFIG =============================
 const HARDCODED_URL = './Gastos%20Fijos.xlsx';
+const SUELDOS_URL = './Control_de_ingresos_y_gastos.xlsm';
 const STORAGE_KEY_CACHE = 'maxifer_gastos_cache';
 const STORAGE_KEY_TS = 'maxifer_gastos_ts';
 
@@ -1673,24 +1674,9 @@ function parsearGastos(wb) {
     }
   }
 
-  // ========= 2) Sueldos (hoja SUEL, columnas A:C - desglosado por persona) =========
-  const su = wb.Sheets['SUEL'];
-  if (su) {
-    for (let r = 3; r <= 400; r++) {
-      const fecha = parseDate(cell(su, r, 1));
-      const detalle = cell(su, r, 2);
-      const valor = cell(su, r, 3);
-      if (!fecha || typeof valor !== 'number' || valor === 0) continue;
-      movs.push({
-        fecha,
-        categoria: 'Sueldos',
-        descripcion: String(detalle || 'Sueldos').trim(),
-        importe: valor,
-        estado: 'pagado',
-        extra: null,
-      });
-    }
-  }
+  // ========= 2) Sueldos: ahora se leen del Excel `Control_de_ingresos_y_gastos.xlsm`
+  //    (ver parsearSueldos). La hoja SUEL del Excel viejo quedó deprecada para evitar
+  //    contar dos veces los mismos sueldos.
 
   // ========= 3) Mercadería (hoja Gastos Reales, K:N) =========
   // K=11 fecha, L=12 proveedor, M=13 facturado?, N=14 importe
@@ -1729,6 +1715,65 @@ function parsearGastos(wb) {
         extra: { facturado: String(fact || '').toUpperCase().trim() === 'SI' },
       });
     }
+  }
+
+  return movs;
+}
+
+// Parsea sueldos (incluye AGUINALDOs) desde Control_de_ingresos_y_gastos.xlsm
+// Hoja "Movimientos", filtrando Subcategoria = 'Sueldos' o 'AGUINALDO'.
+// Estructura por fila:
+//   B (col 2) = Fecha de pago
+//   C (col 3) = Subcategoria ('Sueldos' / 'AGUINALDO')
+//   D (col 4) = Detalle (nombre del empleado)
+//   E (col 5) = Medio de pago (solo si está pagado)
+//   F (col 6) = Importe pagado (vacío si todavía no se pagó)
+//   H (col 8) = Importe estimado (siempre cargado, también para fechas futuras)
+// → Si F tiene valor: pagado, importe = F.
+// → Si F vacío y H tiene valor: pendiente, importe = H.
+// → Si ambos vacíos: se ignora.
+function parsearSueldos(wb) {
+  const movs = [];
+  const ws = wb.Sheets['Movimientos'];
+  if (!ws) return movs;
+
+  for (let r = 6; r <= 1000; r++) {
+    const sub = cell(ws, r, 3);
+    if (!sub) continue;
+    const subStr = String(sub).trim().toUpperCase();
+    if (subStr !== 'SUELDOS' && subStr !== 'AGUINALDO') continue;
+
+    const fecha = parseDate(cell(ws, r, 2));
+    if (!fecha) continue;
+
+    const nombre = String(cell(ws, r, 4) || '').trim();
+    const medio  = String(cell(ws, r, 5) || '').trim();
+    const pagado = cell(ws, r, 6);
+    const estim  = cell(ws, r, 8);
+
+    let importe = null;
+    let estado;
+    if (typeof pagado === 'number' && pagado !== 0) {
+      importe = pagado;
+      estado = 'pagado';
+    } else if (typeof estim === 'number' && estim !== 0) {
+      importe = estim;
+      estado = 'pendiente';
+    } else {
+      continue;  // sin importe ni estimado → fila incompleta, no la sumamos
+    }
+
+    const tipoLabel = subStr === 'AGUINALDO' ? 'Aguinaldo' : 'Sueldo';
+    const desc = nombre ? `${tipoLabel} · ${nombre}` : tipoLabel;
+
+    movs.push({
+      fecha,
+      categoria: 'Sueldos',
+      descripcion: desc,
+      importe,
+      estado,
+      extra: medio ? { medio } : null,
+    });
   }
 
   return movs;
@@ -2419,11 +2464,18 @@ function calOpenModal(mov) {
   });
   document.getElementById('cal-modal-fecha').textContent = fechaLabel;
 
-  // Campo extra: facturado (solo para Mercadería y GVarios)
+  // Campo extra: facturado (Mercadería/GVarios) o medio de pago (Sueldos)
   const extraRow = document.getElementById('cal-modal-extra-row');
+  const extraKey = document.getElementById('cal-modal-extra-key');
+  const extraVal = document.getElementById('cal-modal-extra');
   if (mov.extra && typeof mov.extra.facturado === 'boolean') {
     extraRow.style.display = '';
-    document.getElementById('cal-modal-extra').textContent = mov.extra.facturado ? 'SI (facturado)' : 'NO (no facturado)';
+    extraKey.textContent = 'Facturado';
+    extraVal.textContent = mov.extra.facturado ? 'SI (facturado)' : 'NO (no facturado)';
+  } else if (mov.extra && mov.extra.medio) {
+    extraRow.style.display = '';
+    extraKey.textContent = 'Medio';
+    extraVal.textContent = mov.extra.medio;
   } else {
     extraRow.style.display = 'none';
   }
@@ -2468,6 +2520,8 @@ function calOpenDayModal(dayKey) {
       let extra = '';
       if (mv.extra && typeof mv.extra.facturado === 'boolean') {
         extra = `<div class="cal-day-modal-item-extra">Facturado: ${mv.extra.facturado ? 'SI' : 'NO'}</div>`;
+      } else if (mv.extra && mv.extra.medio) {
+        extra = `<div class="cal-day-modal-item-extra">Medio: ${escapeHtml(mv.extra.medio)}</div>`;
       }
       return `<div class="cal-day-modal-item cat-${catKey} ${estadoCls}">
         <div class="cal-day-modal-item-top">
@@ -2520,16 +2574,33 @@ function popularFiltroMes() {
 
 async function inicializar(forzar = false) {
   try {
-    mostrarStatus('Descargando archivo…', 'loading');
-    const buffer = await descargarArchivo(HARDCODED_URL, forzar);
+    mostrarStatus('Descargando archivos…', 'loading');
+    const [bufGastos, sueldosRes] = await Promise.all([
+      descargarArchivo(HARDCODED_URL, forzar),
+      descargarArchivo(SUELDOS_URL, forzar).catch(e => ({ _err: e })),
+    ]);
+
     mostrarStatus('Parseando Excel…', 'loading');
-    const wb = XLSX.read(new Uint8Array(buffer), { type: 'array', cellDates: true });
-    state.movimientos = parsearGastos(wb);
-    console.log(`✓ Parseados ${state.movimientos.length} movimientos`);
+    const wbGastos = XLSX.read(new Uint8Array(bufGastos), { type: 'array', cellDates: true });
+    const movs = parsearGastos(wbGastos);
+
+    let sueldos = [];
+    if (sueldosRes && !sueldosRes._err) {
+      const wbSueldos = XLSX.read(new Uint8Array(sueldosRes), { type: 'array', cellDates: true });
+      sueldos = parsearSueldos(wbSueldos);
+      console.log(`✓ Parseados ${sueldos.length} sueldos del nuevo Excel`);
+    } else {
+      console.warn('⚠️ No se pudo cargar Control_de_ingresos_y_gastos.xlsm:', sueldosRes && sueldosRes._err);
+    }
+
+    state.movimientos = movs.concat(sueldos);
+    console.log(`✓ Parseados ${state.movimientos.length} movimientos en total`);
 
     popularFiltroMes();
     renderDashboard();  // la vista inicial
-    mostrarStatus(`✓ ${state.movimientos.length} movimientos cargados`, 'ok');
+
+    const aviso = (sueldosRes && sueldosRes._err) ? ' (sueldos no disponibles)' : '';
+    mostrarStatus(`✓ ${state.movimientos.length} movimientos cargados${aviso}`, sueldosRes._err ? 'error' : 'ok');
   } catch (e) {
     console.error(e);
     mostrarStatus('✗ Error: ' + e.message, 'error');
