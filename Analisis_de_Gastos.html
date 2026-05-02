@@ -45,6 +45,7 @@
     --cat-gfijos: #f5b400;
     --cat-merca: #ff6a00;
     --cat-gvarios: #b58aff;
+    --cat-deudores: #ff6b8a;       /* rosa coral, deudas pendientes con fecha */
   }
   /* Tema claro estilo MAXIFER (azul corporativo + verde lima + blanco) */
   html[data-theme="light"] {
@@ -72,6 +73,7 @@
     --cat-gfijos: #d9a013;        /* amarillo */
     --cat-merca: #e87722;         /* naranja sobrio */
     --cat-gvarios: #6b3fa0;       /* morado */
+    --cat-deudores: #d33f49;      /* rojo magenta para deudas */
   }
   html, body {
     background: var(--bg);
@@ -331,6 +333,7 @@
   .cat-item.gfijos { border-left-color: var(--cat-gfijos); }
   .cat-item.mercaderia { border-left-color: var(--cat-merca); }
   .cat-item.gvarios { border-left-color: var(--cat-gvarios); }
+  .cat-item.deudores { border-left-color: var(--cat-deudores); }
   .cat-name {
     font-family: 'JetBrains Mono', monospace;
     font-size: 10px;
@@ -366,6 +369,7 @@
   .cat-item.gfijos .cat-bar-fill { background: var(--cat-gfijos); }
   .cat-item.mercaderia .cat-bar-fill { background: var(--cat-merca); }
   .cat-item.gvarios .cat-bar-fill { background: var(--cat-gvarios); }
+  .cat-item.deudores .cat-bar-fill { background: var(--cat-deudores); }
 
   /* TABLA */
   .table-wrap {
@@ -430,6 +434,7 @@
   .tag.gfijos { background: rgba(245,180,0,0.15); color: var(--cat-gfijos); }
   .tag.mercaderia { background: rgba(255,106,0,0.15); color: var(--cat-merca); }
   .tag.gvarios { background: rgba(181,138,255,0.15); color: var(--cat-gvarios); }
+  .tag.deudores { background: rgba(255,107,138,0.15); color: var(--cat-deudores); }
   .tag.pagado { background: var(--good-dim); color: var(--good); }
   .tag.pendiente { background: var(--bad-dim); color: var(--bad); }
   .tag.facturado { background: var(--good-dim); color: var(--good); }
@@ -500,6 +505,7 @@
   .ev-seg.gfijos { background: var(--cat-gfijos); }
   .ev-seg.mercaderia { background: var(--cat-merca); }
   .ev-seg.gvarios { background: var(--cat-gvarios); }
+  .ev-seg.deudores { background: var(--cat-deudores); }
   .ev-label {
     font-family: 'JetBrains Mono', monospace;
     font-size: 10px;
@@ -539,6 +545,7 @@
   .ev-legend-item.gfijos::before { background: var(--cat-gfijos); }
   .ev-legend-item.mercaderia::before { background: var(--cat-merca); }
   .ev-legend-item.gvarios::before { background: var(--cat-gvarios); }
+  .ev-legend-item.deudores::before { background: var(--cat-deudores); }
 
   /* PROYECCIÓN */
   .proy-item {
@@ -703,6 +710,7 @@
   .cal-tooltip .tt-tag.cat-gfijos     { background: rgba(245,180,0,0.15);  color: var(--cat-gfijos); }
   .cal-tooltip .tt-tag.cat-mercaderia { background: rgba(255,106,0,0.15);  color: var(--cat-merca); }
   .cal-tooltip .tt-tag.cat-gvarios    { background: rgba(181,138,255,0.15); color: var(--cat-gvarios); }
+  .cal-tooltip .tt-tag.cat-deudores   { background: rgba(255,107,138,0.15); color: var(--cat-deudores); }
   .cal-tooltip .tt-tag.estado-pagado    { background: var(--good-dim); color: var(--good); }
   .cal-tooltip .tt-tag.estado-pendiente { background: var(--bad-dim);  color: var(--bad); }
   .cal-tooltip .tt-row {
@@ -881,6 +889,7 @@
   .cal-week-resumen-row.gfijos     .lbl { color: var(--cat-gfijos); }
   .cal-week-resumen-row.mercaderia .lbl { color: var(--cat-merca); }
   .cal-week-resumen-row.gvarios    .lbl { color: var(--cat-gvarios); }
+  .cal-week-resumen-row.deudores   .lbl { color: var(--cat-deudores); }
   .cal-week-resumen-total {
     margin-top: auto; padding-top: 6px; border-top: 1px solid rgba(245,180,0,0.3);
     display: flex; justify-content: space-between; align-items: baseline;
@@ -957,6 +966,7 @@
   .cal-item.cat-gfijos { border-left-color: var(--cat-gfijos); }
   .cal-item.cat-mercaderia { border-left-color: var(--cat-merca); }
   .cal-item.cat-gvarios { border-left-color: var(--cat-gvarios); }
+  .cal-item.cat-deudores { border-left-color: var(--cat-deudores); }
   .cal-item.pendiente { border-left-style: dashed; }
 
   .cal-item-top {
@@ -990,6 +1000,7 @@
   .cal-item-cat.cat-gfijos { background: rgba(245,180,0,0.15); color: var(--cat-gfijos); }
   .cal-item-cat.cat-mercaderia { background: rgba(255,106,0,0.15); color: var(--cat-merca); }
   .cal-item-cat.cat-gvarios { background: rgba(181,138,255,0.15); color: var(--cat-gvarios); }
+  .cal-item-cat.cat-deudores { background: rgba(255,107,138,0.15); color: var(--cat-deudores); }
 
   .cal-item-desc {
     overflow: hidden;
@@ -1063,6 +1074,7 @@
   }
   .cal-legend .dot.sueldos { background: var(--cat-sueldos); }
   .cal-legend .dot.gfijos { background: var(--cat-gfijos); }
+  .cal-legend .dot.deudores { background: var(--cat-deudores); }
   .cal-legend .dot.mercaderia { background: var(--cat-merca); }
   .cal-legend .dot.gvarios { background: var(--cat-gvarios); }
   .cal-legend-sep { color: var(--text-mute); margin: 0 4px; }
@@ -1169,6 +1181,7 @@
   .cal-modal-tag.cat-gfijos { background: rgba(245,180,0,0.15); color: var(--cat-gfijos); }
   .cal-modal-tag.cat-mercaderia { background: rgba(255,106,0,0.15); color: var(--cat-merca); }
   .cal-modal-tag.cat-gvarios { background: rgba(181,138,255,0.15); color: var(--cat-gvarios); }
+  .cal-modal-tag.cat-deudores { background: rgba(255,107,138,0.15); color: var(--cat-deudores); }
   .cal-modal-tag.estado-pagado { background: var(--good-dim); color: var(--good); }
   .cal-modal-tag.estado-pendiente { background: var(--bad-dim); color: var(--bad); }
 
@@ -1278,6 +1291,7 @@
   .cal-day-modal-item.cat-gfijos { border-left-color: var(--cat-gfijos); }
   .cal-day-modal-item.cat-mercaderia { border-left-color: var(--cat-merca); }
   .cal-day-modal-item.cat-gvarios { border-left-color: var(--cat-gvarios); }
+  .cal-day-modal-item.cat-deudores { border-left-color: var(--cat-deudores); }
   .cal-day-modal-item.pendiente { border-left-style: dashed; }
   .cal-day-modal-item-top {
     display: flex;
@@ -1489,6 +1503,7 @@
           <option value="GFijos">GFijos</option>
           <option value="Mercaderia">Mercadería</option>
           <option value="GVarios">GVarios</option>
+          <option value="Deudores">Deudores</option>
         </select>
         <select id="f-estado">
           <option value="">Todos los estados</option>
@@ -1555,6 +1570,7 @@
           <label class="cal-chip"><input type="checkbox" data-cat="GFijos" checked> GFijos</label>
           <label class="cal-chip"><input type="checkbox" data-cat="Mercaderia" checked> Mercadería</label>
           <label class="cal-chip"><input type="checkbox" data-cat="GVarios" checked> GVarios</label>
+          <label class="cal-chip"><input type="checkbox" data-cat="Deudores" checked> Deudores</label>
         </div>
         <div class="cal-filter-group">
           <span class="cal-filter-label">Estado pago (SI):</span>
@@ -1600,6 +1616,7 @@
         <div class="ev-legend-item gfijos">GFijos</div>
         <div class="ev-legend-item mercaderia">Mercadería</div>
         <div class="ev-legend-item gvarios">GVarios</div>
+        <div class="ev-legend-item deudores">Deudores</div>
       </div>
     </div>
 
@@ -1619,6 +1636,7 @@
               <th style="text-align:right;">GFijos</th>
               <th style="text-align:right;">Mercadería</th>
               <th style="text-align:right;">GVarios</th>
+              <th style="text-align:right;">Deudores</th>
               <th style="text-align:right; color:var(--text);">Total</th>
             </tr>
           </thead>
@@ -1732,7 +1750,7 @@ const state = {
     modo: 'week',              // 'week' | 'month'
     zoom: 1,                   // factor de zoom: 0.6 a 1.5 (default 1 = 100%)
     filtros: {
-      cats: new Set(['Sueldos','GFijos','Mercaderia','GVarios']),
+      cats: new Set(['Sueldos','GFijos','Mercaderia','GVarios','Deudores']),
       estado: 'todos',         // 'todos' | 'pagado' | 'pendiente'
     },
   },
@@ -1990,22 +2008,38 @@ function parsearECheques(wb) {
   return movs;
 }
 
-// Parsea proveedores con deuda (sin fecha) desde hoja INDICE, C22:F44.
-// C=proveedor, E=forma de pago (puede vacío), F=importe.
-// Devuelve array { proveedor, medio, importe }. NO se mete a state.movimientos (no tienen fecha).
+// Parsea proveedores con deuda desde hoja INDICE, C22:F44.
+// C=proveedor, D=fecha pago (puede ser texto o fecha real), E=forma de pago, F=importe.
+// Devuelve { conFecha: [movimientos categoria 'Deudores'], sinFecha: [{proveedor, medio, importe}] }.
+//   - Si D parsea como fecha real → es deuda con fecha programada → va como movimiento al calendario.
+//   - Si D vacía o tiene texto (ej: "E-CHEQ+TRANSF", "Efectivo") → queda como deuda sin fecha.
 function parsearDeudasProveedores(wb) {
-  const out = [];
+  const conFecha = [];
+  const sinFecha = [];
   const ws = wb.Sheets['INDICE'];
-  if (!ws) return out;
+  if (!ws) return { conFecha, sinFecha };
   for (let r = 23; r <= 44; r++) {
     const proveedor = String(cell(ws, r, 3) || '').trim();
+    const dRaw = cell(ws, r, 4);   // D = fecha de pago (o texto)
     const medio = String(cell(ws, r, 5) || '').trim();
     const importe = cell(ws, r, 6);
     if (!proveedor) continue;
     if (typeof importe !== 'number' || importe === 0) continue;
-    out.push({ proveedor, medio, importe });
+    const fecha = parseDate(dRaw);
+    if (fecha) {
+      conFecha.push({
+        fecha,
+        categoria: 'Deudores',
+        descripcion: proveedor,
+        importe,
+        estado: 'pendiente',
+        extra: medio ? { medio } : null,
+      });
+    } else {
+      sinFecha.push({ proveedor, medio, importe });
+    }
   }
-  return out;
+  return { conFecha, sinFecha };
 }
 
 // ============================= CÁLCULOS =============================
@@ -2028,7 +2062,7 @@ function filtrarPorMes(key) {
 }
 
 function agruparPorCategoria(movs) {
-  const out = { Sueldos: [], GFijos: [], Mercaderia: [], GVarios: [] };
+  const out = { Sueldos: [], GFijos: [], Mercaderia: [], GVarios: [], Deudores: [] };
   movs.forEach(m => { if (out[m.categoria]) out[m.categoria].push(m); });
   return out;
 }
@@ -2340,7 +2374,7 @@ function renderEvolucion() {
   // Agrupar por mes y categoría
   const porMes = {};
   ultimos12.forEach(k => {
-    porMes[k] = { Sueldos: 0, GFijos: 0, Mercaderia: 0, GVarios: 0, total: 0 };
+    porMes[k] = { Sueldos: 0, GFijos: 0, Mercaderia: 0, GVarios: 0, Deudores: 0, total: 0 };
   });
   state.movimientos.forEach(m => {
     const k = mesKey(m.fecha);
@@ -2371,6 +2405,7 @@ function renderEvolucion() {
             ${d.GFijos > 0 ? `<div class="ev-seg gfijos" style="height:${(d.GFijos / d.total * 100).toFixed(1)}%" title="GFijos: ${fmt$(d.GFijos)}"></div>` : ''}
             ${d.Mercaderia > 0 ? `<div class="ev-seg mercaderia" style="height:${(d.Mercaderia / d.total * 100).toFixed(1)}%" title="Mercadería: ${fmt$(d.Mercaderia)}"></div>` : ''}
             ${d.GVarios > 0 ? `<div class="ev-seg gvarios" style="height:${(d.GVarios / d.total * 100).toFixed(1)}%" title="GVarios: ${fmt$(d.GVarios)}"></div>` : ''}
+            ${(d.Deudores||0) > 0 ? `<div class="ev-seg deudores" style="height:${(d.Deudores / d.total * 100).toFixed(1)}%" title="Deudores: ${fmt$(d.Deudores)}"></div>` : ''}
           </div>
           <div class="ev-label">${mesLabelCorto(k)}</div>
         </div>
@@ -2389,6 +2424,7 @@ function renderEvolucion() {
         <td class="amt" style="color:var(--cat-gfijos)">${fmt$(d.GFijos)}</td>
         <td class="amt" style="color:var(--cat-merca)">${fmt$(d.Mercaderia)}</td>
         <td class="amt" style="color:var(--cat-gvarios)">${fmt$(d.GVarios)}</td>
+        <td class="amt" style="color:var(--cat-deudores)">${fmt$(d.Deudores||0)}</td>
         <td class="amt" style="font-size:14px">${fmt$(d.total)}</td>
       </tr>
     `;
@@ -2546,13 +2582,13 @@ function renderCalendario() {
 
   // Helper: HTML del mini-resumen de una semana (7 días)
   function htmlResumenSemana(diasSemana) {
-    const tot = { Sueldos: 0, GFijos: 0, Mercaderia: 0, GVarios: 0 };
+    const tot = { Sueldos: 0, GFijos: 0, Mercaderia: 0, GVarios: 0, Deudores: 0 };
     for (const d of diasSemana) {
       for (const m of calMovDelDia(d, movsF)) {
         if (tot[m.categoria] != null) tot[m.categoria] += m.importe;
       }
     }
-    const total = tot.Sueldos + tot.GFijos + tot.Mercaderia + tot.GVarios;
+    const total = tot.Sueldos + tot.GFijos + tot.Mercaderia + tot.GVarios + tot.Deudores;
     if (total === 0) {
       return `<div class="cal-week-resumen">
         <div class="cal-week-resumen-head">Semana</div>
@@ -2568,6 +2604,7 @@ function renderCalendario() {
       ${row('mercaderia', 'Merc.', tot.Mercaderia)}
       ${row('gvarios', 'GVarios', tot.GVarios)}
       ${row('sueldos', 'Sueldos', tot.Sueldos)}
+      ${row('deudores', 'Deudores', tot.Deudores)}
       <div class="cal-week-resumen-total"><span class="lbl">Total</span><span class="val">${fmtCompact(total)}</span></div>
     </div>`;
   }
@@ -2607,7 +2644,7 @@ function renderCalendario() {
       const catKey = m.categoria === 'Mercaderia' ? 'mercaderia' : m.categoria.toLowerCase();
       const estadoKey = m.estado === 'pagado' ? 'pagado' : 'pendiente';
       const descEsc = (m.descripcion || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
-      const catLabelMap = { sueldos: 'Sueldos', gfijos: 'GFijos', mercaderia: 'Merc.', gvarios: 'GVarios' };
+      const catLabelMap = { sueldos: 'Sueldos', gfijos: 'GFijos', mercaderia: 'Merc.', gvarios: 'GVarios', deudores: 'Deudores' };
       const catLabel = catLabelMap[catKey] || m.categoria;
       // Guardamos el índice global del movimiento para poder abrir el modal después
       const globalIdx = state.movimientos.indexOf(m);
@@ -2718,7 +2755,7 @@ function calZoom(delta) {
 function calOpenModal(mov) {
   if (!mov) return;
   const catKey = mov.categoria === 'Mercaderia' ? 'mercaderia' : mov.categoria.toLowerCase();
-  const catLabelMap = { sueldos: 'Sueldos', gfijos: 'Gastos Fijos', mercaderia: 'Mercadería', gvarios: 'Gastos Varios' };
+  const catLabelMap = { sueldos: 'Sueldos', gfijos: 'Gastos Fijos', mercaderia: 'Mercadería', gvarios: 'Gastos Varios', deudores: 'Deudores' };
   const catLabel = catLabelMap[catKey] || mov.categoria;
   const estadoKey = mov.estado === 'pagado' ? 'estado-pagado' : 'estado-pendiente';
   const estadoLabel = mov.estado === 'pagado' ? '✓ Pagado (SI)' : '⏳ Pendiente (sin SI)';
@@ -2779,7 +2816,7 @@ function calOpenDayModal(dayKey) {
   if (movsDia.length === 0) {
     list.innerHTML = '<div class="cal-day-modal-empty">Sin gastos para este día con los filtros actuales.</div>';
   } else {
-    const catLabelMap = { sueldos: 'Sueldos', gfijos: 'Gastos Fijos', mercaderia: 'Mercadería', gvarios: 'Gastos Varios' };
+    const catLabelMap = { sueldos: 'Sueldos', gfijos: 'Gastos Fijos', mercaderia: 'Mercadería', gvarios: 'Gastos Varios', deudores: 'Deudores' };
     list.innerHTML = movsDia.map(mv => {
       const catKey = mv.categoria === 'Mercaderia' ? 'mercaderia' : mv.categoria.toLowerCase();
       const catLabel = catLabelMap[catKey] || mv.categoria;
@@ -2933,12 +2970,15 @@ async function inicializar(forzar = false) {
     }
 
     let echeques = [];
+    let deudasConFecha = [];
     state.deudasProveedores = [];
     if (pedidosRes && !pedidosRes._err) {
       const wbPedidos = XLSX.read(new Uint8Array(pedidosRes), { type: 'array', cellDates: true });
       echeques = parsearECheques(wbPedidos);
-      state.deudasProveedores = parsearDeudasProveedores(wbPedidos);
-      console.log(`✓ Parseados ${echeques.length} e-cheques propios + ${state.deudasProveedores.length} deudas a proveedores`);
+      const deudas = parsearDeudasProveedores(wbPedidos);
+      deudasConFecha = deudas.conFecha;
+      state.deudasProveedores = deudas.sinFecha;
+      console.log(`✓ Parseados ${echeques.length} e-cheques propios + ${deudasConFecha.length} deudas con fecha + ${state.deudasProveedores.length} deudas sin fecha`);
     } else {
       console.warn('⚠️ No se pudo cargar 03 Pedidos Fabricas.xlsm:', pedidosRes && pedidosRes._err);
     }
@@ -2953,7 +2993,7 @@ async function inicializar(forzar = false) {
       return true;
     });
     if (pisados > 0) console.log(`✓ ${pisados} mov del Excel viejo pisados por e-cheques propios (quedan como pendientes)`);
-    state.movimientos = baseFiltrada.concat(echeques);
+    state.movimientos = baseFiltrada.concat(echeques).concat(deudasConFecha);
     console.log(`✓ Parseados ${state.movimientos.length} movimientos en total`);
 
     popularFiltroMes();
@@ -3110,7 +3150,7 @@ function setupEvents() {
 
     function buildHtml(mov) {
       const catKey = mov.categoria === 'Mercaderia' ? 'mercaderia' : mov.categoria.toLowerCase();
-      const catLabelMap = { sueldos: 'Sueldos', gfijos: 'Gastos Fijos', mercaderia: 'Mercadería', gvarios: 'Gastos Varios' };
+      const catLabelMap = { sueldos: 'Sueldos', gfijos: 'Gastos Fijos', mercaderia: 'Mercadería', gvarios: 'Gastos Varios', deudores: 'Deudores' };
       const catLabel = catLabelMap[catKey] || mov.categoria;
       const estadoCls = mov.estado === 'pagado' ? 'estado-pagado' : 'estado-pendiente';
       const estadoLabel = mov.estado === 'pagado' ? '✓ Pagado' : '⏳ Pendiente';
