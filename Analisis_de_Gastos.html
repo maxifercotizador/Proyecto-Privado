@@ -1032,6 +1032,143 @@
   .cal-modal-tag.estado-pagado { background: var(--good-dim); color: var(--good); }
   .cal-modal-tag.estado-pendiente { background: var(--bad-dim); color: var(--bad); }
 
+  /* Modal de detalle del día completo */
+  .cal-day { cursor: pointer; }
+  .cal-day-modal-bg {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 1000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    backdrop-filter: blur(4px);
+  }
+  .cal-day-modal-bg.show { display: flex; }
+  .cal-day-modal {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    max-width: 560px;
+    width: 100%;
+    max-height: 85vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+  }
+  .cal-day-modal-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 22px 24px 14px;
+    border-bottom: 1px solid var(--border);
+  }
+  .cal-day-modal-title {
+    font-family: 'Instrument Serif', serif;
+    font-style: italic;
+    font-size: 22px;
+    color: var(--text);
+    line-height: 1.25;
+    text-transform: capitalize;
+    word-break: break-word;
+  }
+  .cal-day-modal-close {
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-size: 18px;
+    cursor: pointer;
+    padding: 4px 10px;
+    border-radius: 4px;
+    line-height: 1;
+    flex-shrink: 0;
+  }
+  .cal-day-modal-close:hover { background: var(--border-strong); }
+  .cal-day-modal-totals {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    padding: 16px 24px;
+    border-bottom: 1px solid var(--border);
+  }
+  .cal-day-modal-total {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .cal-day-modal-total .k {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--text-mute);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+  }
+  .cal-day-modal-total .v {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 22px;
+    font-weight: 700;
+  }
+  .cal-day-modal-total.day .v { color: var(--warn); }
+  .cal-day-modal-total.acum .v { color: var(--info); }
+  .cal-day-modal-list {
+    overflow-y: auto;
+    padding: 12px 24px 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .cal-day-modal-empty {
+    text-align: center;
+    padding: 22px 0;
+    color: var(--text-mute);
+    font-size: 13px;
+  }
+  .cal-day-modal-item {
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-left-width: 3px;
+    border-radius: 6px;
+    padding: 10px 12px;
+    display: grid;
+    gap: 6px;
+  }
+  .cal-day-modal-item.cat-sueldos { border-left-color: var(--cat-sueldos); }
+  .cal-day-modal-item.cat-gfijos { border-left-color: var(--cat-gfijos); }
+  .cal-day-modal-item.cat-mercaderia { border-left-color: var(--cat-merca); }
+  .cal-day-modal-item.cat-gvarios { border-left-color: var(--cat-gvarios); }
+  .cal-day-modal-item.pendiente { border-left-style: dashed; }
+  .cal-day-modal-item-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .cal-day-modal-item-amt {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text);
+  }
+  .cal-day-modal-item-tags {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .cal-day-modal-item-desc {
+    color: var(--text);
+    font-size: 13px;
+    line-height: 1.35;
+    word-break: break-word;
+  }
+  .cal-day-modal-item-extra {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text-mute);
+  }
+
   @media (max-width: 900px) {
     .cal-range { font-size: 16px; min-width: 180px; }
     .cal-btn { font-size: 10px; padding: 6px 10px; }
@@ -1298,7 +1435,7 @@
         <span><b style="color:var(--warn)">Total día</b> en amarillo</span>
         <span><b style="color:var(--info)">Acumulado del mes</b> en azul</span>
         <span class="cal-legend-sep">·</span>
-        <span style="color:var(--text-mute)">Tocá cualquier gasto para ver el detalle</span>
+        <span style="color:var(--text-mute)">Tocá un día para ver todos sus gastos · un gasto para el detalle</span>
       </div>
     </div>
   </div>
@@ -1345,6 +1482,27 @@
     </div>
   </div>
 </main>
+
+<!-- Modal de detalle del día completo del calendario -->
+<div class="cal-day-modal-bg" id="cal-day-modal-bg">
+  <div class="cal-day-modal">
+    <div class="cal-day-modal-head">
+      <div class="cal-day-modal-title" id="cal-day-modal-title">—</div>
+      <button class="cal-day-modal-close" id="cal-day-modal-close">×</button>
+    </div>
+    <div class="cal-day-modal-totals">
+      <div class="cal-day-modal-total day">
+        <span class="k">Total del día</span>
+        <span class="v" id="cal-day-modal-total-dia">—</span>
+      </div>
+      <div class="cal-day-modal-total acum">
+        <span class="k">Acumulado del mes</span>
+        <span class="v" id="cal-day-modal-acum">—</span>
+      </div>
+    </div>
+    <div class="cal-day-modal-list" id="cal-day-modal-list"></div>
+  </div>
+</div>
 
 <!-- Modal de detalle de gasto del calendario -->
 <div class="cal-modal-bg" id="cal-modal-bg">
@@ -2184,7 +2342,8 @@ function renderCalendario() {
         </div>`;
     }
 
-    return `<div class="${classes.join(' ')}">
+    const dayKey = `${f.getFullYear()}-${String(f.getMonth()+1).padStart(2,'0')}-${String(f.getDate()).padStart(2,'0')}`;
+    return `<div class="${classes.join(' ')}" data-day="${dayKey}">
       <div class="cal-day-head">
         <span class="cal-day-num">${f.getDate()}</span>
         <span class="cal-day-dow">${DOW_LABELS[(f.getDay() + 6) % 7]}</span>
@@ -2274,6 +2433,62 @@ function calOpenModal(mov) {
 
 function calCloseModal() {
   document.getElementById('cal-modal-bg').classList.remove('show');
+}
+
+// Modal de detalle de TODO el día (lista expandida + totales)
+function calOpenDayModal(dayKey) {
+  if (!dayKey) return;
+  const [yy, mm, dd] = dayKey.split('-').map(Number);
+  const fecha = new Date(yy, mm - 1, dd);
+
+  const movsF = calFiltrar(state.movimientos);
+  const movsDia = calMovDelDia(fecha, movsF).slice().sort((a, b) => b.importe - a.importe);
+  const totalDia = movsDia.reduce((s, m) => s + m.importe, 0);
+  const acum = calAcumuladoMes(fecha, movsF);
+
+  const fechaLabel = fecha.toLocaleDateString('es-AR', {
+    weekday: 'long', day: '2-digit', month: 'long', year: 'numeric'
+  });
+  document.getElementById('cal-day-modal-title').textContent = fechaLabel;
+  document.getElementById('cal-day-modal-total-dia').textContent = totalDia > 0 ? fmt$(totalDia) : '—';
+  document.getElementById('cal-day-modal-acum').textContent = acum > 0 ? fmt$(acum) : '—';
+
+  const list = document.getElementById('cal-day-modal-list');
+  if (movsDia.length === 0) {
+    list.innerHTML = '<div class="cal-day-modal-empty">Sin gastos para este día con los filtros actuales.</div>';
+  } else {
+    const catLabelMap = { sueldos: 'Sueldos', gfijos: 'Gastos Fijos', mercaderia: 'Mercadería', gvarios: 'Gastos Varios' };
+    list.innerHTML = movsDia.map(mv => {
+      const catKey = mv.categoria === 'Mercaderia' ? 'mercaderia' : mv.categoria.toLowerCase();
+      const catLabel = catLabelMap[catKey] || mv.categoria;
+      const estadoCls = mv.estado === 'pagado' ? 'pagado' : 'pendiente';
+      const estadoTagCls = mv.estado === 'pagado' ? 'estado-pagado' : 'estado-pendiente';
+      const estadoLabel = mv.estado === 'pagado' ? '✓ Pagado' : '⏳ Pendiente';
+      const desc = escapeHtml(mv.descripcion || '(sin descripción)');
+      let extra = '';
+      if (mv.extra && typeof mv.extra.facturado === 'boolean') {
+        extra = `<div class="cal-day-modal-item-extra">Facturado: ${mv.extra.facturado ? 'SI' : 'NO'}</div>`;
+      }
+      return `<div class="cal-day-modal-item cat-${catKey} ${estadoCls}">
+        <div class="cal-day-modal-item-top">
+          <span class="cal-day-modal-item-amt">${fmt$(mv.importe)}</span>
+          <div class="cal-day-modal-item-tags">
+            <span class="cal-modal-tag cat-${catKey}">${catLabel}</span>
+            <span class="cal-modal-tag ${estadoTagCls}">${estadoLabel}</span>
+          </div>
+        </div>
+        <div class="cal-day-modal-item-desc">${desc}</div>
+        ${extra}
+      </div>`;
+    }).join('');
+    list.scrollTop = 0;
+  }
+
+  document.getElementById('cal-day-modal-bg').classList.add('show');
+}
+
+function calCloseDayModal() {
+  document.getElementById('cal-day-modal-bg').classList.remove('show');
 }
 
 // ============================ FIN CALENDARIO ============================
@@ -2401,23 +2616,42 @@ function setupEvents() {
     });
   });
 
-  // Click en item del calendario → abrir modal (event delegation)
+  // Click en calendario:
+  //  - sobre un .cal-item → modal de un solo gasto
+  //  - sobre cualquier otro lugar del día (incluyendo "+ X más", header o totales) → modal del día completo
   document.getElementById('cal-grid').addEventListener('click', e => {
     const item = e.target.closest('.cal-item');
-    if (!item) return;
-    const idx = parseInt(item.dataset.movIdx, 10);
-    if (isNaN(idx)) return;
-    const mov = state.movimientos[idx];
-    if (mov) calOpenModal(mov);
+    if (item) {
+      const idx = parseInt(item.dataset.movIdx, 10);
+      if (!isNaN(idx)) {
+        const mov = state.movimientos[idx];
+        if (mov) calOpenModal(mov);
+      }
+      return;
+    }
+    const day = e.target.closest('.cal-day');
+    if (!day) return;
+    const dayKey = day.dataset.day;
+    if (dayKey) calOpenDayModal(dayKey);
   });
 
-  // Cerrar modal
+  // Cerrar modal de un solo gasto
   document.getElementById('cal-modal-close').addEventListener('click', calCloseModal);
   document.getElementById('cal-modal-bg').addEventListener('click', e => {
     if (e.target.id === 'cal-modal-bg') calCloseModal();
   });
+
+  // Cerrar modal del día completo
+  document.getElementById('cal-day-modal-close').addEventListener('click', calCloseDayModal);
+  document.getElementById('cal-day-modal-bg').addEventListener('click', e => {
+    if (e.target.id === 'cal-day-modal-bg') calCloseDayModal();
+  });
+
   document.addEventListener('keydown', e => {
-    if (e.key === 'Escape') calCloseModal();
+    if (e.key === 'Escape') {
+      calCloseModal();
+      calCloseDayModal();
+    }
   });
 }
 
