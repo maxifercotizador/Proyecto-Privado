@@ -677,6 +677,41 @@
   .cal-btn.cal-deudas:hover { background: rgba(255,71,71,0.18); }
   .cal-btn.cal-deudas #cal-deudas-total { font-family: 'JetBrains Mono', monospace; }
 
+  /* Tooltip flotante on-hover sobre items del calendario */
+  .cal-tooltip {
+    position: fixed; pointer-events: none; z-index: 2000;
+    background: var(--panel); border: 1px solid var(--border-strong);
+    border-radius: 8px; padding: 10px 12px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.5);
+    max-width: 280px; min-width: 180px;
+    font-size: 12px; line-height: 1.4;
+    display: none;
+    transition: opacity .08s ease;
+  }
+  .cal-tooltip.show { display: block; }
+  .cal-tooltip .tt-amt {
+    font-family: 'JetBrains Mono', monospace; font-size: 16px;
+    font-weight: 700; color: var(--text); margin-bottom: 4px;
+  }
+  .cal-tooltip .tt-desc { color: var(--text); margin-bottom: 6px; word-break: break-word; }
+  .cal-tooltip .tt-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 6px; }
+  .cal-tooltip .tt-tag {
+    display: inline-block; font-family: 'JetBrains Mono', monospace; font-size: 10px;
+    padding: 2px 7px; border-radius: 4px; font-weight: 600;
+  }
+  .cal-tooltip .tt-tag.cat-sueldos    { background: rgba(90,168,255,0.15); color: var(--cat-sueldos); }
+  .cal-tooltip .tt-tag.cat-gfijos     { background: rgba(245,180,0,0.15);  color: var(--cat-gfijos); }
+  .cal-tooltip .tt-tag.cat-mercaderia { background: rgba(255,106,0,0.15);  color: var(--cat-merca); }
+  .cal-tooltip .tt-tag.cat-gvarios    { background: rgba(181,138,255,0.15); color: var(--cat-gvarios); }
+  .cal-tooltip .tt-tag.estado-pagado    { background: var(--good-dim); color: var(--good); }
+  .cal-tooltip .tt-tag.estado-pendiente { background: var(--bad-dim);  color: var(--bad); }
+  .cal-tooltip .tt-row {
+    font-family: 'JetBrains Mono', monospace; font-size: 10px;
+    color: var(--text-mute); text-transform: uppercase; letter-spacing: 0.06em;
+    margin-top: 2px;
+  }
+  .cal-tooltip .tt-row b { color: var(--text); font-weight: 600; text-transform: none; letter-spacing: 0; font-family: inherit; }
+
   /* Selector de orden en el modal de deudas */
   .cal-deudas-sort {
     display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
@@ -1671,6 +1706,9 @@
     </div>
   </div>
 </div>
+
+<!-- Tooltip flotante con info completa al hacer hover sobre items del calendario -->
+<div class="cal-tooltip" id="cal-tooltip"></div>
 
 <div class="status-bar" id="status-bar"></div>
 
@@ -3062,6 +3100,79 @@ function setupEvents() {
     const dayKey = day.dataset.day;
     if (dayKey) calOpenDayModal(dayKey);
   });
+
+  // Tooltip on-hover sobre items del calendario (info completa sin abrir modal)
+  (function setupTooltip(){
+    const tip = document.getElementById('cal-tooltip');
+    const grid = document.getElementById('cal-grid');
+    if (!tip || !grid) return;
+    let lastIdx = -1;
+
+    function buildHtml(mov) {
+      const catKey = mov.categoria === 'Mercaderia' ? 'mercaderia' : mov.categoria.toLowerCase();
+      const catLabelMap = { sueldos: 'Sueldos', gfijos: 'Gastos Fijos', mercaderia: 'Mercadería', gvarios: 'Gastos Varios' };
+      const catLabel = catLabelMap[catKey] || mov.categoria;
+      const estadoCls = mov.estado === 'pagado' ? 'estado-pagado' : 'estado-pendiente';
+      const estadoLabel = mov.estado === 'pagado' ? '✓ Pagado' : '⏳ Pendiente';
+      const fechaLabel = mov.fecha.toLocaleDateString('es-AR', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' });
+      let extras = '';
+      if (mov.extra && typeof mov.extra.facturado === 'boolean') {
+        extras += `<div class="tt-row">Facturado: <b>${mov.extra.facturado ? 'SI' : 'NO'}</b></div>`;
+      }
+      if (mov.extra && mov.extra.medio) {
+        extras += `<div class="tt-row">Medio: <b>${escapeHtml(mov.extra.medio)}</b></div>`;
+      }
+      return `
+        <div class="tt-amt">${fmt$(mov.importe)}</div>
+        <div class="tt-desc">${escapeHtml(mov.descripcion || '(sin descripción)')}</div>
+        <div class="tt-tags">
+          <span class="tt-tag cat-${catKey}">${catLabel}</span>
+          <span class="tt-tag ${estadoCls}">${estadoLabel}</span>
+        </div>
+        <div class="tt-row" style="text-transform:capitalize">${fechaLabel}</div>
+        ${extras}`;
+    }
+
+    function place(e) {
+      const tipW = tip.offsetWidth, tipH = tip.offsetHeight;
+      const margin = 14;
+      let x = e.clientX + margin;
+      let y = e.clientY + margin;
+      if (x + tipW > window.innerWidth - 8) x = e.clientX - tipW - margin;
+      if (y + tipH > window.innerHeight - 8) y = e.clientY - tipH - margin;
+      if (x < 4) x = 4;
+      if (y < 4) y = 4;
+      tip.style.left = x + 'px';
+      tip.style.top = y + 'px';
+    }
+
+    grid.addEventListener('mousemove', e => {
+      const item = e.target.closest('.cal-item');
+      if (!item) {
+        if (lastIdx !== -1) { tip.classList.remove('show'); lastIdx = -1; }
+        return;
+      }
+      const idx = parseInt(item.dataset.movIdx, 10);
+      if (isNaN(idx)) return;
+      const mov = state.movimientos[idx];
+      if (!mov) return;
+      if (idx !== lastIdx) {
+        tip.innerHTML = buildHtml(mov);
+        lastIdx = idx;
+      }
+      place(e);
+      tip.classList.add('show');
+    });
+    grid.addEventListener('mouseleave', () => {
+      tip.classList.remove('show');
+      lastIdx = -1;
+    });
+    // Cerrar tooltip al hacer click (cuando se abre el modal)
+    grid.addEventListener('click', () => {
+      tip.classList.remove('show');
+      lastIdx = -1;
+    });
+  })();
 
   // Cerrar modal de un solo gasto
   document.getElementById('cal-modal-close').addEventListener('click', calCloseModal);
