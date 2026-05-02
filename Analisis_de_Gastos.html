@@ -1922,13 +1922,12 @@ function parsearSueldos(wb) {
 // Parsea E-cheques propios desde 03 Pedidos Fabricas.xlsm hoja INDICE, K47:N65.
 // K=fecha, L=importe, M=a nombre de, N=detalle.
 // Solo trae los que el "a nombre de" contiene Maxi/Maximiliano/Gordillo (los emitidos por mí).
-// `movsExistentes` (opcional): lista de movs ya parseados de los otros Excels.
-//   Si un e-cheq tiene la misma fecha + importe que un mov existente, NO se duplica.
-function parsearECheques(wb, movsExistentes) {
+// REGLA: un e-cheq propio SIEMPRE es pendiente (la plata sale del banco ese día).
+// El dedupe contra el Excel viejo se hace en inicializar() pisando el match del viejo.
+function parsearECheques(wb) {
   const movs = [];
   const ws = wb.Sheets['INDICE'];
   if (!ws) return movs;
-  const existentes = movsExistentes || [];
   for (let r = 48; r <= 65; r++) {
     const fecha = parseDate(cell(ws, r, 11));
     const importe = cell(ws, r, 12);
@@ -1939,12 +1938,6 @@ function parsearECheques(wb, movsExistentes) {
     const nlow = nombre.toLowerCase();
     const esMio = nlow.includes('maxi') || nlow.includes('maximiliano') || nlow.includes('gordillo');
     if (!esMio) continue;
-    // Dedupe: si ya existe un movimiento con la misma fecha + importe (margen $1), saltar
-    const dup = existentes.some(m => sameDay(m.fecha, fecha) && Math.abs(m.importe - importe) < 1);
-    if (dup) {
-      console.log(`E-cheq duplicado salteado: ${fmtDate(fecha)} $${importe} (${nombre})`);
-      continue;
-    }
     const detTxt = String(detalle || '').trim();
     const desc = `E-cheq · ${nombre}` + (detTxt ? ` · ${detTxt}` : '');
     movs.push({
@@ -2905,15 +2898,24 @@ async function inicializar(forzar = false) {
     state.deudasProveedores = [];
     if (pedidosRes && !pedidosRes._err) {
       const wbPedidos = XLSX.read(new Uint8Array(pedidosRes), { type: 'array', cellDates: true });
-      // Pasamos movs+sueldos ya parseados para deduplicar e-cheques que ya están en otro Excel
-      echeques = parsearECheques(wbPedidos, movs.concat(sueldos));
+      echeques = parsearECheques(wbPedidos);
       state.deudasProveedores = parsearDeudasProveedores(wbPedidos);
       console.log(`✓ Parseados ${echeques.length} e-cheques propios + ${state.deudasProveedores.length} deudas a proveedores`);
     } else {
       console.warn('⚠️ No se pudo cargar 03 Pedidos Fabricas.xlsm:', pedidosRes && pedidosRes._err);
     }
 
-    state.movimientos = movs.concat(sueldos).concat(echeques);
+    // REGLA: el e-cheq propio (pendiente, plata que sale del banco) PISA cualquier match
+    // del Excel viejo (que pudo estar marcado como pagado). Sacamos del Excel viejo cualquier
+    // mov con la misma fecha + importe que un e-cheq propio.
+    let pisados = 0;
+    const baseFiltrada = movs.concat(sueldos).filter(m => {
+      const dup = echeques.some(e => sameDay(m.fecha, e.fecha) && Math.abs(m.importe - e.importe) < 1);
+      if (dup) { pisados++; return false; }
+      return true;
+    });
+    if (pisados > 0) console.log(`✓ ${pisados} mov del Excel viejo pisados por e-cheques propios (quedan como pendientes)`);
+    state.movimientos = baseFiltrada.concat(echeques);
     console.log(`✓ Parseados ${state.movimientos.length} movimientos en total`);
 
     popularFiltroMes();
