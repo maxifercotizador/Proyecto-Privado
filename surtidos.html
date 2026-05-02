@@ -105,6 +105,36 @@
   .chk.active { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); }
   .stats-label { font-size: 11px; color: var(--text-mute); font-family: 'JetBrains Mono', monospace; }
 
+  /* Totales (sumas filtradas) */
+  .totales-card { margin-bottom: 12px; }
+  .totales-grid {
+    display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px;
+  }
+  @media (max-width: 900px) {
+    .totales-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  }
+  .tot {
+    background: var(--panel-2); border: 1px solid var(--border);
+    border-radius: 8px; padding: 10px 12px;
+  }
+  .tot-l {
+    font-size: 10px; color: var(--text-mute); text-transform: uppercase;
+    letter-spacing: 0.08em; font-weight: 600; margin-bottom: 4px;
+  }
+  .tot-v {
+    font-family: 'JetBrains Mono', monospace; font-size: 18px; font-weight: 700;
+  }
+  .tot.tot-acc .tot-v { color: var(--good); }
+
+  /* Filtros Monday */
+  .monday-filters { gap: 10px; align-items: flex-end; flex-wrap: wrap; }
+  .monday-filters .control-group { gap: 4px; }
+  .monday-filters select, .monday-filters input[type=date] {
+    background: var(--panel); border: 1px solid var(--border); color: var(--text);
+    padding: 6px 8px; border-radius: 6px; font-family: inherit; font-size: 12px;
+  }
+  .monday-filters select:focus, .monday-filters input[type=date]:focus { outline: none; border-color: var(--accent); }
+
   /* Controles globales de descuento/comisión */
   .control-group {
     display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
@@ -399,32 +429,58 @@
 </header>
 
 <div class="main">
-  <!-- KPIs categorías (clickables) -->
-  <div class="kpis-row">
-    <div class="kpi-tab ok" data-cat="ok">
-      <div class="kpi-label">OK (calculables)</div>
-      <div class="kpi-value" id="n-ok">—</div>
-      <div class="kpi-sub">100% items con costo</div>
+  <!-- Totales (sumas filtradas por ventas Monday) -->
+  <div class="card totales-card" id="totalesCard" style="padding:14px 16px;display:none">
+    <div class="totales-grid">
+      <div class="tot"><div class="tot-l">Ventas</div><div class="tot-v" id="tot-ventas">0</div></div>
+      <div class="tot"><div class="tot-l">Surtidos vendidos</div><div class="tot-v" id="tot-surtidos">0</div></div>
+      <div class="tot"><div class="tot-l">Facturado neto</div><div class="tot-v" id="tot-facturado">$0</div></div>
+      <div class="tot tot-acc"><div class="tot-l">Ganancia neta</div><div class="tot-v" id="tot-ganancia">$0</div></div>
+      <div class="tot"><div class="tot-l">Ticket promedio</div><div class="tot-v" id="tot-ticket">$0</div></div>
     </div>
-    <div class="kpi-tab cuasi" data-cat="cuasi">
-      <div class="kpi-label">Cuasi (≥90%)</div>
-      <div class="kpi-value" id="n-cuasi">—</div>
-      <div class="kpi-sub">Faltan 1-6 items</div>
-    </div>
-    <div class="kpi-tab parcial" data-cat="parcial">
-      <div class="kpi-label">Parciales</div>
-      <div class="kpi-value" id="n-parcial">—</div>
-      <div class="kpi-sub">Entre 1% y 89%</div>
-    </div>
-    <div class="kpi-tab sin" data-cat="sin_datos">
-      <div class="kpi-label">Sin datos</div>
-      <div class="kpi-value" id="n-sin">—</div>
-      <div class="kpi-sub">Sin costos cargados</div>
-    </div>
-    <div class="kpi-tab victor" data-cat="victor">
-      <div class="kpi-label">De Victor</div>
-      <div class="kpi-value" id="n-victor">—</div>
-      <div class="kpi-sub">No calculables</div>
+  </div>
+
+  <!-- Filtros Monday (ventas) -->
+  <div class="card" style="padding:12px;">
+    <div class="filters monday-filters">
+      <div class="control-group">
+        <label class="control-label">Período</label>
+        <select id="mPeriodo">
+          <option value="all">Todo el histórico</option>
+          <option value="today">Hoy</option>
+          <option value="yesterday">Ayer</option>
+          <option value="tomorrow">Mañana</option>
+          <option value="thisWeek">Esta semana</option>
+          <option value="lastWeek">Semana pasada</option>
+          <option value="thisMonth">Este mes</option>
+          <option value="lastMonth">Mes pasado</option>
+          <option value="last3Months">Últimos 3 meses</option>
+          <option value="thisYear">Este año</option>
+          <option value="custom">Desde – Hasta…</option>
+        </select>
+      </div>
+      <div class="control-group m-date-custom" style="display:none">
+        <label class="control-label">Desde</label>
+        <input type="date" id="mFrom">
+      </div>
+      <div class="control-group m-date-custom" style="display:none">
+        <label class="control-label">Hasta</label>
+        <input type="date" id="mTo">
+      </div>
+      <div class="control-group">
+        <label class="control-label">Vendedor</label>
+        <select id="mVendedor"><option value="">Todos</option></select>
+      </div>
+      <div class="control-group">
+        <label class="control-label">Etiqueta</label>
+        <select id="mEtiqueta"><option value="">Todas</option></select>
+      </div>
+      <div class="control-group">
+        <label class="control-label">Surtido</label>
+        <select id="mSurtido"><option value="">Todos</option></select>
+      </div>
+      <button class="btn-opt" id="mClear" style="align-self:flex-end">× Limpiar Monday</button>
+      <span class="stats-label" id="mTags"></span>
     </div>
   </div>
 
@@ -626,15 +682,71 @@ function _buildSurt(productos, surtidos, costos) {
   return out;
 }
 
+// Sinónimos Monday → nombres del Excel de surtidos (mismos que Venta_Surtidos_Monday.html)
+const SINONIMOS_COMPLETOS = {
+  'COMBUSTIBLE INICIAL': 'CONECTORES DE COMBUSTIBLE Reducido',
+  'CARBON COMPLETO': 'CARBONES COMPLETO',
+  'Conexiones Plasticas Importadas': 'CONEXIONES PLASTICAS IMPORTADAS',
+  'INTERRUPTOR-PULSADOR': 'INTERRUPTORES Y PULSADORES',
+  'CONECTORES PLASTICOS MANGUERAS COMPL.': 'CONECTORES PLASTICOS MANGUERAS',
+  'TORNILLOS ESPECIALES': 'TORNILLERIA ESPECIAL',
+  'RACORD COMPLETO': 'RACORD completo',
+  'Aluminio 27 Med. Mayor Rot.': 'CONEXIÓN DE ALUMINIO 27 Med. Mayor Rot.',
+  'CONEXIONES DE ALUMINIO N°1': 'CONEXIONES DE ALUMINIO N°1 - Nuevo',
+  'UNIONES DE BRONCE C/VIROLA': 'ACCESORIOS DE BRONCE UNION POLIAMIDA',
+  'Tornillos especiales + TR. Completo': 'TORNILLOS ESPECIALES + TR COMPLETO',
+  'CONECTORES DE COMBUSTIBLE': 'CONECTORES DE COMBUSTIBLE Reducido',
+  'PLASTICO NACIONAL 160 MEDIDAS': 'CLIPS LINEA NACIONAL COMPLETO',
+  'CONEXIONES DE ALUMINIO N°2': 'CONEXIONES DE ALUMINIO N°2 - Nuevo',
+  'ABRAZADERAS C/ GOMA - COMPLETO': 'ABRAZADERAS C/ GOMA',
+  'CHAVETAS CH': 'CHAVETAS',
+};
+const SINONIMOS_REDUCIDOS = {
+  'RE - SEEGER DIN 471 - 472': ['SEEGER DIN 471 - 472', false],
+  'RE - ARANDELAS Aluminio': ['ARANDELAS Aluminio', false],
+  'RE - TERMINALES N°2': ['TERMINALES N°2', false],
+  'RE - ARANDELAS Cobre': ['ARANDELAS Cobre', false],
+  'RE - CONECTORES NEUMATICOS': ['CONECTORES NEUMATICOS', true],
+  'RE - BULON PERFORADO': ['BULON PERFORADO', false],
+  'RE - CARBONES N°1': ['CARBONES N°1', true],
+  'RE - ESPARRAGOS DE ACERO': ['ESPARRAGOS DE ACERO', true],
+  'RE - PICOS PARA GAS': ['PICOS PARA GAS', true],
+  'RE - ARANDELAS Fibra': ['ARANDELAS Fibra', false],
+  'RE - INTERRUPTORES Y PULSADORES 1': ['INTERRUPTORES Y PULSADORES 1', false],
+  'RE - ORING inicial 1': ['ORING inicial 1', false],
+  'RE - UNIONES ORIENTABLES': ['UNIONES ORIENTABLES', true],
+  'RE - ARANDELAS DE GOMA': ['ARANDELAS DE GOMA', true],
+  'RE - ORING inicial 2': ['ORING inicial 2', false],
+  'RE - ESPINAS ELASTICAS': ['ESPINAS ELASTICAS', true],
+  'RE - ORING inicial 3': ['ORING inicial 3', false],
+  'RE - TERMINALES N°1': ['TERMINALES N°1', false],
+  'RE - RACORD N°1': ['RACORD N°1', false],
+};
+
+let VENTAS = []; // ventas_monday.json (puede llegar vacío si falla)
+
+// Resuelve qué surtido del Excel corresponde a una venta de Monday
+function _matchVenta(nombreMonday, surtidosByName) {
+  if (surtidosByName[nombreMonday]) return nombreMonday;
+  if (SINONIMOS_COMPLETOS[nombreMonday] && surtidosByName[SINONIMOS_COMPLETOS[nombreMonday]]) return SINONIMOS_COMPLETOS[nombreMonday];
+  if (SINONIMOS_REDUCIDOS[nombreMonday]) {
+    const target = SINONIMOS_REDUCIDOS[nombreMonday][0];
+    if (surtidosByName[target]) return target;
+  }
+  return null;
+}
+
 async function loadCatalog() {
   const basePresu = 'https://maxifercotizador.github.io/Presupuestador/';
-  const [productos, surtidos, costosWB] = await Promise.all([
+  const [productos, surtidos, costosWB, ventasResult] = await Promise.all([
     _fetchJson(basePresu + 'productos.json'),
     _fetchJson(basePresu + 'surtidos.json'),
     _fetchXlsx('01 COMPRAS - COSTOS - FABRICAS.xlsm'),
+    _fetchJson('ventas_monday.json').catch(e => { console.warn('ventas_monday.json:', e.message); return []; }),
   ]);
   const costos = _parseCostosWB(costosWB);
   SURT = _buildSurt(productos, surtidos, costos);
+  VENTAS = Array.isArray(ventasResult) ? ventasResult : [];
   DATA_READY = true;
   document.dispatchEvent(new Event('catalog-ready'));
   const ld = document.getElementById('catalog-loader');
@@ -651,7 +763,6 @@ loadCatalog().catch(e => {
 
 // === INTERFAZ ===
 const state = {
-  catFilter: null,
   search: '',
   sort: 'g',
   sortDir: -1,
@@ -661,7 +772,54 @@ const state = {
   expanded: null,
   descuento: 46,   // % descuento sobre lista (por defecto 46)
   comision: 0,     // % comisión que se lleva el vendedor
+  // Filtros sobre ventas de Monday
+  monday: { periodo: 'all', from: '', to: '', vendedor: '', etiqueta: '', surtido: '' },
 };
+
+function getPeriodRange(periodo){
+  const hoy = new Date();
+  const y = hoy.getFullYear(), m = hoy.getMonth(), d = hoy.getDate();
+  const iso = (dt) => dt.toISOString().slice(0,10);
+  switch(periodo){
+    case 'today':     { const t = iso(new Date(y, m, d));     return { from: t, to: t }; }
+    case 'yesterday': { const t = iso(new Date(y, m, d - 1)); return { from: t, to: t }; }
+    case 'tomorrow':  { const t = iso(new Date(y, m, d + 1)); return { from: t, to: t }; }
+    case 'thisMonth':  return { from: iso(new Date(y, m, 1)),     to: iso(new Date(y, m+1, 0)) };
+    case 'lastMonth':  return { from: iso(new Date(y, m-1, 1)),   to: iso(new Date(y, m, 0)) };
+    case 'last3Months':return { from: iso(new Date(y, m-2, 1)),   to: iso(new Date(y, m+1, 0)) };
+    case 'thisWeek':   { const dow = hoy.getDay()||7; const lun = new Date(hoy); lun.setDate(d-(dow-1)); const dom = new Date(lun); dom.setDate(lun.getDate()+6); return { from: iso(lun), to: iso(dom) }; }
+    case 'lastWeek':   { const dow = hoy.getDay()||7; const lunE = new Date(hoy); lunE.setDate(d-(dow-1)); const lunP = new Date(lunE); lunP.setDate(lunE.getDate()-7); const domP = new Date(lunP); domP.setDate(lunP.getDate()+6); return { from: iso(lunP), to: iso(domP) }; }
+    case 'thisYear':   return { from: iso(new Date(y, 0, 1)),     to: iso(new Date(y, 11, 31)) };
+    default:           return { from: '', to: '' };
+  }
+}
+
+// ¿Hay algún filtro Monday activo (que limite la lista)?
+function _mondayActivo() {
+  const m = state.monday;
+  return !!(m.from || m.to || m.vendedor || m.etiqueta || m.surtido);
+}
+
+// Devuelve las ventas filtradas + un map { surtidoExcel: { cant, ventaUnit } }
+function getVentasFiltradas() {
+  const m = state.monday;
+  // Index para matching rápido (set de nombres válidos)
+  const surtidosByName = {};
+  for (const s of SURT) surtidosByName[s.n] = s;
+
+  const ventasOk = [];
+  for (const v of VENTAS) {
+    if (m.from && (v.fecha || '') < m.from) continue;
+    if (m.to && (v.fecha || '') > m.to) continue;
+    if (m.vendedor && v.vendedor !== m.vendedor) continue;
+    if (m.etiqueta && (v.etiqueta || '') !== m.etiqueta) continue;
+    const matchName = _matchVenta(v.surtido, surtidosByName);
+    // Si filtra por surtido (Monday) y NO matchea, lo dejo solo si el filtro coincide con el nombre crudo
+    if (m.surtido && v.surtido !== m.surtido) continue;
+    ventasOk.push({ ...v, _match: matchName });
+  }
+  return ventasOk;
+}
 
 // Calcula valores dinámicos de un surtido usando descuento y comisión actuales
 function calc(s) {
@@ -697,20 +855,102 @@ function catLabel(cat) {
 }
 
 function updateKPIs() {
-  const counts = { ok: 0, cuasi: 0, parcial: 0, sin_datos: 0, victor: 0 };
-  SURT.forEach(s => { counts[s.cat] = (counts[s.cat] || 0) + 1; });
-  document.getElementById('n-ok').textContent = counts.ok;
-  document.getElementById('n-cuasi').textContent = counts.cuasi;
-  document.getElementById('n-parcial').textContent = counts.parcial;
-  document.getElementById('n-sin').textContent = counts.sin_datos;
-  document.getElementById('n-victor').textContent = counts.victor;
+  // Compatibilidad: ya no hay chips KPI superiores. Esta función ahora actualiza totales Monday.
+  updateTotalesMonday();
+  refreshMondayDropdowns();
+}
+
+// Suma facturado y ganancia de las ventas filtradas, usando el descuento + comisión global.
+function _calcVentas(ventasFiltradas) {
+  let cant = 0, fact = 0, gan = 0;
+  const surtidosUnicos = new Set();
+  for (const v of ventasFiltradas) {
+    if (!v._match) continue;
+    const s = SURT.find(x => x.n === v._match);
+    if (!s) continue;
+    const c = calc(s);
+    if (c.venta == null) continue;
+    cant++;
+    surtidosUnicos.add(v._match);
+    fact += c.venta;
+    if (c.ganancia != null) gan += c.ganancia;
+  }
+  return { cant, fact, gan, surtidos: surtidosUnicos.size, ticket: cant > 0 ? fact/cant : 0 };
+}
+
+function updateTotalesMonday() {
+  const card = document.getElementById('totalesCard');
+  if (!card) return;
+  if (!_mondayActivo() || VENTAS.length === 0) {
+    card.style.display = 'none';
+    return;
+  }
+  const ventasF = getVentasFiltradas();
+  const r = _calcVentas(ventasF);
+  card.style.display = '';
+  document.getElementById('tot-ventas').textContent = r.cant.toLocaleString('es-AR');
+  document.getElementById('tot-surtidos').textContent = r.surtidos;
+  document.getElementById('tot-facturado').textContent = fmt$(r.fact);
+  document.getElementById('tot-ganancia').textContent = fmt$(r.gan);
+  document.getElementById('tot-ticket').textContent = fmt$(r.ticket);
+}
+
+function refreshMondayDropdowns() {
+  // Llenar selects con valores únicos del JSON (la primera vez se filtra por filtros activos para "dinámico")
+  const m = state.monday;
+  // Set actual de valores que aparecen en ventas filtradas (excluyendo el propio filtro)
+  function valoresSi(excluir) {
+    const r = new Set();
+    for (const v of VENTAS) {
+      if (excluir !== 'date' && m.from && (v.fecha || '') < m.from) continue;
+      if (excluir !== 'date' && m.to && (v.fecha || '') > m.to) continue;
+      if (excluir !== 'vendedor' && m.vendedor && v.vendedor !== m.vendedor) continue;
+      if (excluir !== 'etiqueta' && m.etiqueta && (v.etiqueta || '') !== m.etiqueta) continue;
+      if (excluir !== 'surtido' && m.surtido && v.surtido !== m.surtido) continue;
+      r.add(v[excluir === 'etiqueta' ? 'etiqueta' : excluir === 'surtido' ? 'surtido' : 'vendedor']);
+    }
+    return r;
+  }
+  function fill(id, set, current, label) {
+    const sel = document.getElementById(id);
+    if (!sel) return;
+    const opts = [...set].filter(x => x).sort();
+    if (current && !opts.includes(current)) opts.unshift(current);
+    sel.innerHTML = '<option value="">' + label + ' (' + opts.length + ')</option>' +
+      opts.map(v => `<option value="${escapeHtmlAttr(v)}" ${v===current?'selected':''}>${escapeHtmlAttr(v)}</option>`).join('');
+  }
+  fill('mVendedor', valoresSi('vendedor'), m.vendedor, 'Todos');
+  fill('mEtiqueta', valoresSi('etiqueta'), m.etiqueta, 'Todas');
+  fill('mSurtido',  valoresSi('surtido'),  m.surtido,  'Todos');
+  // Tags de filtros activos (texto compacto)
+  const tags = [];
+  const periodoLabels = {
+    today: 'Hoy', yesterday: 'Ayer', tomorrow: 'Mañana',
+    thisWeek: 'Esta semana', lastWeek: 'Semana pasada',
+    thisMonth: 'Este mes', lastMonth: 'Mes pasado', last3Months: 'Últ. 3 meses',
+    thisYear: 'Este año', custom: (m.from||'...')+' → '+(m.to||'...'),
+  };
+  if (m.periodo && m.periodo !== 'all') tags.push(periodoLabels[m.periodo] || m.periodo);
+  if (m.vendedor) tags.push(m.vendedor);
+  if (m.etiqueta) tags.push('🏷 ' + m.etiqueta);
+  if (m.surtido)  tags.push(m.surtido);
+  document.getElementById('mTags').textContent = tags.length ? '· ' + tags.join(' · ') : '';
+}
+
+function escapeHtmlAttr(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
 
 function getFilteredSorted() {
   let list = SURT.slice();
 
-  // Filtro categoría
-  if (state.catFilter) list = list.filter(s => s.cat === state.catFilter);
+  // Filtros Monday: si hay alguno activo, restringimos a los surtidos del Excel
+  // que aparecen como matches en las ventas filtradas.
+  if (_mondayActivo()) {
+    const ventasF = getVentasFiltradas();
+    const matchSet = new Set(ventasF.map(v => v._match).filter(x => x));
+    list = list.filter(s => matchSet.has(s.n));
+  }
 
   // Búsqueda
   if (state.search) {
@@ -934,21 +1174,46 @@ function renderDetalle(s) {
 
 // === EVENTOS ===
 
-// KPIs click = filtro categoría
-document.querySelectorAll('.kpi-tab').forEach(el => {
-  el.addEventListener('click', () => {
-    const cat = el.dataset.cat;
-    if (state.catFilter === cat) {
-      state.catFilter = null;
-      el.classList.remove('active');
-    } else {
-      document.querySelectorAll('.kpi-tab').forEach(x => x.classList.remove('active'));
-      state.catFilter = cat;
-      el.classList.add('active');
-    }
-    state.expanded = null;
-    render();
-  });
+// Filtros Monday
+function applyMondayPeriodo(p) {
+  state.monday.periodo = p;
+  const customs = document.querySelectorAll('.m-date-custom');
+  if (p === 'custom') {
+    customs.forEach(c => c.style.display = '');
+  } else if (p === 'all') {
+    customs.forEach(c => c.style.display = 'none');
+    state.monday.from = ''; state.monday.to = '';
+    document.getElementById('mFrom').value = '';
+    document.getElementById('mTo').value = '';
+  } else {
+    customs.forEach(c => c.style.display = 'none');
+    const r = getPeriodRange(p);
+    state.monday.from = r.from; state.monday.to = r.to;
+    document.getElementById('mFrom').value = r.from;
+    document.getElementById('mTo').value = r.to;
+  }
+  state.expanded = null;
+  render();
+  updateTotalesMonday();
+  refreshMondayDropdowns();
+}
+
+document.getElementById('mPeriodo').addEventListener('change', e => applyMondayPeriodo(e.target.value));
+document.getElementById('mFrom').addEventListener('input', e => { state.monday.from = e.target.value; state.expanded=null; render(); updateTotalesMonday(); refreshMondayDropdowns(); });
+document.getElementById('mTo').addEventListener('input',   e => { state.monday.to   = e.target.value; state.expanded=null; render(); updateTotalesMonday(); refreshMondayDropdowns(); });
+document.getElementById('mVendedor').addEventListener('change', e => { state.monday.vendedor = e.target.value; state.expanded=null; render(); updateTotalesMonday(); refreshMondayDropdowns(); });
+document.getElementById('mEtiqueta').addEventListener('change', e => { state.monday.etiqueta = e.target.value; state.expanded=null; render(); updateTotalesMonday(); refreshMondayDropdowns(); });
+document.getElementById('mSurtido').addEventListener('change',  e => { state.monday.surtido  = e.target.value; state.expanded=null; render(); updateTotalesMonday(); refreshMondayDropdowns(); });
+document.getElementById('mClear').addEventListener('click', () => {
+  state.monday = { periodo: 'all', from: '', to: '', vendedor: '', etiqueta: '', surtido: '' };
+  document.getElementById('mPeriodo').value = 'all';
+  document.getElementById('mFrom').value = '';
+  document.getElementById('mTo').value = '';
+  document.querySelectorAll('.m-date-custom').forEach(c => c.style.display = 'none');
+  state.expanded = null;
+  render();
+  updateTotalesMonday();
+  refreshMondayDropdowns();
 });
 
 // Búsqueda
