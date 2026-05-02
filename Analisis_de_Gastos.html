@@ -2734,7 +2734,13 @@ inicializar();
 // Maxifer: el boton "atras" del browser cierra modales en lugar de salir de la app.
 (function(){
   function findOpenModal(){
-    var sels = [".modal-overlay.active",".modal.active",".modal-bg.active",".lightbox.active","[class*=modal-overlay].active","[class*=lightbox].active","[role=dialog]:not([hidden])"];
+    var sels = [
+      ".modal-overlay.active",".modal.active",".modal-bg.active",".lightbox.active",
+      "[class*=modal-overlay].active","[class*=lightbox].active",
+      "[role=dialog]:not([hidden])",
+      // Modales del calendario de Análisis de Gastos (usan .show en vez de .active)
+      ".cal-modal-bg.show",".cal-day-modal-bg.show"
+    ];
     for (var i=0;i<sels.length;i++){
       var els = document.querySelectorAll(sels[i]);
       for (var j=0;j<els.length;j++){
@@ -2762,11 +2768,12 @@ inicializar();
     if (m) {
       // Esc cierra la mayoria de los modales
       document.dispatchEvent(new KeyboardEvent("keydown",{key:"Escape",code:"Escape",keyCode:27,which:27,bubbles:true,cancelable:true}));
-      // Si Esc no cerro, removemos active y/o ocultamos
+      // Si Esc no cerro, removemos active/show y/o ocultamos
       setTimeout(function(){
         var still = findOpenModal();
         if (still) {
           still.classList.remove("active");
+          still.classList.remove("show");
           if (still.style.display === "block" || still.style.display === "flex") still.style.display = "none";
         }
         // Re-push para que el siguiente back tambien cierre modales nuevos
