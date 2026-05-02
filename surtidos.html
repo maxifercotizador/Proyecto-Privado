@@ -4,349 +4,629 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>MAXIFER — Análisis de Surtidos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Instrument+Serif&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
-    --bg: #0a0a0a; --panel: #141414; --panel-2: #1c1c1c; --panel-3: #242424;
+    --bg: #0a0a0a; --panel: #141414; --panel-2: #1c1c1c;
     --border: #2a2a2a; --border-strong: #3a3a3a;
     --text: #eaeaea; --text-dim: #9a9a9a; --text-mute: #6a6a6a;
     --accent: #ff6a00; --accent-dim: rgba(255,106,0,0.15);
+    --teal: #2dd4bf; --teal-dim: rgba(45,212,191,0.15);
     --good: #3bd671; --good-dim: rgba(59,214,113,0.12);
     --warn: #f5b400; --warn-dim: rgba(245,180,0,0.12);
     --bad: #ff4747; --bad-dim: rgba(255,71,71,0.12);
     --info: #5aa8ff; --info-dim: rgba(90,168,255,0.12);
     --purple: #b58aff; --purple-dim: rgba(181,138,255,0.12);
-    --invest: #06d6a0; --invest-dim: rgba(6,214,160,0.12);
   }
-  html, body { background: var(--bg); color: var(--text); font-family: 'IBM Plex Sans', sans-serif; font-size: 14px; min-height: 100vh; }
-  a { color: inherit; text-decoration: none; }
+  html, body {
+    background: var(--bg); color: var(--text);
+    font-family: 'IBM Plex Sans', sans-serif; font-size: 14px;
+    -webkit-font-smoothing: antialiased; min-height: 100vh;
+    background-image:
+      radial-gradient(circle at 20% 10%, rgba(45,212,191,0.05) 0%, transparent 50%),
+      radial-gradient(circle at 80% 90%, rgba(255,106,0,0.03) 0%, transparent 50%);
+  }
+
   header {
     padding: 14px 20px; display: flex; align-items: center; justify-content: space-between;
     gap: 16px; border-bottom: 1px solid var(--border); flex-wrap: wrap;
   }
-  .logo { font-size: 20px; font-weight: 700; display: flex; align-items: center; gap: 10px; }
-  .logo .dot { width: 10px; height: 10px; background: var(--accent); border-radius: 50%; animation: pulse 2.5s ease-in-out infinite; }
+  .logo-block { display: flex; align-items: baseline; gap: 12px; }
+  .logo { font-size: 20px; font-weight: 700; letter-spacing: -0.03em; display: flex; align-items: center; gap: 10px; }
+  .logo .dot {
+    width: 10px; height: 10px; background: var(--teal); border-radius: 50%;
+    box-shadow: 0 0 10px var(--teal); animation: pulse 2.5s ease-in-out infinite;
+  }
   @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.6} }
-  .back-btn {
-    font-size: 12px; color: var(--text-dim); padding: 6px 10px;
-    border: 1px solid var(--border); background: var(--panel); border-radius: 6px;
+  .subtitle {
+    font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text-dim);
+    text-transform: uppercase; letter-spacing: 0.1em;
   }
-  .back-btn:hover { border-color: var(--border-strong); color: var(--text); }
+  .header-right { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .btn-header {
+    background: var(--panel); border: 1px solid var(--border); color: var(--text);
+    padding: 7px 12px; border-radius: 5px; font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; cursor: pointer; transition: all 0.15s;
+    text-transform: uppercase; letter-spacing: 0.05em; text-decoration: none;
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .btn-header:hover { border-color: var(--teal); color: var(--teal); }
+  .btn-header.primary { background: var(--teal-dim); border-color: var(--teal); color: var(--teal); }
+  .btn-header.primary:hover { background: var(--teal); color: var(--bg); }
+  .updated-info {
+    font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--text-mute);
+    text-transform: uppercase; letter-spacing: 0.08em;
+  }
 
-  .main { max-width: 1600px; margin: 0 auto; padding: 20px; }
-  @media (max-width: 700px) {
-    .main { padding: 10px 6px; }
-    header { padding: 10px 12px; }
-    .logo { font-size: 16px; }
-  }
+  main { padding: 24px 20px; max-width: 1400px; margin: 0 auto; }
 
-  /* KPIs superiores */
-  .kpis-row {
-    display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 20px;
+  .hero { margin-bottom: 24px; }
+  .hero h1 {
+    font-family: 'Instrument Serif', serif; font-style: italic; font-weight: 400;
+    font-size: clamp(28px, 5vw, 42px); line-height: 1.1; letter-spacing: -0.02em;
+    color: var(--text); margin-bottom: 8px;
   }
-  @media (max-width: 1000px) { .kpis-row { grid-template-columns: repeat(5, 1fr); gap: 6px; margin-bottom: 12px; } }
-  @media (max-width: 700px) {
-    .kpi-tab { padding: 8px 6px; }
-    .kpi-label { font-size: 8px; margin-bottom: 2px; letter-spacing: 0.04em; }
-    .kpi-value { font-size: 20px; }
-    .kpi-sub { display: none; }
+  .hero h1 .accent { color: var(--teal); }
+  .hero p { color: var(--text-dim); max-width: 680px; font-size: 13px; line-height: 1.5; }
+  .hero-meta {
+    margin-top: 12px; display: flex; gap: 18px; flex-wrap: wrap;
+    font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text-mute);
+    text-transform: uppercase; letter-spacing: 0.08em;
   }
-  .kpi-tab {
+  .hero-meta b { color: var(--text); font-weight: 600; margin-left: 4px; }
+
+  .config-strip {
     background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
-    padding: 14px; cursor: pointer; position: relative; overflow: hidden;
-    transition: all 0.2s; user-select: none;
+    padding: 14px 16px; margin-bottom: 20px; display: flex; gap: 24px;
+    flex-wrap: wrap; align-items: center;
   }
-  .kpi-tab::before {
-    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
-    background: var(--border); transition: background 0.2s;
+  .config-item { display: flex; flex-direction: column; gap: 6px; }
+  .config-item label {
+    font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--text-mute);
+    text-transform: uppercase; letter-spacing: 0.1em;
   }
-  .kpi-tab.ok::before { background: var(--good); }
-  .kpi-tab.cuasi::before { background: var(--warn); }
-  .kpi-tab.parcial::before { background: var(--bad); }
-  .kpi-tab.victor::before { background: var(--purple); }
-  .kpi-tab.sin::before { background: var(--text-mute); }
-  .kpi-tab:hover { border-color: var(--border-strong); background: var(--panel-2); }
-  .kpi-tab.active { border-color: var(--accent); background: var(--accent-dim); }
-  .kpi-tab.active::before { background: var(--accent); }
-  .kpi-label { font-size: 10px; color: var(--text-mute); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600; margin-bottom: 4px; }
-  .kpi-value { font-size: 28px; font-weight: 700; font-family: 'JetBrains Mono', monospace; margin-bottom: 2px; }
-  .kpi-sub { font-size: 11px; color: var(--text-dim); line-height: 1.3; }
+  .config-item .controls { display: flex; align-items: center; gap: 4px; }
+  .btn-toggle {
+    background: transparent; border: 1px solid var(--border); color: var(--text-dim);
+    padding: 5px 10px; border-radius: 4px; font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; cursor: pointer; transition: all 0.15s;
+  }
+  .btn-toggle:hover { border-color: var(--text-dim); color: var(--text); }
+  .btn-toggle.active { background: var(--teal-dim); border-color: var(--teal); color: var(--teal); }
+  .input-num {
+    width: 68px; background: var(--panel-2); border: 1px solid var(--border); color: var(--text);
+    padding: 5px 8px; border-radius: 4px; font-family: 'JetBrains Mono', monospace;
+    font-size: 12px; text-align: right; outline: none;
+  }
+  .input-num:focus { border-color: var(--teal); }
+  .select-ctrl {
+    background: var(--panel-2); border: 1px solid var(--border); color: var(--text);
+    padding: 5px 10px; border-radius: 4px; font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; cursor: pointer; outline: none;
+  }
+  .select-ctrl:focus { border-color: var(--teal); }
+  .config-coverage {
+    margin-left: auto; padding: 6px 12px; background: var(--panel-2); border: 1px solid var(--border);
+    border-radius: 20px; font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text-dim);
+  }
+  .config-coverage b { color: var(--teal); }
 
-  .card { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 18px; margin-bottom: 16px; }
-  @media (max-width: 700px) {
-    .card { padding: 10px !important; margin-bottom: 10px; border-radius: 8px; }
-    .filters { padding: 8px !important; gap: 6px !important; }
-    .control-label { font-size: 10px; }
-    .btn-opt { font-size: 11px; padding: 4px 8px; }
-    .btn-group input[type="number"] { width: 50px; font-size: 11px; padding: 3px 6px; }
+  .comision-mini {
+    display: flex; gap: 6px; flex-wrap: wrap; align-items: center;
+  }
+  .comision-chip {
+    display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px;
+    background: var(--panel-2); border: 1px solid var(--border); border-radius: 4px;
+    font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--text-dim);
+  }
+  .comision-chip input {
+    width: 38px; background: transparent; border: none; color: var(--teal);
+    font-family: 'JetBrains Mono', monospace; font-size: 10px; text-align: right; outline: none;
   }
 
-  /* Filtros */
-  .filters {
-    display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; align-items: center;
-    padding: 12px; background: var(--panel-2); border-radius: 8px; border: 1px solid var(--border);
+  .kpi-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 10px; margin-bottom: 24px;
   }
-  .filters input, .filters select {
-    background: var(--panel); border: 1px solid var(--border); color: var(--text);
-    padding: 8px 12px; border-radius: 6px; font-family: inherit; font-size: 13px;
+  .kpi-card {
+    background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
+    padding: 16px; position: relative; overflow: hidden; transition: all 0.15s;
   }
-  .filters input:focus, .filters select:focus { outline: none; border-color: var(--accent); }
-  .search-input { flex: 1; min-width: 180px; }
-  .chk-group { display: flex; gap: 6px; flex-wrap: wrap; }
-  .chk {
-    display: inline-flex; align-items: center; gap: 4px;
-    font-size: 11px; color: var(--text-dim); padding: 6px 10px;
-    border: 1px solid var(--border); background: var(--panel); border-radius: 6px;
-    cursor: pointer; font-family: inherit; transition: all 0.15s; user-select: none;
+  .kpi-card:hover { border-color: var(--border-strong); }
+  .kpi-card.primary::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    background: var(--teal); box-shadow: 0 0 10px var(--teal);
   }
-  .chk:hover { color: var(--text); border-color: var(--border-strong); }
-  .chk.active { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); }
-  .stats-label { font-size: 11px; color: var(--text-mute); font-family: 'JetBrains Mono', monospace; }
+  .kpi-label {
+    font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--text-mute);
+    text-transform: uppercase; letter-spacing: 0.12em; margin-bottom: 8px;
+  }
+  .kpi-value {
+    font-size: 26px; font-weight: 700; letter-spacing: -0.02em;
+    color: var(--text); line-height: 1.1;
+  }
+  .kpi-value.small { font-size: 15px; font-weight: 600; letter-spacing: -0.01em; }
+  .kpi-value.teal { color: var(--teal); }
+  .kpi-hint {
+    font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--text-mute);
+    margin-top: 6px; text-transform: uppercase; letter-spacing: 0.05em;
+  }
 
-  /* Totales (sumas filtradas) */
-  .totales-card { margin-bottom: 12px; }
-  .totales-grid {
-    display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px;
+  .section { margin-bottom: 28px; }
+  .section-title {
+    display: flex; align-items: baseline; gap: 14px; margin-bottom: 12px; flex-wrap: wrap;
   }
-  @media (max-width: 900px) {
-    .totales-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .section-title h2 {
+    font-family: 'Instrument Serif', serif; font-style: italic; font-weight: 400;
+    font-size: 26px; letter-spacing: -0.01em; color: var(--text);
   }
-  .tot {
-    background: var(--panel-2); border: 1px solid var(--border);
-    border-radius: 8px; padding: 10px 12px;
+  .section-title .caption {
+    font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--text-mute);
+    text-transform: uppercase; letter-spacing: 0.1em;
   }
-  .tot-l {
-    font-size: 10px; color: var(--text-mute); text-transform: uppercase;
-    letter-spacing: 0.08em; font-weight: 600; margin-bottom: 4px;
-  }
-  .tot-v {
-    font-family: 'JetBrains Mono', monospace; font-size: 18px; font-weight: 700;
-  }
-  .tot.tot-acc .tot-v { color: var(--good); }
 
-  /* Filtros Monday */
-  .monday-filters { gap: 10px; align-items: flex-end; flex-wrap: wrap; }
-  .monday-filters .control-group { gap: 4px; }
-  .monday-filters select, .monday-filters input[type=date] {
-    background: var(--panel); border: 1px solid var(--border); color: var(--text);
-    padding: 6px 8px; border-radius: 6px; font-family: inherit; font-size: 12px;
+  .filters-card {
+    background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
+    padding: 16px; margin-bottom: 20px;
   }
-  .monday-filters select:focus, .monday-filters input[type=date]:focus { outline: none; border-color: var(--accent); }
+  .filters-head {
+    display: flex; align-items: center; gap: 12px; margin-bottom: 12px; flex-wrap: wrap;
+  }
+  .filters-head .tit {
+    font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--text-mute);
+    text-transform: uppercase; letter-spacing: 0.12em;
+  }
+  .active-tags { display: flex; gap: 6px; flex-wrap: wrap; }
+  .tag {
+    padding: 3px 9px; background: var(--teal-dim); border: 1px solid var(--teal);
+    color: var(--teal); border-radius: 14px; font-family: 'JetBrains Mono', monospace;
+    font-size: 10px; display: inline-flex; gap: 5px; align-items: center;
+    text-transform: uppercase; letter-spacing: 0.04em;
+  }
+  .tag .x { cursor: pointer; opacity: 0.7; }
+  .tag .x:hover { opacity: 1; }
+  .filters-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 10px; align-items: end;
+  }
+  .field { display: flex; flex-direction: column; gap: 5px; }
+  .field label {
+    font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--text-mute);
+    text-transform: uppercase; letter-spacing: 0.08em;
+  }
+  .field input, .field select {
+    background: var(--panel-2); border: 1px solid var(--border); color: var(--text);
+    padding: 7px 10px; border-radius: 5px; font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 12px; outline: none;
+  }
+  .field input:focus, .field select:focus { border-color: var(--teal); }
+  .field input::placeholder { color: var(--text-mute); }
+  .btn-clear {
+    background: transparent; border: 1px solid var(--border); color: var(--text-dim);
+    padding: 7px 12px; border-radius: 5px; font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; cursor: pointer; text-transform: uppercase;
+    letter-spacing: 0.05em; white-space: nowrap;
+  }
+  .btn-clear:hover { border-color: var(--bad); color: var(--bad); }
 
-  /* Controles globales de descuento/comisión */
-  .control-group {
-    display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
-  }
-  .control-label {
-    font-size: 11px; color: var(--text-dim); font-weight: 600;
-    text-transform: uppercase; letter-spacing: 0.05em;
-  }
-  .btn-group {
-    display: flex; gap: 4px; align-items: center;
-    background: var(--panel); padding: 3px; border-radius: 6px;
-    border: 1px solid var(--border);
-  }
-  .btn-opt {
-    font-size: 12px; color: var(--text-dim); padding: 5px 12px;
-    border: none; background: transparent; border-radius: 4px;
-    cursor: pointer; font-family: inherit; font-weight: 500;
-    transition: all 0.15s; white-space: nowrap;
-  }
-  .btn-opt:hover { color: var(--text); background: var(--panel-2); }
-  .btn-opt.active { color: var(--accent); background: var(--accent-dim); font-weight: 600; }
-  .btn-group input[type="number"] {
-    width: 60px; background: var(--panel-2); border: 1px solid var(--border);
-    color: var(--text); padding: 4px 8px; border-radius: 4px;
-    font-family: 'JetBrains Mono', monospace; font-size: 12px;
-    -moz-appearance: textfield;
-  }
-  .btn-group input[type="number"]::-webkit-outer-spin-button,
-  .btn-group input[type="number"]::-webkit-inner-spin-button {
-    -webkit-appearance: none; margin: 0;
-  }
-  .btn-group input[type="number"]:focus { outline: none; border-color: var(--accent); }
+  /* Date range picker visibility */
+  .date-range-fields { display: none; gap: 10px; grid-column: span 2; }
+  .date-range-fields.show { display: grid; grid-template-columns: 1fr 1fr; }
 
-  /* Tabla */
+  .rank-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 14px;
+  }
+  .rank-card {
+    background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 16px;
+  }
+  .rank-card h3 {
+    font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 2px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .rank-card h3 .count-badge {
+    font-family: 'JetBrains Mono', monospace; font-size: 10px; padding: 2px 7px;
+    background: var(--warn-dim); color: var(--warn); border-radius: 10px; font-weight: 500;
+  }
+  .rank-card .rank-caption {
+    font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--text-mute);
+    margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.06em;
+  }
+  .rank-list { display: flex; flex-direction: column; gap: 2px; }
+  .rank-item {
+    display: grid; grid-template-columns: 28px 1fr auto; gap: 10px; align-items: center;
+    padding: 7px 8px; border-radius: 5px; font-size: 12px; position: relative;
+    transition: background 0.1s; cursor: pointer;
+    border: 1px solid transparent;
+  }
+  .rank-item:hover { background: var(--panel-2); border-color: var(--border); }
+  .rank-item.clickable::after {
+    content: '→'; position: absolute; right: 6px; top: 50%; transform: translateY(-50%);
+    color: var(--teal); opacity: 0; font-size: 11px; font-family: 'JetBrains Mono', monospace;
+    transition: opacity 0.15s; pointer-events: none;
+  }
+  .rank-item.clickable:hover::after { opacity: 0.6; }
+  .rank-item.top-1 { background: linear-gradient(90deg, var(--teal-dim), transparent 60%); }
+  .rank-item .n {
+    font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--text-mute); font-weight: 500;
+  }
+  .rank-item.top-1 .n { color: var(--teal); }
+  .rank-item .name {
+    color: var(--text); font-weight: 500; overflow: hidden;
+    text-overflow: ellipsis; white-space: nowrap;
+  }
+  .rank-item .val {
+    font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text-dim);
+    text-align: right; white-space: nowrap;
+  }
+  .rank-item .val .cant { color: var(--text-mute); font-weight: 400; margin-left: 4px; }
+  .rank-item .val.positive { color: var(--good); }
+  .rank-item .val.negative { color: var(--bad); font-weight: 600; }
+  .rank-item .val.emph { color: var(--text); font-weight: 600; }
+  .rank-item .bar {
+    position: absolute; bottom: 0; left: 0; right: 0; height: 2px;
+    background: rgba(45, 212, 191, 0.12); border-radius: 1px;
+  }
+  .rank-item .bar .fill { height: 100%; background: var(--teal); border-radius: 1px; opacity: 0.6; }
+  .rank-item.top-1 .bar .fill { opacity: 1; box-shadow: 0 0 6px var(--teal); }
+
+  .chart-card {
+    background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 20px;
+  }
+  .chart {
+    height: 220px; display: flex; align-items: flex-end; gap: 4px;
+    padding: 10px 0 34px; border-bottom: 1px solid var(--border); position: relative;
+  }
+  .chart-bar {
+    flex: 1; background: var(--teal); border-radius: 2px 2px 0 0; min-height: 3px;
+    position: relative; cursor: pointer; transition: all 0.15s; opacity: 0.7;
+  }
+  .chart-bar:hover { opacity: 1; box-shadow: 0 0 12px var(--teal); }
+  .chart-bar .tip {
+    position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%);
+    background: var(--panel-2); border: 1px solid var(--teal); color: var(--text);
+    padding: 5px 9px; border-radius: 4px; font-family: 'JetBrains Mono', monospace;
+    font-size: 10px; white-space: nowrap; opacity: 0; pointer-events: none;
+    transition: opacity 0.15s; margin-bottom: 6px; z-index: 2;
+  }
+  .chart-bar:hover .tip { opacity: 1; }
+  .chart-bar .lbl {
+    position: absolute; top: 100%; left: 50%; transform: translateX(-50%);
+    font-family: 'JetBrains Mono', monospace; font-size: 9px; color: var(--text-mute);
+    margin-top: 5px; text-transform: uppercase; letter-spacing: 0.06em;
+  }
+
   .table-wrap {
-    overflow-x: auto;
-    overflow-y: auto;
-    max-height: calc(100vh - 280px);
-    /* Scrollbar visible y prominente */
-    scrollbar-width: thin;
-    scrollbar-color: var(--border-strong) var(--panel-2);
+    background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
+    overflow: auto; max-height: 560px;
   }
-  .table-wrap::-webkit-scrollbar { width: 12px; height: 12px; }
-  .table-wrap::-webkit-scrollbar-track { background: var(--panel-2); border-radius: 6px; }
-  .table-wrap::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 6px; border: 2px solid var(--panel-2); }
-  .table-wrap::-webkit-scrollbar-thumb:hover { background: var(--accent); }
-  .table-wrap::-webkit-scrollbar-corner { background: var(--panel-2); }
-  table.data { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 13px; min-width: 1200px; }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  thead { position: sticky; top: 0; background: var(--panel-2); z-index: 1; }
+  th {
+    text-align: left; padding: 10px 12px; font-family: 'JetBrains Mono', monospace;
+    font-size: 10px; color: var(--text-mute); text-transform: uppercase;
+    letter-spacing: 0.08em; font-weight: 600; border-bottom: 1px solid var(--border);
+    white-space: nowrap; cursor: pointer; user-select: none; transition: color 0.15s;
+  }
+  th:hover { color: var(--teal); }
+  th.right { text-align: right; }
+  th .arr { display: inline-block; margin-left: 4px; color: var(--text-mute); font-size: 9px; }
+  th.sorted .arr { color: var(--teal); }
+  td {
+    padding: 8px 12px; border-bottom: 1px solid var(--border);
+    color: var(--text-dim); vertical-align: top;
+  }
+  td.mono { font-family: 'JetBrains Mono', monospace; font-size: 11px; }
+  td.right { text-align: right; font-family: 'JetBrains Mono', monospace; }
+  td.positive { color: var(--good); font-weight: 500; }
+  td.neutral { color: var(--text-mute); }
+  td.emph { color: var(--text); font-weight: 500; }
+  tbody tr:hover td { background: var(--panel-2); }
+  tbody tr { cursor: pointer; }
+  .pill {
+    display: inline-block; padding: 1px 6px; border-radius: 9px;
+    font-family: 'JetBrains Mono', monospace; font-size: 9px; text-transform: uppercase;
+    letter-spacing: 0.04em; margin-left: 4px; font-weight: 500;
+  }
+  .pill.re { background: var(--purple-dim); color: var(--purple); }
+  .pill.nomatch { background: var(--bad-dim); color: var(--bad); }
+  .pill.noprice { background: var(--info-dim); color: var(--info); }
 
-  @media (max-width: 700px) {
-    table.data { min-width: 560px; font-size: 11px; }
-    table.data thead th { padding: 6px 4px; font-size: 9px; }
-    table.data td { padding: 6px 4px !important; }
-    /* Ocultar columna Estado en mobile (se muestra como mini pill en el nombre) */
-    table.data th:nth-child(3), table.data td:nth-child(3) { display: none; }
-    /* Columna Items también oculta en mobile (se muestra en el nombre con "+N items") */
-    table.data th:nth-child(4), table.data td:nth-child(4) { display: none; }
-    .surtido-nombre-mobile-pill {
-      display: inline-block; font-size: 8px; padding: 1px 5px;
-      border-radius: 8px; font-weight: 700; letter-spacing: 0.03em;
-      vertical-align: middle; margin-left: 4px;
-    }
-    .expand-icon { font-size: 9px; }
-    .mobile-only { display: inline !important; }
-    /* KPIs ya mostrados arriba hacen de filtro por estado */
+  .empty {
+    text-align: center; padding: 40px 20px; color: var(--text-mute);
+    font-family: 'JetBrains Mono', monospace; font-size: 11px;
+    text-transform: uppercase; letter-spacing: 0.08em;
   }
-  table.data thead th {
-    font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em;
-    color: var(--text-mute); font-weight: 600; text-align: left;
-    padding: 10px 10px;
-    white-space: nowrap;
-    position: sticky; top: 0; z-index: 10;
-    background: var(--panel);
-    cursor: pointer; user-select: none;
-  }
-  table.data thead th::after {
-    content: ''; position: absolute; left: 0; right: 0; bottom: 0;
-    height: 1px; background: var(--border-strong);
-  }
-  table.data thead::after {
-    content: ''; display: block; height: 0;
-  }
-  table.data th.num { text-align: right; }
-  table.data th:hover { color: var(--text); background: var(--panel-2); }
-  table.data th .arr { font-size: 9px; color: var(--accent); margin-left: 3px; }
-  table.data td { padding: 10px 10px; border-bottom: 1px solid var(--border); }
-  table.data td.num { text-align: right; font-family: 'JetBrains Mono', monospace; }
-  table.data tr.row-surtido { cursor: pointer; transition: background 0.1s; }
-  table.data tr.row-surtido:hover td { background: var(--panel-2); }
-  table.data tr.row-surtido.expanded td {
-    background: var(--accent-dim);
-    border-bottom: 2px solid var(--accent);
-    font-weight: 600;
-  }
-  /* Sticky de la fila expandida: queda pegada arriba mientras scrolleás dentro */
-  table.data tr.row-surtido.expanded td {
-    position: sticky;
-    top: 37px; /* debajo del header */
-    z-index: 8;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.4);
-  }
-  table.data tr.row-detalle > td { padding: 0; background: var(--bg); border-bottom: 2px solid var(--accent); }
 
+  .foot {
+    text-align: center; padding: 20px; font-family: 'JetBrains Mono', monospace;
+    font-size: 10px; color: var(--text-mute); border-top: 1px solid var(--border);
+    margin-top: 40px; text-transform: uppercase; letter-spacing: 0.08em;
+  }
+  .foot code {
+    font-family: 'JetBrains Mono', monospace; color: var(--teal);
+    background: var(--panel); padding: 1px 5px; border-radius: 3px; font-size: 10px;
+  }
+
+  /* ========== DRAWER (panel flotante lateral) ========== */
+  .drawer-bg {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.65); backdrop-filter: blur(2px);
+    display: none; z-index: 90;
+  }
+  .drawer-bg.show { display: block; }
+  .drawer {
+    position: fixed; top: 0; right: 0; height: 100vh; width: min(480px, 100vw);
+    background: var(--panel); border-left: 1px solid var(--teal);
+    box-shadow: -4px 0 40px rgba(45,212,191,0.15);
+    z-index: 100; display: flex; flex-direction: column;
+    transform: translateX(100%); transition: transform 0.25s ease;
+  }
+  .drawer.show { transform: translateX(0); }
+  .drawer-head {
+    padding: 18px 20px; border-bottom: 1px solid var(--border);
+    display: flex; justify-content: space-between; align-items: flex-start; gap: 12px;
+  }
+  .drawer-head .type-label {
+    font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--teal);
+    text-transform: uppercase; letter-spacing: 0.12em; margin-bottom: 6px;
+  }
+  .drawer-head h3 {
+    font-family: 'Instrument Serif', serif; font-style: italic; font-weight: 400;
+    font-size: 22px; color: var(--text); line-height: 1.15;
+  }
+  .drawer-close {
+    background: transparent; border: 1px solid var(--border); color: var(--text-dim);
+    width: 32px; height: 32px; border-radius: 6px; cursor: pointer; font-size: 16px;
+    flex-shrink: 0; transition: all 0.15s;
+  }
+  .drawer-close:hover { border-color: var(--bad); color: var(--bad); }
+  .drawer-body {
+    flex: 1; overflow-y: auto; padding: 18px 20px;
+  }
+  .drawer-kpis {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px;
+  }
+  .drawer-kpi {
+    background: var(--panel-2); border: 1px solid var(--border);
+    border-radius: 8px; padding: 12px;
+  }
+  .drawer-kpi .l {
+    font-family: 'JetBrains Mono', monospace; font-size: 9px; color: var(--text-mute);
+    text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 5px;
+  }
+  .drawer-kpi .v {
+    font-size: 18px; font-weight: 700; color: var(--text); letter-spacing: -0.02em;
+  }
+  .drawer-kpi .v.teal { color: var(--teal); }
+  .drawer-kpi .v.good { color: var(--good); }
+  .drawer-kpi .h {
+    font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--text-mute); margin-top: 3px;
+  }
+  .drawer-section-title {
+    font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--text-mute);
+    text-transform: uppercase; letter-spacing: 0.12em; margin: 20px 0 10px;
+    padding-bottom: 6px; border-bottom: 1px solid var(--border);
+  }
+  .drawer-list {
+    display: flex; flex-direction: column; gap: 3px;
+  }
+  .drawer-row {
+    display: grid; grid-template-columns: 1fr auto; gap: 10px; padding: 7px 8px;
+    border-radius: 5px; font-size: 12px; align-items: center;
+  }
+  .drawer-row:hover { background: var(--panel-2); }
+  .drawer-row .name { color: var(--text); font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .drawer-row .name .s {
+    font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--text-mute); margin-top: 2px; display: block;
+  }
+  .drawer-row .v {
+    font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text-dim);
+    text-align: right; white-space: nowrap;
+  }
+  .drawer-row .v.positive { color: var(--good); }
+  .drawer-row .v.emph { color: var(--teal); font-weight: 600; }
+
+  .drawer-actions {
+    display: flex; gap: 8px; margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border);
+  }
+  .drawer-actions button {
+    flex: 1; background: var(--panel-2); border: 1px solid var(--border); color: var(--text);
+    padding: 9px; border-radius: 5px; cursor: pointer; font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em;
+    transition: all 0.15s;
+  }
+  .drawer-actions button:hover { border-color: var(--teal); color: var(--teal); }
+
+  /* Loading overlay */
+  .loading-ov {
+    position: fixed; inset: 0; background: var(--bg); z-index: 200;
+    display: flex; align-items: center; justify-content: center; flex-direction: column;
+    gap: 24px; transition: opacity 0.3s;
+  }
+  .loading-ov.hide { opacity: 0; pointer-events: none; }
+  .loading-ov .spinner {
+    width: 40px; height: 40px; border: 2px solid var(--border);
+    border-top-color: var(--teal); border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-ov .steps {
+    display: flex; flex-direction: column; gap: 8px; min-width: 280px;
+    font-family: 'JetBrains Mono', monospace; font-size: 11px;
+    text-transform: uppercase; letter-spacing: 0.08em;
+  }
+  .loading-ov .step { color: var(--text-mute); display: flex; gap: 10px; align-items: center; }
+  .loading-ov .step::before {
+    content: '○'; color: var(--text-mute); font-size: 14px;
+  }
+  .loading-ov .step.doing::before { content: '◐'; color: var(--teal); animation: spin 1s linear infinite; }
+  .loading-ov .step.done { color: var(--good); }
+  .loading-ov .step.done::before { content: '✓'; color: var(--good); }
+  .loading-ov .step.error { color: var(--bad); }
+  .loading-ov .step.error::before { content: '✕'; color: var(--bad); }
+  .loading-ov .logo-big {
+    font-family: 'Instrument Serif', serif; font-style: italic;
+    font-size: 28px; color: var(--text); margin-bottom: 4px;
+  }
+  .loading-ov .logo-big .dot {
+    display: inline-block; width: 10px; height: 10px; background: var(--teal);
+    border-radius: 50%; margin-right: 10px; box-shadow: 0 0 10px var(--teal);
+    animation: pulse 2.5s ease-in-out infinite; vertical-align: middle;
+  }
+
+  /* Error banner */
+  .error-banner {
+    background: var(--bad-dim); border: 1px solid var(--bad);
+    border-radius: 10px; padding: 14px 18px; margin-bottom: 20px;
+    font-size: 13px; color: var(--text);
+  }
+  .error-banner b { color: var(--bad); }
+  .error-banner code {
+    background: var(--panel-2); padding: 1px 5px; border-radius: 3px;
+    font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--teal);
+  }
+
+  .modal-bg {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.75); backdrop-filter: blur(4px);
+    display: none; align-items: center; justify-content: center; z-index: 100; padding: 20px;
+  }
+  .modal-bg.show { display: flex; }
+  .modal {
+    background: var(--panel); border: 1px solid var(--teal); border-radius: 10px;
+    max-width: 560px; width: 100%; padding: 24px;
+    box-shadow: 0 0 40px rgba(45,212,191,0.15); max-height: 90vh; overflow-y: auto;
+  }
+  .modal h3 {
+    font-family: 'Instrument Serif', serif; font-style: italic; font-size: 24px;
+    font-weight: 400; margin-bottom: 14px; color: var(--text);
+  }
+  .modal p { font-size: 13px; color: var(--text-dim); line-height: 1.6; margin-bottom: 10px; }
+  .modal code {
+    background: var(--panel-2); padding: 2px 8px; border-radius: 4px;
+    font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--teal);
+  }
+  .modal ul { margin: 10px 0 10px 18px; color: var(--text-dim); font-size: 13px; }
+  .modal ul li { margin-bottom: 4px; line-height: 1.5; }
+  .modal ul li b { color: var(--text); }
+  .modal .btn-row { display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px; }
+
+  @media (max-width: 640px) {
+    main { padding: 16px 12px; }
+    header { padding: 12px 14px; }
+    .kpi-value { font-size: 22px; }
+    .rank-item { grid-template-columns: 22px 1fr auto; gap: 8px; }
+    .config-strip { gap: 14px; padding: 12px; }
+    .drawer { width: 100vw; }
+    .drawer-kpis { grid-template-columns: 1fr; }
+  }
+
+  /* Pestañas internas (Análisis / Catálogo) */
+  .tabs-bar {
+    display: flex; gap: 4px; padding: 0 20px; margin-top: -8px; margin-bottom: 14px;
+    border-bottom: 1px solid var(--border);
+  }
+  .tab-btn {
+    background: transparent; border: none; color: var(--text-mute);
+    padding: 10px 16px; font-size: 13px; font-weight: 600; font-family: inherit;
+    cursor: pointer; border-bottom: 2px solid transparent;
+    transition: all .15s; user-select: none;
+  }
+  .tab-btn:hover { color: var(--text); }
+  .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .tab-pane { display: none; }
+  .tab-pane.active { display: block; }
+
+  /* Tabla del catálogo (de surtidos.html viejo) */
+  .cat-card { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; margin-bottom: 16px; }
+  .cat-controls { display: flex; gap: 24px; flex-wrap: wrap; padding: 14px 16px; border-bottom: 1px solid var(--border); align-items: center; }
+  .cat-control-group { display: flex; flex-direction: column; gap: 6px; }
+  .cat-control-label { font-size: 10px; color: var(--text-mute); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600; }
+  .cat-btn-group { display: flex; gap: 4px; align-items: center; background: var(--panel-2); padding: 3px; border-radius: 6px; }
+  .cat-btn-opt {
+    border: 1px solid transparent; background: transparent; color: var(--text-mute);
+    padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 11px;
+    font-family: 'JetBrains Mono', monospace; font-weight: 600;
+  }
+  .cat-btn-opt:hover { color: var(--text); background: var(--panel); }
+  .cat-btn-opt.active { background: var(--accent-dim); color: var(--accent); border-color: var(--accent); }
+  .cat-btn-group input[type=number] {
+    width: 60px; background: var(--panel); border: 1px solid var(--border);
+    color: var(--text); padding: 3px 8px; border-radius: 4px; font-size: 11px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  table.cat-tbl {
+    width: 100%; border-collapse: collapse; font-size: 12px;
+  }
+  table.cat-tbl thead th {
+    text-align: left; padding: 10px 12px; font-weight: 600; font-size: 10px;
+    text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-mute);
+    background: var(--panel-2); border-bottom: 1px solid var(--border);
+    cursor: pointer; user-select: none; white-space: nowrap;
+  }
+  table.cat-tbl thead th.num { text-align: right; }
+  table.cat-tbl thead th:hover { color: var(--text); background: var(--panel); }
+  table.cat-tbl tbody td {
+    padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: top;
+  }
+  table.cat-tbl tbody td.num { text-align: right; font-family: 'JetBrains Mono', monospace; }
+  table.cat-tbl tr.row-surtido { cursor: pointer; }
+  table.cat-tbl tr.row-surtido:hover td { background: var(--panel-2); }
+  table.cat-tbl tr.detalle td { background: var(--panel-2); padding: 14px 16px; }
   .cat-pill {
-    display: inline-block; font-size: 9px; padding: 2px 8px;
-    border-radius: 10px; font-weight: 700; letter-spacing: 0.05em;
+    display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 10px;
+    font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;
   }
   .cat-pill.ok { background: var(--good-dim); color: var(--good); }
   .cat-pill.cuasi { background: var(--warn-dim); color: var(--warn); }
   .cat-pill.parcial { background: var(--bad-dim); color: var(--bad); }
   .cat-pill.victor { background: var(--purple-dim); color: var(--purple); }
-  .cat-pill.sin { background: var(--panel-3); color: var(--text-mute); }
-
+  .cat-pill.sin { background: rgba(106,106,106,0.2); color: var(--text-mute); }
   .margen-chip {
-    font-family: 'JetBrains Mono', monospace; font-weight: 600;
-    padding: 2px 6px; border-radius: 4px; font-size: 11px;
+    display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 10px;
+    font-weight: 600; font-family: 'JetBrains Mono', monospace;
   }
   .margen-chip.pos-alto { background: var(--good-dim); color: var(--good); }
-  .margen-chip.pos-medio { background: var(--info-dim); color: var(--info); }
-  .margen-chip.pos-bajo { background: var(--warn-dim); color: var(--warn); }
+  .margen-chip.pos-medio { background: var(--warn-dim); color: var(--warn); }
+  .margen-chip.pos-bajo { background: var(--bad-dim); color: var(--bad); }
   .margen-chip.neg { background: var(--bad-dim); color: var(--bad); }
 
-  .expand-icon {
-    display: inline-block; width: 14px; height: 14px;
-    color: var(--text-mute); font-size: 10px; text-align: center;
-    transition: transform 0.2s;
-  }
-  tr.expanded .expand-icon { transform: rotate(90deg); color: var(--accent); }
-
-  .no-results {
-    padding: 60px 20px; text-align: center; color: var(--text-mute);
-  }
-
-  /* Panel de detalle */
-  .detalle-wrap { padding: 16px; background: var(--panel-2); border-top: 1px solid var(--border-strong); }
-  .detalle-header {
-    display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 12px; margin-bottom: 16px;
-  }
-  @media (max-width: 800px) { .detalle-header { grid-template-columns: 1fr 1fr; } }
+  /* Drilldown */
+  .detalle-wrap { display: flex; flex-direction: column; gap: 12px; }
+  .detalle-resumen { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; }
   .detalle-box {
-    background: var(--panel); border: 1px solid var(--border); border-radius: 6px; padding: 10px;
+    padding: 10px 12px; background: var(--panel); border: 1px solid var(--border);
+    border-radius: 6px;
   }
   .detalle-box h5 {
-    font-size: 10px; color: var(--text-mute); text-transform: uppercase;
-    letter-spacing: 0.05em; margin-bottom: 4px; font-weight: 600;
+    font-size: 9px; color: var(--text-mute); text-transform: uppercase;
+    letter-spacing: 0.08em; margin-bottom: 4px; font-weight: 600;
   }
   .detalle-box .v {
-    font-family: 'JetBrains Mono', monospace; font-size: 16px; font-weight: 600;
+    font-size: 14px; font-weight: 700; font-family: 'JetBrains Mono', monospace;
   }
-  .detalle-box .s { font-size: 11px; color: var(--text-dim); margin-top: 2px; }
-
-  .detalle-items {
-    max-height: 500px; overflow: auto;
-    background: var(--panel); border: 1px solid var(--border); border-radius: 6px;
-    scrollbar-width: thin;
-    scrollbar-color: var(--border-strong) var(--panel-2);
+  .detalle-box .s { font-size: 10px; color: var(--text-mute); margin-top: 2px; }
+  .detalle-items table {
+    width: 100%; font-size: 11px; border-collapse: collapse;
   }
-  .detalle-items::-webkit-scrollbar { width: 10px; height: 10px; }
-  .detalle-items::-webkit-scrollbar-track { background: var(--panel-2); }
-  .detalle-items::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 5px; }
-  .detalle-items::-webkit-scrollbar-thumb:hover { background: var(--accent); }
-  .detalle-items table { width: 100%; font-size: 12px; min-width: unset; border-collapse: separate; border-spacing: 0; }
-  .detalle-items thead th {
-    position: sticky; top: 0; z-index: 5;
-    background: var(--panel-2);
-    font-size: 10px; padding: 8px; color: var(--text-mute);
-    font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;
-    border-bottom: 1px solid var(--border-strong);
-    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  .detalle-items th {
+    padding: 6px 10px; font-weight: 600; font-size: 10px;
+    text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-mute);
+    background: var(--panel); border-bottom: 1px solid var(--border);
   }
-  .detalle-items td { padding: 6px 8px; border-bottom: 1px solid var(--border); }
-  .detalle-items td.num { font-family: 'JetBrains Mono', monospace; text-align: right; }
-  .detalle-items tr.falta td { background: rgba(255,71,71,0.05); color: var(--bad); }
-  .detalle-items tr.gav td { background: rgba(6,214,160,0.05); }
-  .detalle-items tr.var td { background: rgba(245,180,0,0.05); }
-  .detalle-items td.desc-col {
-    max-width: 340px; white-space: normal; line-height: 1.3;
-    font-size: 11px;
+  .detalle-items td {
+    padding: 6px 10px; border-bottom: 1px solid var(--border);
   }
-
-  /* Pestañas dentro del detalle */
-  .mini-tabs { display: flex; gap: 4px; margin-bottom: 12px; border-bottom: 1px solid var(--border); }
-  .mini-tab {
-    padding: 8px 14px; font-size: 12px; color: var(--text-dim);
-    border: none; background: transparent; cursor: pointer;
-    border-bottom: 2px solid transparent; font-family: inherit;
-  }
-  .mini-tab:hover { color: var(--text); }
-  .mini-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
-  .mini-panel { display: none; }
-  .mini-panel.active { display: block; }
-
-  .hint {
-    font-size: 12px; color: var(--text-mute);
-    padding: 10px 14px; background: var(--panel-2);
-    border-left: 3px solid var(--info); border-radius: 6px;
-    margin-top: 10px; line-height: 1.5;
-  }
-  .hint strong { color: var(--text-dim); }
-
-  .section-title {
-    font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em;
-    color: var(--text-mute); font-weight: 600; margin-bottom: 10px;
-  }
-
-  .loader {
-    padding: 60px; text-align: center; color: var(--text-mute);
-  }
+  .detalle-items tr.falta { color: var(--bad); }
+  .detalle-items tr.gav td { color: var(--good); }
+  .detalle-items tr.var td { color: var(--warn); }
+  .detalle-items .desc-col { font-size: 10px; color: var(--text-dim); }
+  .hint { color: var(--text-mute); font-size: 11px; padding: 12px 16px; }
 </style>
 </head>
 <body>
-<div id="catalog-loader" style="position:fixed;top:50px;left:50%;transform:translateX(-50%);z-index:9999;background:#fff8e6;color:#8a6d00;padding:8px 18px;border-radius:8px;font-size:13px;border:1px solid #f0d878;font-family:system-ui;">⏳ Cargando catálogo desde el servidor...</div>
 <a id="btn-volver-menu" href="https://maxifercotizador.github.io/Temporales/Index_general.html" title="Volver al menú general" style="display:none;position:fixed;top:8px;left:8px;z-index:99998;background:rgba(15,23,42,0.92);color:#f1f5f9;padding:6px 12px;border-radius:20px;font-size:11px;text-decoration:none;box-shadow:0 1px 4px rgba(0,0,0,0.3);font-family:system-ui;">← Menú</a><script id="btn-volver-menu-script">(function(){try{var p=new URLSearchParams(location.search);if(p.get("from")==="menu"){sessionStorage.setItem("maxifer_from_menu","1");p.delete("from");var s=p.toString();history.replaceState(null,"",location.pathname+(s?"?"+s:"")+location.hash);}if(sessionStorage.getItem("maxifer_from_menu")==="1"){var b=document.getElementById("btn-volver-menu");if(b)b.style.display="inline-block";}}catch(e){}})();</script>
 
 <details id="info-fuentes" style="margin:8px 12px;background:rgba(15,23,42,0.55);border:1px solid rgba(255,255,255,0.08);border-radius:8px;overflow:hidden;font-family:system-ui,-apple-system,sans-serif;font-size:13px;color:#cbd5e1;">
@@ -355,26 +635,26 @@
     <span style="font-weight:400;color:#94a3b8;font-size:12px;margin-left:auto;">tocá para ver fuentes</span>
   </summary>
   <div style="padding:0 14px 12px;">
-    <div style="margin-bottom:10px;line-height:1.5;color:#cbd5e1;">Rentabilidad y análisis de cada surtido del catálogo: precio venta, costo, margen, % de items con costo cargado y categoría (OK/Cuasi/Parcial/Sin datos).</div>
+    <div style="margin-bottom:10px;line-height:1.5;color:#cbd5e1;">Análisis de ventas reales de surtidos: matchea cada venta de Monday con su composición y costo en Excel para calcular margen real, ranking, tendencias y problemas de costos faltantes.</div>
     <div style="font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:#94a3b8;margin-bottom:6px;">Fuentes</div>
     <div style="display:flex;flex-direction:column;gap:6px;">
       <div class="info-row">
         <span class="info-icon">📂</span>
-        <span class="info-file"><a href="https://github.com/maxifercotizador/Presupuestador/blob/main/productos.json" target="_blank">productos.json</a></span>
-        <span class="info-detail">precios de venta (auto-generado del Excel)</span>
-        <span class="info-date" data-repo="maxifercotizador/Presupuestador" data-path="productos.json">consultando…</span>
-      </div>
-      <div class="info-row">
-        <span class="info-icon">📂</span>
-        <span class="info-file"><a href="https://github.com/maxifercotizador/Presupuestador/blob/main/surtidos.json" target="_blank">surtidos.json</a></span>
+        <span class="info-file"><a href="https://github.com/maxifercotizador/Presupuestador/blob/main/Precio%20Surtidos.xlsx" target="_blank">Precio Surtidos.xlsx</a></span>
         <span class="info-detail">composición de surtidos</span>
-        <span class="info-date" data-repo="maxifercotizador/Presupuestador" data-path="surtidos.json">consultando…</span>
+        <span class="info-date" data-repo="maxifercotizador/Presupuestador" data-path="Precio Surtidos.xlsx">consultando…</span>
       </div>
       <div class="info-row">
         <span class="info-icon">📂</span>
         <span class="info-file"><a href="https://github.com/maxifercotizador/Proyecto-Privado/blob/main/01%20COMPRAS%20-%20COSTOS%20-%20FABRICAS.xlsm" target="_blank">01 COMPRAS - COSTOS - FABRICAS.xlsm</a></span>
         <span class="info-detail">costos por producto</span>
         <span class="info-date" data-repo="maxifercotizador/Proyecto-Privado" data-path="01 COMPRAS - COSTOS - FABRICAS.xlsm">consultando…</span>
+      </div>
+      <div class="info-row">
+        <span class="info-icon">📂</span>
+        <span class="info-file"><a href="https://github.com/maxifercotizador/Proyecto-Privado/blob/main/ventas_monday.json" target="_blank">ventas_monday.json</a></span>
+        <span class="info-detail">ventas exportadas de Monday</span>
+        <span class="info-date" data-repo="maxifercotizador/Proyecto-Privado" data-path="ventas_monday.json">consultando…</span>
       </div>
     </div>
   </div>
@@ -420,33 +700,77 @@
 </script>
 
 
+<div class="loading-ov" id="loadingOv">
+  <div class="logo-big"><span class="dot"></span>MAXIFER</div>
+  <div class="spinner"></div>
+  <div class="steps">
+    <div class="step" id="step-surt">Descargando composición de surtidos…</div>
+    <div class="step" id="step-cost">Descargando tabla de costos…</div>
+    <div class="step" id="step-vent">Descargando ventas del Monday…</div>
+    <div class="step" id="step-cruz">Cruzando datos…</div>
+  </div>
+</div>
+
 <header>
-  <div class="logo">
-    <span class="dot"></span>
-    <span>MAXIFER</span>
-    <span style="color: var(--text-dim); font-size: 14px; font-family: 'Instrument Serif', serif; font-style: italic;">análisis de surtidos</span>
+  <div class="logo-block">
+    <div class="logo"><span class="dot"></span>MAXIFER</div>
+    <div class="subtitle">Análisis de Surtidos</div>
+  </div>
+  <div class="header-right">
+    <span class="updated-info" id="updatedAt">—</span>
+    <a href="index.html" class="btn-header">← Panel</a>
+    <button class="btn-header primary" onclick="openRefresh()">↻ Actualizar</button>
   </div>
 </header>
 
-<div class="main">
-  <!-- Totales (sumas filtradas por ventas Monday) -->
-  <div class="card totales-card" id="totalesCard" style="padding:14px 16px;display:none">
-    <div class="totales-grid">
-      <div class="tot"><div class="tot-l">Ventas</div><div class="tot-v" id="tot-ventas">0</div></div>
-      <div class="tot"><div class="tot-l">Surtidos vendidos</div><div class="tot-v" id="tot-surtidos">0</div></div>
-      <div class="tot"><div class="tot-l">Facturado neto</div><div class="tot-v" id="tot-facturado">$0</div></div>
-      <div class="tot tot-acc"><div class="tot-l">Ganancia neta</div><div class="tot-v" id="tot-ganancia">$0</div></div>
-      <div class="tot"><div class="tot-l">Ticket promedio</div><div class="tot-v" id="tot-ticket">$0</div></div>
+<div class="tabs-bar">
+  <button class="tab-btn active" data-tab="analisis">📊 Análisis (ventas Monday)</button>
+  <button class="tab-btn" data-tab="catalogo">📦 Catálogo (composición)</button>
+</div>
+
+<main>
+
+  <div class="hero">
+    <h1>Quién, qué y <span class="accent">cuánto dejás</span></h1>
+    <p>Ventas de surtidos por cliente, vendedor y período. La ganancia se calcula con el descuento global y la comisión específica de cada vendedor (Micky 25%, Fede y Eduardo 15%, el resto sin comisión).</p>
+    <div class="hero-meta">
+      <span>Período:<b id="rangeDates">—</b></span>
+      <span>Ventas:<b id="totalCount">—</b></span>
+      <span>Clientes:<b id="totalClientes">—</b></span>
+      <span>Surtidos:<b id="totalSurtidos">—</b></span>
     </div>
   </div>
 
-  <!-- Filtros Monday (ventas) -->
-  <div class="card" style="padding:12px;">
-    <div class="filters monday-filters">
-      <div class="control-group">
-        <label class="control-label">Período</label>
-        <select id="mPeriodo">
-          <option value="all">Todo el histórico</option>
+  <div id="errorContainer"></div>
+
+  <div class="config-strip">
+    <div class="config-item">
+      <label>Descuento aplicado</label>
+      <div class="controls">
+        <button class="btn-toggle" data-dto="46">46%</button>
+        <button class="btn-toggle" data-dto="42">42%</button>
+        <button class="btn-toggle" data-dto="15">15%</button>
+        <input type="number" class="input-num" id="dtoCustom" min="0" max="100" step="1" value="46">
+      </div>
+    </div>
+    <div class="config-item" style="flex: 1; min-width: 280px;">
+      <label>Comisión por vendedor (% sobre ganancia)</label>
+      <div class="comision-mini" id="comisionMini"></div>
+    </div>
+    <div class="config-coverage" id="coverageBadge">—</div>
+  </div>
+
+  <div class="kpi-grid" id="kpiGrid"></div>
+
+  <div class="filters-card">
+    <div class="filters-head">
+      <span class="tit">Filtros</span>
+      <div class="active-tags" id="activeTags"></div>
+    </div>
+    <div class="filters-grid">
+      <div class="field">
+        <label>Período</label>
+        <select id="filterPeriodo">
           <option value="today">Hoy</option>
           <option value="yesterday">Ayer</option>
           <option value="tomorrow">Mañana</option>
@@ -455,211 +779,263 @@
           <option value="thisMonth">Este mes</option>
           <option value="lastMonth">Mes pasado</option>
           <option value="last3Months">Últimos 3 meses</option>
-          <option value="thisYear">Este año</option>
+          <option value="thisYear" selected>Este año</option>
           <option value="custom">Desde – Hasta…</option>
+          <option value="all">Todo el histórico</option>
         </select>
       </div>
-      <div class="control-group m-date-custom" style="display:none">
-        <label class="control-label">Desde</label>
-        <input type="date" id="mFrom">
+      <div class="field date-custom" style="display:none">
+        <label>Desde</label>
+        <input type="date" id="dateFrom">
       </div>
-      <div class="control-group m-date-custom" style="display:none">
-        <label class="control-label">Hasta</label>
-        <input type="date" id="mTo">
+      <div class="field date-custom" style="display:none">
+        <label>Hasta</label>
+        <input type="date" id="dateTo">
       </div>
-      <div class="control-group">
-        <label class="control-label">Vendedor</label>
-        <select id="mVendedor"><option value="">Todos</option></select>
+      <div class="field">
+        <label>Vendedor</label>
+        <select id="filterVendedor"><option value="">Todos</option></select>
       </div>
-      <div class="control-group">
-        <label class="control-label">Etiqueta</label>
-        <select id="mEtiqueta"><option value="">Todas</option></select>
+      <div class="field">
+        <label>Cliente</label>
+        <select id="filterCliente"><option value="">Todos</option></select>
       </div>
-      <div class="control-group">
-        <label class="control-label">Surtido</label>
-        <select id="mSurtido"><option value="">Todos</option></select>
+      <div class="field">
+        <label>Surtido</label>
+        <select id="filterSurtido"><option value="">Todos</option></select>
       </div>
-      <button class="btn-opt" id="mClear" style="align-self:flex-end">× Limpiar Monday</button>
-      <span class="stats-label" id="mTags"></span>
+      <div class="field">
+        <label>Etiqueta</label>
+        <select id="filterEtiqueta"><option value="">Todas</option></select>
+      </div>
+      <div class="field">
+        <label>Estado</label>
+        <select id="filterStatus">
+          <option value="">Todos</option>
+          <option value="ok">Con ganancia</option>
+          <option value="sinPrecio">Sin precio</option>
+          <option value="observacion">En observación</option>
+        </select>
+      </div>
+      <button class="btn-clear" onclick="clearFilters()">× LIMPIAR</button>
     </div>
   </div>
 
-  <!-- Filtros -->
-  <div class="card" style="padding: 12px;">
-    <!-- Controles globales de descuento y comisión -->
-    <div class="filters">
-      <div class="control-group">
-        <label class="control-label">Descuento:</label>
-        <div class="btn-group" id="desc-buttons">
-          <button class="btn-opt" data-desc="42">42%</button>
-          <button class="btn-opt active" data-desc="46">46%</button>
-          <button class="btn-opt" data-desc="50">50%</button>
-          <input type="number" id="desc-custom" placeholder="otro" min="0" max="90" step="1">
-        </div>
-      </div>
-      <div class="control-group">
-        <label class="control-label">Comisión vendedor:</label>
-        <div class="btn-group" id="com-buttons">
-          <button class="btn-opt active" data-com="0">Sin com.</button>
-          <button class="btn-opt" data-com="15">15% (Fede/Edu)</button>
-          <button class="btn-opt" data-com="25">25% (Micky)</button>
-          <input type="number" id="com-custom" placeholder="otro" min="0" max="90" step="1">
-        </div>
-      </div>
+  <!-- ===== TAB: ANÁLISIS (ventas Monday) ===== -->
+  <div class="tab-pane active" data-tab="analisis">
+
+  <div class="section">
+    <div class="section-title">
+      <h2>Rankings</h2>
+      <span class="caption">tocá cualquier ítem para ver el detalle</span>
+    </div>
+    <div class="rank-grid">
+      <div class="rank-card"><h3>Surtidos más vendidos</h3><div class="rank-caption">por cantidad de pedidos</div><div class="rank-list" id="rankSurtidosCant"></div></div>
+      <div class="rank-card"><h3>Surtidos más rentables</h3><div class="rank-caption">por ganancia total generada</div><div class="rank-list" id="rankSurtidosGan"></div></div>
+      <div class="rank-card"><h3>Mejores clientes</h3><div class="rank-caption">por ganancia generada</div><div class="rank-list" id="rankClientes"></div></div>
+      <div class="rank-card"><h3>Vendedores</h3><div class="rank-caption">ganancia neta descontando comisión</div><div class="rank-list" id="rankVendedores"></div></div>
     </div>
   </div>
 
-  <!-- Tabla -->
-  <div class="card" style="padding: 0;">
+  <div class="section">
+    <div class="section-title">
+      <h2>Evolución mensual</h2>
+      <span class="caption" id="chartCaption">—</span>
+    </div>
+    <div class="chart-card"><div class="chart" id="chartBars"></div></div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">
+      <h2>Detalle</h2>
+      <span class="caption" id="tableCount">—</span>
+    </div>
     <div class="table-wrap">
-      <table class="data" id="tbl">
+      <table id="detailTable">
         <thead>
           <tr>
-            <th style="width: 24px;"></th>
-            <th data-sort="n">Surtido</th>
-            <th data-sort="cat">Estado</th>
-            <th data-sort="it" class="num">Items</th>
-            <th data-sort="v" class="num" id="th-venta">Venta <span style="color:var(--accent)" id="th-venta-pct">46%</span></th>
-            <th data-sort="co" class="num">Costo</th>
-            <th data-sort="g" class="num" id="th-ganancia">Ganancia</th>
-            <th data-sort="m" class="num">% Margen</th>
+            <th data-sort="fecha">Fecha <span class="arr">↕</span></th>
+            <th data-sort="cliente">Cliente <span class="arr">↕</span></th>
+            <th data-sort="surtido">Surtido <span class="arr">↕</span></th>
+            <th data-sort="vendedor">Vendedor <span class="arr">↕</span></th>
+            <th class="right" data-sort="precioNeto">Precio neto <span class="arr">↕</span></th>
+            <th class="right" data-sort="ganancia">Ganancia <span class="arr">↕</span></th>
+            <th class="right" data-sort="margen">Margen% <span class="arr">↕</span></th>
           </tr>
         </thead>
-        <tbody id="tbody"></tbody>
+        <tbody id="detailBody"></tbody>
       </table>
-    </div>
-    <div class="no-results" id="no-results" style="display: none;">
-      <div style="font-size: 32px; margin-bottom: 8px;">⋯</div>
-      Sin resultados con esos filtros
     </div>
   </div>
 
+  <div class="section">
+    <div class="section-title">
+      <h2>Surtidos a revisar</h2>
+      <span class="caption">qué mejorar en la base de datos de costos</span>
+    </div>
+    <div class="rank-grid">
+      <div class="rank-card"><h3>Sin precio cargado <span class="count-badge" id="badgeSinPrecio">0</span></h3><div class="rank-caption">surtidos con costos incompletos en el Excel de costos. Mostramos cuántas piezas faltan cargar. Al completarlas, la ganancia queda exacta.</div><div class="rank-list" id="sinPrecioList"></div></div>
+      <div class="rank-card"><h3>En observación <span class="count-badge" id="badgeObservacion">0</span></h3><div class="rank-caption">nombres que no matchean ningún surtido del Excel. Definir qué son: crear en el Excel, usar un nombre existente en Monday, o mapear como sinónimo.</div><div class="rank-list" id="observacionList"></div></div>
+    </div>
+  </div>
+
+  </div><!-- /tab-pane analisis -->
+
+  <!-- ===== TAB: CATÁLOGO (composición y rentabilidad de cada surtido) ===== -->
+  <div class="tab-pane" data-tab="catalogo">
+
+    <div class="section">
+      <div class="section-title">
+        <h2>Catálogo de surtidos</h2>
+        <span class="caption" id="catCount">—</span>
+      </div>
+
+      <!-- Controles de descuento + comisión global del catálogo -->
+      <div class="cat-card">
+        <div class="cat-controls">
+          <div class="cat-control-group">
+            <label class="cat-control-label">Descuento</label>
+            <div class="cat-btn-group" id="cat-desc-buttons">
+              <button class="cat-btn-opt" data-desc="42">42%</button>
+              <button class="cat-btn-opt active" data-desc="46">46%</button>
+              <button class="cat-btn-opt" data-desc="50">50%</button>
+              <input type="number" id="cat-desc-custom" placeholder="otro" min="0" max="90" step="1">
+            </div>
+          </div>
+          <div class="cat-control-group">
+            <label class="cat-control-label">Comisión vendedor</label>
+            <div class="cat-btn-group" id="cat-com-buttons">
+              <button class="cat-btn-opt active" data-com="0">Sin com.</button>
+              <button class="cat-btn-opt" data-com="15">15% (Fede/Edu)</button>
+              <button class="cat-btn-opt" data-com="25">25% (Micky)</button>
+              <input type="number" id="cat-com-custom" placeholder="otro" min="0" max="90" step="1">
+            </div>
+          </div>
+          <span class="caption" style="margin-left:auto;color:var(--text-mute);font-size:11px">Si hay filtros Monday activos, la lista se restringe a los surtidos vendidos en ese filtro.</span>
+        </div>
+
+        <div style="overflow-x: auto;">
+          <table class="cat-tbl" id="catTbl">
+            <thead>
+              <tr>
+                <th style="width: 24px;"></th>
+                <th data-sort="n">Surtido</th>
+                <th data-sort="cat">Estado</th>
+                <th data-sort="it" class="num">Items</th>
+                <th data-sort="v" class="num" id="cat-th-venta">Venta <span style="color:var(--accent)" id="cat-th-venta-pct">46%</span></th>
+                <th data-sort="co" class="num">Costo</th>
+                <th data-sort="g" class="num">Ganancia</th>
+                <th data-sort="m" class="num">% Margen</th>
+              </tr>
+            </thead>
+            <tbody id="catTbody"></tbody>
+          </table>
+        </div>
+        <div class="empty" id="cat-no-results" style="display:none">
+          <div style="font-size: 32px; margin-bottom: 8px;">⋯</div>
+          Sin resultados con esos filtros
+        </div>
+      </div>
+
+    </div>
+
+  </div><!-- /tab-pane catalogo -->
+
+</main>
+
+<div class="foot">
+  Datos desde Monday <code>board 7212937829</code> · Expo MDQ excluido (no es cliente real) · Datos estáticos, pedí update a Mia para refrescar
+</div>
+
+<!-- DRAWER -->
+<div class="drawer-bg" id="drawerBg" onclick="closeDrawer()"></div>
+<div class="drawer" id="drawer">
+  <div class="drawer-head">
+    <div>
+      <div class="type-label" id="drawerType">—</div>
+      <h3 id="drawerTitle">—</h3>
+    </div>
+    <button class="drawer-close" onclick="closeDrawer()">×</button>
+  </div>
+  <div class="drawer-body" id="drawerBody"></div>
+</div>
+
+<!-- MODAL actualizar -->
+<div class="modal-bg" id="refreshModal" onclick="if(event.target===this)closeRefresh()">
+  <div class="modal" style="max-width:560px">
+    <h3>Actualizar datos</h3>
+
+    <div style="background:rgba(0,217,126,0.06);border:1px solid rgba(0,217,126,0.3);border-radius:8px;padding:14px;margin:12px 0">
+      <div style="font-weight:700;color:var(--good);margin-bottom:6px">📥 Bajar ventas frescas desde Monday</div>
+      <p style="font-size:13px;margin:6px 0">Conecta directo con el board <b>"Equipo MAXIFER"</b>, baja todos los pedidos con sus subelementos (excluye REPOSICIÓN y MUEBLE) y te descarga el archivo <code>ventas_monday.json</code> listo para subir al repo.</p>
+      <div id="mondayProgress" style="display:none;font-size:12px;color:var(--text-mute);font-family:'JetBrains Mono',monospace;background:var(--bg);padding:8px 10px;border-radius:6px;margin:8px 0"></div>
+      <div class="btn-row" style="margin-top:8px">
+        <button class="btn-header primary" id="btnBajarMonday" onclick="actualizarVentasMonday()">↓ Bajar ventas de Monday</button>
+        <button class="btn-header" onclick="cambiarTokenMonday()">🔑 Cambiar token</button>
+      </div>
+      <p style="font-size:11px;color:var(--text-mute);margin-top:6px">Después subí el archivo descargado al repo: pestaña <b>📂 Archivos</b> del Admin → <code>ventas_monday.json</code> → <b>↑ Actualizar</b>. O directo en GitHub.</p>
+    </div>
+
+    <p style="margin-top:16px"><b style="color:var(--text)">Otras fuentes (Excel)</b>:</p>
+    <ul>
+      <li><code>Precio Surtidos.xlsx</code> — composición de cada surtido</li>
+      <li><code>01 COMPRAS - COSTOS - FABRICAS.xlsm</code> — costo por producto/número</li>
+    </ul>
+    <p style="font-size:12px">Reemplazá el Excel correspondiente en el repo y recargá la página.</p>
+    <p style="color:var(--text-mute);font-size:12px;margin-top:14px">El HTML cachea los archivos por unos minutos. Si cambiaste algo y no lo ves, forzá recarga con <code>Ctrl+Shift+R</code>.</p>
+    <div class="btn-row">
+      <button class="btn-header" onclick="window.location.reload()">↻ Recargar datos</button>
+      <button class="btn-header" onclick="closeRefresh()">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL piezas faltantes -->
+<div class="modal-bg" id="piezasModal" onclick="if(event.target===this)closePiezas()">
+  <div class="modal" style="max-width: 720px;">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:14px">
+      <div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--teal);text-transform:uppercase;letter-spacing:0.12em;margin-bottom:4px">Piezas sin costo cargado</div>
+        <h3 style="margin-bottom:0" id="piezasTitle">—</h3>
+        <div id="piezasSubtitle" style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-mute);margin-top:4px"></div>
+      </div>
+      <button class="drawer-close" onclick="closePiezas()">×</button>
+    </div>
+    <p style="font-size:12px;color:var(--text-mute);margin-bottom:12px">Estas piezas <b style="color:var(--text)">no están en el Excel de costos</b>. Para que la ganancia sea exacta, cargalas en <code>01 COMPRAS - COSTOS - FABRICAS.xlsm</code> hoja <code>CODIGOS Y COSTOS</code> con la clave <b style="color:var(--teal)">Producto + N°</b> tal como se muestra abajo.</p>
+    <div style="max-height: 50vh; overflow-y: auto; border: 1px solid var(--border); border-radius: 6px;">
+      <table style="width:100%;font-size:12px">
+        <thead>
+          <tr>
+            <th>Producto + N°</th>
+            <th style="text-align:left">Descripción</th>
+            <th class="right">Cant.</th>
+          </tr>
+        </thead>
+        <tbody id="piezasBody"></tbody>
+      </table>
+    </div>
+    <div class="btn-row">
+      <button class="btn-header" onclick="copiarPiezas()" id="btnCopiarPiezas">📋 Copiar lista</button>
+      <button class="btn-header" onclick="closePiezas()">Cerrar</button>
+    </div>
+  </div>
 </div>
 
 <script>
-// ============================================================
-// SURT: se construye en vivo desde:
-//   - https://maxifercotizador.github.io/Presupuestador/productos.json
-//   - https://maxifercotizador.github.io/Presupuestador/surtidos.json
-// (auto-generados por GitHub Action al actualizar los Excel).
-// Nunca hardcodear precios o costos aca.
-// ============================================================
-let SURT = [];
-let DATA_READY = false;
+// ========== CONFIGURACIÓN ==========
+// Precio Surtidos.xlsx vive en el repo `Presupuestador` (fuente unica de verdad).
+// Se lee remoto via raw.githubusercontent.com para que cuando Max actualice los
+// precios alla, todas las apps (Consultor, Catalogo de Exhibidores y este analisis)
+// agarren la version nueva sin tener que sincronizar copias.
+const FILE_SURTIDOS = 'https://raw.githubusercontent.com/maxifercotizador/Presupuestador/main/Precio%20Surtidos.xlsx';
+const FILE_COSTOS = '01 COMPRAS - COSTOS - FABRICAS.xlsm';
+const FILE_VENTAS = 'ventas_monday.json';
 
-async function _fetchJson(url) {
-  const r = await fetch(url + '?v=' + Date.now(), { cache: 'no-cache' });
-  if (!r.ok) throw new Error(url + ': HTTP ' + r.status);
-  return r.json();
-}
-async function _fetchXlsx(url) {
-  const r = await fetch(url + '?v=' + Date.now(), { cache: 'no-cache' });
-  if (!r.ok) throw new Error(url + ': HTTP ' + r.status);
-  const ab = await r.arrayBuffer();
-  return XLSX.read(ab, { type: 'array' });
-}
+// Datos cargados — se inicializan vacíos y se llenan en loadData()
+let VENTAS = [];
+let UPDATED_AT = '—';
 
-function _parseCostosWB(wb) {
-  // Hoja 'CODIGOS Y COSTOS': key = (Producto + N°).toUpperCase() -> costo unitario
-  const ws = wb.Sheets['CODIGOS Y COSTOS'];
-  if (!ws) throw new Error('No se encontró hoja "CODIGOS Y COSTOS" en el Excel de costos');
-  const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: null });
-  const costos = {};
-  for (let i = 1; i < rows.length; i++) {
-    const [fab, prod_num, codigo, desc, costo] = rows[i];
-    if (!prod_num || costo == null) continue;
-    const key = String(prod_num).trim().toUpperCase();
-    const v = parseFloat(costo);
-    if (!isNaN(v)) costos[key] = v;
-  }
-  return costos;
-}
-
-function _buildSurt(productos, surtidos, costos) {
-  // costos: { "PRODUCTON°".toUpperCase(): costo_unitario } desde el Excel de costos
-  // productos: fallback por si el Excel de costos no tiene el item
-  function norm(s){ return String(s||'').trim().toLowerCase().replace(/\s+/g,' '); }
-  const idxProd = new Map();
-  for (const p of productos) {
-    idxProd.set(norm(p.p)+'|'+norm(p.n), { pl: p.pl||0, pc: p.pc||0, prov: p.prov||'' });
-  }
-  function getCosto(prod, num) {
-    const P = String(prod||'').trim().toUpperCase();
-    const N = String(num||'').trim().toUpperCase();
-    // Probamos las dos concatenaciones posibles porque algunas filas del Excel
-    // tienen "Producto y N°" cargado al revés (ej: "Varios ChVarios" en vez de "VariosVarios Ch").
-    const k1 = P + N;
-    const k2 = N + P;
-    if (costos[k1] != null && costos[k1] > 0) return costos[k1];
-    if (costos[k2] != null && costos[k2] > 0) return costos[k2];
-    // fallback a productos.json
-    const f = idxProd.get(norm(prod)+'|'+norm(num));
-    return (f && f.pc > 0) ? f.pc : 0;
-  }
-  const out = [];
-  for (const code in surtidos) {
-    const s = surtidos[code];
-    let it=0, itC=0, gv=0, vr=0;
-    let pS=0, pR=0;
-    let vL=0, coI=0, coG=0, coV=0;
-    let pMaxiferItems=0;
-    const items = [];
-    for (const i of (s.i||[])) {
-      const cs = i.cs||0, cr = i.cr||0;
-      const pl = i.pl||0;
-      const fProd = idxProd.get(norm(i.p)+'|'+norm(i.n)) || {};
-      const pc = getCosto(i.p, i.n);
-      const prov = fProd.prov || '';
-      const isMaxifer = prov.toUpperCase().includes('MAXIFER');
-      const numLow = String(i.n||'').toLowerCase();
-      const isGav = numLow.includes('gaveta');
-      const isVar = numLow.includes('varios');
-      const isExtra = isGav || isVar;
-      const extraTag = isGav ? 'gaveta' : (isVar ? 'varios' : null);
-      if (isGav) gv++;
-      else if (isVar) vr++;
-      else { it++; if (pc>0) itC++; if (isMaxifer) pMaxiferItems++; }
-      if (!isExtra) { pS += cs; pR += cr; }
-      vL += pl * cs;
-      const itemCost = pc * cs;
-      if (isGav) coG += itemCost;
-      else if (isVar) coV += itemCost;
-      else coI += itemCost;
-      // Item con nombres cortos esperados por la tabla del detalle:
-      //   n=numero, d=descripcion, c=cantidad std, pU=precio unitario,
-      //   cU=costo unitario (null si falta), f=fabrica/proveedor, e=extra, ok=tiene costo
-      items.push({
-        n: i.n, d: i.d || '',
-        c: cs,
-        pU: pl,
-        cU: pc > 0 ? pc : null,
-        f: prov,
-        e: extraTag,
-        ok: pc > 0 ? 1 : 0
-      });
-    }
-    const co = coI + coG + coV;
-    const pct = it > 0 ? Math.round((itC/it)*100) : 0;
-    const pM = it > 0 ? Math.round((pMaxiferItems/it)*100) : 0;
-    let cat;
-    if (it === 0) cat = 'sin_datos';
-    else if (pM >= 50) cat = 'victor';
-    else if (itC === it) cat = 'ok';
-    else if (pct >= 80) cat = 'cuasi';
-    else cat = 'parcial';
-    out.push({
-      n: s.n||code, c: code, cat,
-      it, itC, pct, pM, gv, vr,
-      pS, pR,
-      vL, co: (cat==='sin_datos' || cat==='victor') ? null : co,
-      coI, coG, coV,
-      items
-    });
-  }
-  return out;
-}
-
-// Sinónimos Monday → nombres del Excel de surtidos (mismos que Venta_Surtidos_Monday.html)
+// Mapa de sinónimos Monday → Excel (confirmados por Maxi)
 const SINONIMOS_COMPLETOS = {
   'COMBUSTIBLE INICIAL': 'CONECTORES DE COMBUSTIBLE Reducido',
   'CARBON COMPLETO': 'CARBONES COMPLETO',
@@ -678,6 +1054,7 @@ const SINONIMOS_COMPLETOS = {
   'ABRAZADERAS C/ GOMA - COMPLETO': 'ABRAZADERAS C/ GOMA',
   'CHAVETAS CH': 'CHAVETAS',
 };
+
 const SINONIMOS_REDUCIDOS = {
   'RE - SEEGER DIN 471 - 472': ['SEEGER DIN 471 - 472', false],
   'RE - ARANDELAS Aluminio': ['ARANDELAS Aluminio', false],
@@ -700,591 +1077,1611 @@ const SINONIMOS_REDUCIDOS = {
   'RE - RACORD N°1': ['RACORD N°1', false],
 };
 
-let VENTAS = []; // ventas_monday.json (puede llegar vacío si falla)
+// Surtidos en observación (quedan con status 'observacion')
+const SURTIDOS_OBSERVACION = new Set([
+  'PLASTICOS IMPORTADOS 1', 'PLASTICOS IMPORTADOS 2',
+  'TUERCAS RAPIDAS NUEVAS', 'CARBONES', 'PLASTICOS completo',
+  'PLASTICO NACIONAL 1', 'RE - CHAVETAS', 'RE - CARBONES N°2',
+  'Tornilleria especial 2° importacion + TR importadas',
+]);
 
-// Resuelve qué surtido del Excel corresponde a una venta de Monday
-function _matchVenta(nombreMonday, surtidosByName) {
-  if (surtidosByName[nombreMonday]) return nombreMonday;
-  if (SINONIMOS_COMPLETOS[nombreMonday] && surtidosByName[SINONIMOS_COMPLETOS[nombreMonday]]) return SINONIMOS_COMPLETOS[nombreMonday];
-  if (SINONIMOS_REDUCIDOS[nombreMonday]) {
-    const target = SINONIMOS_REDUCIDOS[nombreMonday][0];
-    if (surtidosByName[target]) return target;
+// Excluir Expo MDQ (no es cliente real)
+const CLIENTES_EXCLUIR = new Set(['Expo MDQ']);
+
+// ==============================================================================
+// LOADER
+// ==============================================================================
+async function setStep(id, status, extra = '') {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.className = 'step ' + status;
+  if (extra) el.innerHTML = el.textContent.split(' ')[0] + ' ' + extra;
+}
+
+async function fetchExcel(url) {
+  const r = await fetch(url, { cache: 'no-cache' });
+  if (!r.ok) throw new Error(`${url}: HTTP ${r.status}`);
+  const ab = await r.arrayBuffer();
+  return XLSX.read(ab, { type: 'array' });
+}
+
+async function fetchJson(url) {
+  const r = await fetch(url, { cache: 'no-cache' });
+  if (!r.ok) throw new Error(`${url}: HTTP ${r.status}`);
+  return r.json();
+}
+
+function parseSurtidosWB(wb) {
+  // Parsea Precio_Surtidos.xlsx hoja 'BD' → { nombre: { items: [{producto, numero, cant_std, cant_red}], precio_std, precio_red, codigo } }
+  // Lee por NOMBRE de columna (no por posicion) para tolerar reordenamientos del Excel.
+  // En la version actual del xlsx la columna "Descripción" no existe; queda como string vacio.
+  const ws = wb.Sheets['BD'];
+  if (!ws) throw new Error('No se encontró hoja "BD" en Precio_Surtidos.xlsx');
+  const rows = XLSX.utils.sheet_to_json(ws, { defval: null });
+  const surtidos = {};
+  for (const r of rows) {
+    const codigo = r['Codigo'];
+    const nombre = r['NOMBRE SURTIDO'];
+    const cant_std = r['Cantidad stándar'] ?? r['Cantidad standar'] ?? r['Cantidad estándar'];
+    const numero = r['N°'] ?? r['Numero'] ?? r['N'];
+    const desc = r['Descripción'] ?? r['Descripcion'] ?? '';
+    const producto = r['Producto'];
+    const precio_std = r['Precio Estándar'] ?? r['Precio Estandar'];
+    const cant_red = r['Cantidad Reducidas'] ?? r['Cantidad Reducida'];
+    const precio_red = r['Precio Reducido'];
+    if (!nombre || !producto || numero === null || numero === undefined) continue;
+    if (!surtidos[nombre]) {
+      surtidos[nombre] = {
+        codigo: codigo,
+        items: [],
+        precio_std: 0,
+        precio_red: 0,
+        items_std: 0,
+        items_red: 0,
+      };
+    }
+    const s = surtidos[nombre];
+    s.items.push({
+      producto: String(producto).trim(),
+      numero: String(numero).trim(),
+      desc: desc || '',
+      cant_std: cant_std || 0,
+      cant_red: cant_red || 0,
+    });
+    if (cant_std && cant_std > 0) {
+      s.precio_std += (precio_std || 0);
+      s.items_std += 1;
+    }
+    if (cant_red && cant_red > 0) {
+      s.precio_red += (precio_red || 0);
+      s.items_red += 1;
+    }
   }
-  return null;
+  return surtidos;
 }
 
-async function loadCatalog() {
-  const basePresu = 'https://maxifercotizador.github.io/Presupuestador/';
-  const [productos, surtidos, costosWB, ventasResult] = await Promise.all([
-    _fetchJson(basePresu + 'productos.json'),
-    _fetchJson(basePresu + 'surtidos.json'),
-    _fetchXlsx('01 COMPRAS - COSTOS - FABRICAS.xlsm'),
-    _fetchJson('ventas_monday.json').catch(e => { console.warn('ventas_monday.json:', e.message); return []; }),
-  ]);
-  const costos = _parseCostosWB(costosWB);
-  SURT = _buildSurt(productos, surtidos, costos);
-  VENTAS = Array.isArray(ventasResult) ? ventasResult : [];
-  DATA_READY = true;
-  document.dispatchEvent(new Event('catalog-ready'));
-  const ld = document.getElementById('catalog-loader');
-  if (ld) ld.style.display = 'none';
-  if (typeof updateKPIs === 'function') updateKPIs();
-  if (typeof updateVentaHeader === 'function') updateVentaHeader();
-  if (typeof render === 'function') render();
+function parseCostosWB(wb) {
+  // Parsea 01 COMPRAS hoja 'CODIGOS Y COSTOS' → { "PRODUCTON°": costo_unitario }
+  const ws = wb.Sheets['CODIGOS Y COSTOS'];
+  if (!ws) throw new Error('No se encontró hoja "CODIGOS Y COSTOS" en el Excel de costos');
+  const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: null });
+  // Headers: [FABRICA, Producto y N°, CODIGO, Descripción, COSTO, ...]
+  const costos = {};
+  for (let i = 1; i < rows.length; i++) {
+    const [fabrica, prod_num, codigo, desc, costo] = rows[i];
+    if (!prod_num || costo == null) continue;
+    const key = String(prod_num).trim().toUpperCase();
+    costos[key] = parseFloat(costo);
+  }
+  return costos;
 }
-loadCatalog().catch(e => {
-  const ld = document.getElementById('catalog-loader');
-  if (ld) ld.innerHTML = '<div style="color:#c00">Error cargando catalogo: '+e.message+'</div>';
-});
 
+function calcularCostoSurtido(surtido, costos, usarReducida = false) {
+  // Para un surtido, recorre sus items, busca cada producto+numero en costos y multiplica por cantidad
+  // Devuelve { costo_total, items_matched, items_total, items_sin_costo }
+  let costo_total = 0;
+  let items_matched = 0;
+  let items_total = 0;
+  const items_sin_costo = [];
+  for (const item of surtido.items) {
+    const cant = usarReducida ? item.cant_red : item.cant_std;
+    if (!cant || cant <= 0) continue;
+    items_total++;
+    // Probamos las dos concatenaciones posibles porque algunas filas del Excel
+    // tienen "Producto y N°" cargado al revés (ej "Varios ChVarios" en vez de "VariosVarios Ch").
+    const P = String(item.producto || '').toUpperCase();
+    const N = String(item.numero || '').toUpperCase();
+    const k1 = P + N;
+    const k2 = N + P;
+    let costo_unit = costos[k1];
+    if (!(costo_unit > 0)) costo_unit = costos[k2];
+    // Considerar válido sólo si hay un número > 0. Un costo en 0 (cargado vacío
+    // en el Excel) se trata como faltante para que aparezca en "sin precio".
+    if (costo_unit != null && costo_unit > 0) {
+      costo_total += costo_unit * cant;
+      items_matched++;
+    } else {
+      items_sin_costo.push({
+        producto: item.producto,
+        numero: item.numero,
+        desc: item.desc || '',
+        cant: cant,
+        claveCostos: item.producto + item.numero
+      });
+    }
+  }
+  return { costo_total: Math.round(costo_total), items_matched, items_total, items_sin_costo };
+}
 
-// === INTERFAZ ===
-const state = {
-  search: '',
-  sort: 'g',
-  sortDir: -1,
-  chkPerdida: false,
-  chkBajoMargen: false,
-  chkAltoIngreso: false,
-  expanded: null,
-  descuento: 46,   // % descuento sobre lista (por defecto 46)
-  comision: 0,     // % comisión que se lleva el vendedor
-  // Filtros sobre ventas de Monday
-  monday: { periodo: 'all', from: '', to: '', vendedor: '', etiqueta: '', surtido: '' },
+function matchVenta(surtido_monday, surtidos_excel) {
+  // Devuelve { match_name, usa_reducida, status }
+  if (SURTIDOS_OBSERVACION.has(surtido_monday)) return { match_name: null, usa_reducida: false, status: 'observacion' };
+  if (surtidos_excel[surtido_monday]) return { match_name: surtido_monday, usa_reducida: false, status: 'ok' };
+  if (SINONIMOS_COMPLETOS[surtido_monday]) return { match_name: SINONIMOS_COMPLETOS[surtido_monday], usa_reducida: false, status: 'ok' };
+  if (SINONIMOS_REDUCIDOS[surtido_monday]) {
+    const [target, usa_red] = SINONIMOS_REDUCIDOS[surtido_monday];
+    return { match_name: target, usa_reducida: usa_red, status: 'ok' };
+  }
+  return { match_name: null, usa_reducida: false, status: 'sinClasif' };
+}
+
+async function loadData() {
+  const errors = [];
+  let surtidos_excel = {};
+  let costos = {};
+  let ventas_raw = [];
+
+  // Paso 1: surtidos
+  try {
+    setStep('step-surt', 'doing');
+    const wb = await fetchExcel(FILE_SURTIDOS);
+    surtidos_excel = parseSurtidosWB(wb);
+    setStep('step-surt', 'done');
+    document.getElementById('step-surt').textContent = `✓ ${Object.keys(surtidos_excel).length} surtidos cargados`;
+  } catch (e) {
+    setStep('step-surt', 'error');
+    document.getElementById('step-surt').textContent = `✕ Error al leer ${FILE_SURTIDOS}`;
+    errors.push(`No se pudo cargar <code>${FILE_SURTIDOS}</code>: ${e.message}`);
+  }
+
+  // Paso 2: costos
+  try {
+    setStep('step-cost', 'doing');
+    const wb = await fetchExcel(FILE_COSTOS);
+    costos = parseCostosWB(wb);
+    window._lastCostos = costos; // compartido con la pestaña Catálogo
+    setStep('step-cost', 'done');
+    document.getElementById('step-cost').textContent = `✓ ${Object.keys(costos).length} códigos de costos cargados`;
+  } catch (e) {
+    setStep('step-cost', 'error');
+    document.getElementById('step-cost').textContent = `✕ Error al leer archivo de costos`;
+    errors.push(`No se pudo cargar <code>${FILE_COSTOS}</code>: ${e.message}`);
+  }
+
+  // Paso 3: ventas
+  try {
+    setStep('step-vent', 'doing');
+    ventas_raw = await fetchJson(FILE_VENTAS);
+    setStep('step-vent', 'done');
+    document.getElementById('step-vent').textContent = `✓ ${ventas_raw.length} ventas cargadas`;
+  } catch (e) {
+    setStep('step-vent', 'error');
+    document.getElementById('step-vent').textContent = `✕ Error al leer ${FILE_VENTAS}`;
+    errors.push(`No se pudo cargar <code>${FILE_VENTAS}</code>: ${e.message}`);
+  }
+
+  // Paso 4: cruzar
+  setStep('step-cruz', 'doing');
+  const resultado = [];
+  let ok_count = 0, obs_count = 0, sc_count = 0, sp_count = 0;
+
+  for (const v of ventas_raw) {
+    if (CLIENTES_EXCLUIR.has(v.cliente)) continue;
+    const { match_name, usa_reducida, status } = matchVenta(v.surtido, surtidos_excel);
+
+    const row = {
+      fecha: v.fecha,
+      cliente: v.cliente,
+      vendedor: v.vendedor,
+      surtido: v.surtido,
+      match: match_name,
+      esReducido: usa_reducida || v.surtido.startsWith('RE - '),
+      status: status,
+    };
+
+    if (match_name && surtidos_excel[match_name]) {
+      const sf = surtidos_excel[match_name];
+      const pLista = usa_reducida ? sf.precio_red : sf.precio_std;
+      const costoCalc = calcularCostoSurtido(sf, costos, usa_reducida);
+      row.pLista = Math.round(pLista);
+      row.costo = costoCalc.costo_total;
+      row.itemsMatched = costoCalc.items_matched;
+      row.itemsTotal = costoCalc.items_total;
+      row.itemsSinCosto = costoCalc.items_sin_costo;
+      row.coberturaCosto = costoCalc.items_total > 0 ? costoCalc.items_matched / costoCalc.items_total : 0;
+
+      if (pLista === 0) {
+        row.status = 'sinPrecio';
+        sp_count++;
+      } else {
+        ok_count++;
+      }
+    } else {
+      row.pLista = 0;
+      row.costo = 0;
+      if (status === 'observacion') obs_count++;
+      else if (status === 'sinClasif') sc_count++;
+    }
+
+    resultado.push(row);
+  }
+
+  VENTAS = resultado;
+  UPDATED_AT = new Date().toLocaleString('es-AR', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+
+  setStep('step-cruz', 'done');
+  document.getElementById('step-cruz').textContent = `✓ ${ok_count} ok · ${sp_count} sin precio · ${obs_count} en observación · ${sc_count} sin clasificar`;
+
+  // Mostrar errores si los hubo
+  if (errors.length > 0) {
+    const c = document.getElementById('errorContainer');
+    c.innerHTML = errors.map(e => `
+      <div class="error-banner">
+        <b>⚠ Error al cargar datos.</b> ${e}<br>
+        <span style="font-size:12px;color:var(--text-mute)">Verificá que el archivo esté en el repo con el nombre exacto y que el repo esté público (o que tengas GitHub Pro si es privado).</span>
+      </div>`).join('');
+  }
+
+  // Cerrar loading
+  setTimeout(() => {
+    document.getElementById('loadingOv').classList.add('hide');
+  }, 400);
+
+  return VENTAS.length > 0;
+}
+
+// Comisiones por vendedor (% sobre ganancia bruta)
+const COMISIONES_DEFAULT = {
+  'Micky-Fabi': 25,
+  'Federico-Cordoba': 15,
+  'EDUARDO': 15,
+  'Victor Gordillo': 0,
+  'Maximiliano Gordillo': 0,
+  'Nadia Uldokat': 0,
+  'Sin asignar': 0,
+  'Gabi Mayeski': 0,
+  'GABI MAYESKI': 0,
+  'MARCELO': 0,
+  'Daniel Tumini': 0,
+  'Rafael Bonet': 0,
 };
 
+// Vendedores que representan pérdida pura para la empresa
+// (mercadería que sale, no genera facturación, costo total es pérdida)
+const VENDEDORES_PERDIDA = new Set([
+  'Victor Gordillo',
+]);
+
+// ========== UTILS ==========
+const fmt = (n) => {
+  if (!isFinite(n)) return '—';
+  const abs = Math.abs(n);
+  if (abs >= 1e6) return '$' + (n/1e6).toFixed(2) + 'M';
+  if (abs >= 1e3) return '$' + (n/1e3).toFixed(0) + 'k';
+  return '$' + Math.round(n).toLocaleString('es-AR');
+};
+const fmtFull = (n) => '$' + Math.round(n).toLocaleString('es-AR');
+const monthKey = (s) => s.substring(0, 7);
+const escHtml = (s) => String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+// Date helpers
 function getPeriodRange(periodo){
   const hoy = new Date();
   const y = hoy.getFullYear(), m = hoy.getMonth(), d = hoy.getDate();
   const iso = (dt) => dt.toISOString().slice(0,10);
   switch(periodo){
-    case 'today':     { const t = iso(new Date(y, m, d));     return { from: t, to: t }; }
-    case 'yesterday': { const t = iso(new Date(y, m, d - 1)); return { from: t, to: t }; }
-    case 'tomorrow':  { const t = iso(new Date(y, m, d + 1)); return { from: t, to: t }; }
-    case 'thisMonth':  return { from: iso(new Date(y, m, 1)),     to: iso(new Date(y, m+1, 0)) };
-    case 'lastMonth':  return { from: iso(new Date(y, m-1, 1)),   to: iso(new Date(y, m, 0)) };
-    case 'last3Months':return { from: iso(new Date(y, m-2, 1)),   to: iso(new Date(y, m+1, 0)) };
-    case 'thisWeek':   { const dow = hoy.getDay()||7; const lun = new Date(hoy); lun.setDate(d-(dow-1)); const dom = new Date(lun); dom.setDate(lun.getDate()+6); return { from: iso(lun), to: iso(dom) }; }
-    case 'lastWeek':   { const dow = hoy.getDay()||7; const lunE = new Date(hoy); lunE.setDate(d-(dow-1)); const lunP = new Date(lunE); lunP.setDate(lunE.getDate()-7); const domP = new Date(lunP); domP.setDate(lunP.getDate()+6); return { from: iso(lunP), to: iso(domP) }; }
-    case 'thisYear':   return { from: iso(new Date(y, 0, 1)),     to: iso(new Date(y, 11, 31)) };
-    default:           return { from: '', to: '' };
+    case 'today': {
+      const t = iso(new Date(y, m, d));
+      return { from: t, to: t };
+    }
+    case 'yesterday': {
+      const t = iso(new Date(y, m, d - 1));
+      return { from: t, to: t };
+    }
+    case 'tomorrow': {
+      const t = iso(new Date(y, m, d + 1));
+      return { from: t, to: t };
+    }
+    case 'thisMonth': {
+      return { from: iso(new Date(y, m, 1)), to: iso(new Date(y, m+1, 0)) };
+    }
+    case 'lastMonth': {
+      return { from: iso(new Date(y, m-1, 1)), to: iso(new Date(y, m, 0)) };
+    }
+    case 'last3Months': {
+      const from = new Date(y, m-2, 1);
+      return { from: iso(from), to: iso(new Date(y, m+1, 0)) };
+    }
+    case 'thisWeek': {
+      const dow = hoy.getDay() || 7; // lunes = 1
+      const lunes = new Date(hoy); lunes.setDate(d - (dow - 1));
+      const domingo = new Date(lunes); domingo.setDate(lunes.getDate() + 6);
+      return { from: iso(lunes), to: iso(domingo) };
+    }
+    case 'lastWeek': {
+      const dow = hoy.getDay() || 7;
+      const lunesEsta = new Date(hoy); lunesEsta.setDate(d - (dow - 1));
+      const lunesPas = new Date(lunesEsta); lunesPas.setDate(lunesEsta.getDate() - 7);
+      const domingoPas = new Date(lunesPas); domingoPas.setDate(lunesPas.getDate() + 6);
+      return { from: iso(lunesPas), to: iso(domingoPas) };
+    }
+    case 'thisYear': {
+      return { from: iso(new Date(y, 0, 1)), to: iso(new Date(y, 11, 31)) };
+    }
+    case 'all':
+    default:
+      return { from: '', to: '' };
   }
 }
 
-// ¿Hay algún filtro Monday activo (que limite la lista)?
-function _mondayActivo() {
-  const m = state.monday;
-  return !!(m.from || m.to || m.vendedor || m.etiqueta || m.surtido);
-}
+// ========== STATE ==========
+const state = {
+  filters: {
+    periodo: 'thisYear',  // desde el select
+    from: '', to: '',     // calculados o custom
+    vendedor: '', cliente: '', surtido: '', etiqueta: '', status: ''
+  },
+  dto: 46,
+  comisiones: { ...COMISIONES_DEFAULT },
+  sort: { key: 'fecha', dir: 'desc' }
+};
 
-// Devuelve las ventas filtradas + un map { surtidoExcel: { cant, ventaUnit } }
-function getVentasFiltradas() {
-  const m = state.monday;
-  // Index para matching rápido (set de nombres válidos)
-  const surtidosByName = {};
-  for (const s of SURT) surtidosByName[s.n] = s;
+// ========== CALCULATION ==========
+function calcRow(v){
+  const row = { ...v };
+  // Detectar si es vendedor de pérdida (Victor)
+  const esPerdida = VENDEDORES_PERDIDA.has(v.vendedor);
+  row.esPerdida = esPerdida;
 
-  const ventasOk = [];
-  for (const v of VENTAS) {
-    if (m.from && (v.fecha || '') < m.from) continue;
-    if (m.to && (v.fecha || '') > m.to) continue;
-    if (m.vendedor && v.vendedor !== m.vendedor) continue;
-    if (m.etiqueta && (v.etiqueta || '') !== m.etiqueta) continue;
-    const matchName = _matchVenta(v.surtido, surtidosByName);
-    // Si filtra por surtido (Monday) y NO matchea, lo dejo solo si el filtro coincide con el nombre crudo
-    if (m.surtido && v.surtido !== m.surtido) continue;
-    ventasOk.push({ ...v, _match: matchName });
+  if(v.status === 'sinClasif' || v.status === 'observacion'){
+    row.precioNeto = null; row.ganancia = null; row.margen = null;
+    row.comisionAplicada = 0;
+    return row;
   }
-  return ventasOk;
+  if(v.status === 'sinPrecio'){
+    row.precioNeto = null; row.ganancia = null; row.margen = null;
+    row.comisionAplicada = 0;
+    return row;
+  }
+
+  if(esPerdida){
+    // Víctor: la empresa pierde el costo completo, no hay facturación real
+    row.precioNeto = 0;           // no hay ingreso
+    row.ganancia = -v.costo;      // pérdida = costo de la mercadería
+    row.gananciaBruta = -v.costo;
+    row.margen = -100;
+    row.comisionAplicada = 0;
+    row.comisionMonto = 0;
+    return row;
+  }
+
+  const precioNeto = v.pLista * (1 - state.dto/100);
+  const ganBruta = precioNeto - v.costo;
+  const comisionPct = state.comisiones[v.vendedor] ?? 0;
+  const ganancia = ganBruta * (1 - comisionPct/100);
+  const margen = precioNeto ? (ganancia / precioNeto) * 100 : 0;
+  row.precioNeto = precioNeto;
+  row.ganancia = ganancia;
+  row.gananciaBruta = ganBruta;
+  row.margen = margen;
+  row.comisionAplicada = comisionPct;
+  row.comisionMonto = ganBruta * comisionPct/100;
+  return row;
 }
 
-// Calcula valores dinámicos de un surtido usando descuento y comisión actuales
-function calc(s) {
-  const descFactor = 1 - (state.descuento / 100);
-  const comFactor = 1 - (state.comision / 100);
+// Aplicar filtros con lógica de "dinámica":
+// Cuando se filtra por vendedor, los dropdowns de cliente/surtido muestran solo los que tuvieron venta con ese vendedor
+// y viceversa
+function applyFilters(rows, exclude){
+  const f = state.filters;
+  return rows.filter(r => {
+    if(exclude !== 'date'){
+      if(f.from && r.fecha < f.from) return false;
+      if(f.to && r.fecha > f.to) return false;
+    }
+    if(exclude !== 'vendedor' && f.vendedor && r.vendedor !== f.vendedor) return false;
+    if(exclude !== 'cliente' && f.cliente && r.cliente !== f.cliente) return false;
+    if(exclude !== 'surtido' && f.surtido && r.surtido !== f.surtido) return false;
+    if(exclude !== 'etiqueta' && f.etiqueta && (r.etiqueta || '') !== f.etiqueta) return false;
+    if(exclude !== 'status' && f.status && r.status !== f.status) return false;
+    return true;
+  });
+}
+
+// ========== RENDER ==========
+function renderAll(){
+  const enriched = VENTAS.map(calcRow);
+  const filtered = applyFilters(enriched);
+  renderHeader(enriched, filtered);
+  renderKPIs(filtered);
+  renderRankings(filtered);
+  renderChart(filtered);
+  renderTable(filtered);
+  renderProblems(enriched);
+  renderTags();
+  renderCoverage(filtered);
+  refreshDropdowns(enriched);
+}
+
+function renderHeader(all, filtered){
+  document.getElementById('updatedAt').textContent = 'Últ. act: ' + UPDATED_AT;
+  const fechas = filtered.map(v => v.fecha).sort();
+  document.getElementById('rangeDates').textContent = fechas.length ? (fechas[0] + ' → ' + fechas[fechas.length-1]) : (state.filters.from + ' → ' + state.filters.to || '—');
+  document.getElementById('totalCount').textContent = filtered.length + (filtered.length !== all.length ? ' / ' + all.length : '');
+  document.getElementById('totalClientes').textContent = new Set(filtered.map(v=>v.cliente)).size;
+  document.getElementById('totalSurtidos').textContent = new Set(filtered.map(v=>v.surtido)).size;
+}
+
+function renderCoverage(filtered){
+  const ok = filtered.filter(r => r.status === 'ok').length;
+  const pct = filtered.length ? Math.round(ok/filtered.length*100) : 0;
+  document.getElementById('coverageBadge').innerHTML = '<b>' + pct + '%</b> con ganancia calculable';
+}
+
+// Refrescar dropdowns con datos que realmente existen (según filtros actuales)
+function refreshDropdowns(enriched){
+  // Para cada dropdown, calcular valores disponibles si SE EXCLUYE ese filtro
+  // Ej: vendedores que aparecen cuando aplicás todos los filtros excepto el de vendedor
+  const vendedoresDisp = new Set(applyFilters(enriched, 'vendedor').map(r => r.vendedor));
+  const clientesDisp = new Set(applyFilters(enriched, 'cliente').map(r => r.cliente));
+  const surtidosDisp = new Set(applyFilters(enriched, 'surtido').map(r => r.surtido));
+  const etiquetasDisp = new Set(applyFilters(enriched, 'etiqueta').map(r => r.etiqueta || '').filter(x => x));
+
+  const updateSelect = (id, values, current, labelAll) => {
+    const sel = document.getElementById(id);
+    const opts = [...values].sort();
+    // Asegurarse que el valor actual aparezca aunque no esté disponible
+    if(current && !opts.includes(current)) opts.unshift(current);
+    sel.innerHTML = '<option value="">' + labelAll + ' (' + opts.length + ')</option>' +
+      opts.map(v => `<option value="${escHtml(v)}" ${v===current?'selected':''}>${escHtml(v)}</option>`).join('');
+  };
+
+  updateSelect('filterVendedor', vendedoresDisp, state.filters.vendedor, 'Todos');
+  updateSelect('filterCliente', clientesDisp, state.filters.cliente, 'Todos');
+  updateSelect('filterSurtido', surtidosDisp, state.filters.surtido, 'Todos');
+  updateSelect('filterEtiqueta', etiquetasDisp, state.filters.etiqueta, 'Todas');
+}
+
+function renderKPIs(rows){
+  const totalVendido = rows.reduce((s,r) => s + (r.precioNeto || 0), 0);
+  const totalGanancia = rows.reduce((s,r) => s + (r.ganancia || 0), 0);
+  const totalPedidos = rows.length;
+
+  const agg = (field) => {
+    const m = {};
+    rows.forEach(r => {
+      if(!m[r[field]]) m[r[field]] = { cant:0, ganancia:0 };
+      m[r[field]].cant += 1;
+      m[r[field]].ganancia += r.ganancia || 0;
+    });
+    return Object.entries(m).sort((a,b) => b[1].ganancia - a[1].ganancia)[0];
+  };
+  const topS = agg('surtido'), topC = agg('cliente'), topV = agg('vendedor');
+
+  const avgPedido = totalPedidos ? totalVendido / totalPedidos : 0;
+  const margenProm = totalVendido ? (totalGanancia/totalVendido*100) : 0;
+
+  const kpis = [
+    { l:'Facturado neto', v: fmt(totalVendido), h: rows.length + ' ventas · ' + state.dto + '% dto' },
+    { l:'Ganancia neta', v: fmt(totalGanancia), h: margenProm.toFixed(1) + '% margen prom.', primary:true, teal:true },
+    { l:'Ticket promedio', v: fmt(avgPedido), h: 'por surtido vendido' },
+    { l:'Top surtido', v: topS ? topS[0].substring(0,24) : '—', h: topS ? fmt(topS[1].ganancia) + ' · ' + topS[1].cant + 'x' : '', small:true },
+    { l:'Top cliente', v: topC ? topC[0].substring(0,24) : '—', h: topC ? fmt(topC[1].ganancia) + ' · ' + topC[1].cant + 'x' : '', small:true },
+    { l:'Top vendedor', v: topV ? topV[0].substring(0,24) : '—', h: topV ? fmt(topV[1].ganancia) + ' · ' + topV[1].cant + 'x' : '', small:true }
+  ];
+  document.getElementById('kpiGrid').innerHTML = kpis.map(k =>
+    `<div class="kpi-card ${k.primary?'primary':''}">
+      <div class="kpi-label">${k.l}</div>
+      <div class="kpi-value ${k.small?'small':''} ${k.teal?'teal':''}">${k.v}</div>
+      <div class="kpi-hint">${k.h}</div>
+    </div>`
+  ).join('');
+}
+
+function groupRank(rows, field, maxItems, sortBy){
+  const m = {};
+  rows.forEach(r => {
+    if(!m[r[field]]) m[r[field]] = { key:r[field], cant:0, ganancia:0, vendido:0 };
+    m[r[field]].cant += 1;
+    m[r[field]].ganancia += r.ganancia || 0;
+    m[r[field]].vendido += r.precioNeto || 0;
+  });
+  return Object.values(m).sort((a,b) => b[sortBy] - a[sortBy]).slice(0, maxItems);
+}
+
+function renderRankList(elId, items, valueKey, valueFmt, drawerType){
+  const el = document.getElementById(elId);
+  if(!items.length){ el.innerHTML = '<div class="empty">Sin datos</div>'; return; }
+  const max = Math.max(...items.map(i => Math.abs(i[valueKey])), 1);
+  el.innerHTML = items.map((it, i) => {
+    const pct = Math.abs(it[valueKey]) / max * 100;
+    const topClass = i === 0 ? 'top-1' : '';
+    const isNeg = it[valueKey] < 0;
+    const valClass = isNeg ? 'negative' : (it[valueKey] > 0 ? 'positive' : '');
+    const fillColor = isNeg ? 'var(--bad)' : 'var(--teal)';
+    return `<div class="rank-item clickable ${topClass}" data-type="${drawerType}" data-value="${escHtml(it.key)}">
+      <div class="n">${String(i+1).padStart(2,'0')}</div>
+      <div class="name" title="${escHtml(it.key)}">${escHtml(it.key)}</div>
+      <div class="val ${valClass} ${i===0 && !isNeg?'emph':''}">${valueFmt(it[valueKey])} <span class="cant">· ${it.cant}x</span></div>
+      <div class="bar"><div class="fill" style="width:${pct}%;background:${fillColor}"></div></div>
+    </div>`;
+  }).join('');
+  // Bind click
+  el.querySelectorAll('.rank-item.clickable').forEach(item => {
+    item.onclick = () => openDrawer(item.dataset.type, item.dataset.value);
+  });
+}
+
+function renderRankings(rows){
+  renderRankList('rankSurtidosCant', groupRank(rows, 'surtido', 10, 'cant'), 'cant', v => v + ' ventas', 'surtido');
+  renderRankList('rankSurtidosGan', groupRank(rows.filter(r => r.ganancia > 0), 'surtido', 10, 'ganancia'), 'ganancia', fmt, 'surtido');
+  renderRankList('rankClientes', groupRank(rows.filter(r => r.ganancia > 0), 'cliente', 10, 'ganancia'), 'ganancia', fmt, 'cliente');
+  // Vendedores: incluir todos (incluso los de pérdida), ordenado por ganancia (negativos van al final naturalmente)
+  renderRankList('rankVendedores', groupRank(rows.filter(r => r.ganancia != null), 'vendedor', 10, 'ganancia'), 'ganancia', fmt, 'vendedor');
+}
+
+function renderChart(rows){
+  const byMonth = {};
+  rows.forEach(r => {
+    const m = monthKey(r.fecha);
+    if(!byMonth[m]) byMonth[m] = { ganancia:0, cant:0 };
+    byMonth[m].ganancia += r.ganancia || 0;
+    byMonth[m].cant += 1;
+  });
+  const months = Object.keys(byMonth).sort();
+  if(!months.length){
+    document.getElementById('chartBars').innerHTML = '<div class="empty" style="width:100%">Sin datos en el rango</div>';
+    document.getElementById('chartCaption').textContent = '';
+    return;
+  }
+  const max = Math.max(...months.map(m => byMonth[m].ganancia));
+  const totalGan = months.reduce((s,m) => s + byMonth[m].ganancia, 0);
+  document.getElementById('chartCaption').textContent = 'ganancia por mes · total ' + fmt(totalGan);
+  const labels = { '01':'Ene','02':'Feb','03':'Mar','04':'Abr','05':'May','06':'Jun','07':'Jul','08':'Ago','09':'Sep','10':'Oct','11':'Nov','12':'Dic' };
+  document.getElementById('chartBars').innerHTML = months.map(m => {
+    const v = byMonth[m];
+    const h = max > 0 ? (v.ganancia / max) * 100 : 0;
+    const [y, mm] = m.split('-');
+    return `<div class="chart-bar" style="height:${h}%">
+      <div class="tip">${labels[mm]} ${y}: ${fmt(v.ganancia)} · ${v.cant}x</div>
+      <div class="lbl">${labels[mm]}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderTable(rows){
+  const k = state.sort.key, d = state.sort.dir === 'asc' ? 1 : -1;
+  const sorted = [...rows].sort((a,b) => {
+    const av = a[k], bv = b[k];
+    if(av == null && bv == null) return 0;
+    if(av == null) return 1;
+    if(bv == null) return -1;
+    if(typeof av === 'string') return av.localeCompare(bv) * d;
+    return (av - bv) * d;
+  });
+  document.getElementById('tableCount').textContent = rows.length + ' ventas · ' + fmt(rows.reduce((s,r) => s + (r.ganancia||0), 0)) + ' ganancia total';
+  document.querySelectorAll('th[data-sort]').forEach(th => {
+    th.classList.toggle('sorted', th.dataset.sort === k);
+    const arr = th.querySelector('.arr');
+    if(arr) arr.textContent = th.dataset.sort === k ? (d === 1 ? '↑' : '↓') : '↕';
+  });
+  const tbody = document.getElementById('detailBody');
+  if(!sorted.length){ tbody.innerHTML = '<tr><td colspan="7" class="empty">Sin resultados</td></tr>'; return; }
+  tbody.innerHTML = sorted.slice(0, 500).map((r, idx) => {
+    let badge = '';
+    if(r.status === 'sinClasif') badge = '<span class="pill nomatch">sin clasif</span>';
+    else if(r.status === 'observacion') badge = '<span class="pill nomatch">observación</span>';
+    else if(r.status === 'sinPrecio') badge = '<span class="pill noprice">sin precio</span>';
+    else if(r.esReducido) badge = '<span class="pill re">reduc</span>';
+    const precio = r.precioNeto != null ? fmt(r.precioNeto) : '<span class="neutral">—</span>';
+    const gan = r.ganancia != null ? fmt(r.ganancia) : '<span class="neutral">—</span>';
+    const mar = r.margen != null ? r.margen.toFixed(1) + '%' : '<span class="neutral">—</span>';
+    const ganClass = r.ganancia > 0 ? 'positive' : '';
+    return `<tr data-row-idx="${idx}">
+      <td class="mono">${r.fecha}</td>
+      <td class="emph">${escHtml(r.cliente)}</td>
+      <td>${escHtml(r.surtido)}${badge}</td>
+      <td class="neutral">${escHtml(r.vendedor)}</td>
+      <td class="right">${precio}</td>
+      <td class="right ${ganClass}">${gan}</td>
+      <td class="right neutral">${mar}</td>
+    </tr>`;
+  }).join('') + (sorted.length > 500 ? `<tr><td colspan="7" class="empty">… y ${sorted.length - 500} más. Refiná los filtros.</td></tr>` : '');
+
+  // Click en fila: abrir drawer del cliente
+  tbody.querySelectorAll('tr[data-row-idx]').forEach(tr => {
+    tr.onclick = () => {
+      const r = sorted[+tr.dataset.rowIdx];
+      if(r) openDrawer('cliente', r.cliente);
+    };
+  });
+}
+
+function renderProblems(allEnriched){
+  // "Sin precio cargado" AMPLIADO:
+  // Incluye tanto los surtidos con pLista=0 como los que tienen costos parciales
+  // (algunas piezas sin costo cargado en el Excel de costos)
+  const conProblemaCosto = allEnriched.filter(r =>
+    r.status === 'sinPrecio' ||
+    (r.status === 'ok' && r.itemsTotal > 0 && r.itemsMatched < r.itemsTotal)
+  );
+  const observacion = allEnriched.filter(r => r.status === 'observacion');
+  document.getElementById('badgeSinPrecio').textContent = conProblemaCosto.length;
+  document.getElementById('badgeObservacion').textContent = observacion.length;
+
+  // Agrupar por surtido_original (o match) y calcular stats de piezas
+  const agruparCosto = (rows) => {
+    const m = {};
+    rows.forEach(r => {
+      const key = r.surtido + (r.match && r.match !== r.surtido ? ' → ' + r.match : '');
+      if(!m[key]) m[key] = {
+        surtido: r.surtido, match: r.match, cant: 0,
+        itemsTotal: r.itemsTotal || 0,
+        itemsMatched: r.itemsMatched || 0,
+        itemsSinCosto: r.itemsSinCosto || [],
+        sinPrecio: r.status === 'sinPrecio'
+      };
+      m[key].cant += 1;
+    });
+    return Object.values(m).sort((a,b) => b.cant - a.cant);
+  };
+  const agruparSimple = (rows) => {
+    const m = {};
+    rows.forEach(r => { m[r.surtido] = (m[r.surtido] || 0) + 1; });
+    return Object.entries(m).map(([k,v]) => ({ key:k, cant:v })).sort((a,b) => b.cant - a.cant);
+  };
+
+  const sp = agruparCosto(conProblemaCosto);
+  const spMax = Math.max(...sp.map(x=>x.cant), 1);
+  // Guardar items globalmente para que openPiezas pueda leerlos
+  window._piezasMap = {};
+  sp.forEach(it => { window._piezasMap[it.surtido] = it; });
+
+  document.getElementById('sinPrecioList').innerHTML = sp.length ? sp.slice(0,30).map((it,i) => {
+    const subtitle = (it.match && it.match !== it.surtido)
+      ? `<span style="color:var(--text-mute);font-size:10px;font-family:'JetBrains Mono',monospace"> → ${escHtml(it.match)}</span>`
+      : '';
+    // Detalle de piezas - clickeable para abrir modal si hay faltantes
+    let detallePiezas = '';
+    if (it.sinPrecio) {
+      detallePiezas = `<span class="piezas-btn" data-surtido="${escHtml(it.surtido)}" style="color:var(--bad);font-size:10px;font-family:'JetBrains Mono',monospace;display:inline-block;margin-top:3px;cursor:pointer;border-bottom:1px dashed var(--bad);padding-bottom:1px">SIN PRECIO LISTA · ${it.itemsTotal} piezas →</span>`;
+    } else if (it.itemsTotal > 0) {
+      const faltan = it.itemsTotal - it.itemsMatched;
+      const pct = Math.round(it.itemsMatched / it.itemsTotal * 100);
+      const color = pct >= 90 ? 'var(--good)' : pct >= 50 ? 'var(--warn)' : 'var(--bad)';
+      const clickeable = faltan > 0;
+      detallePiezas = clickeable
+        ? `<span class="piezas-btn" data-surtido="${escHtml(it.surtido)}" style="color:${color};font-size:10px;font-family:'JetBrains Mono',monospace;display:inline-block;margin-top:3px;cursor:pointer;border-bottom:1px dashed ${color};padding-bottom:1px">${it.itemsMatched}/${it.itemsTotal} piezas con costo · faltan ${faltan} (${pct}%) →</span>`
+        : `<span style="color:${color};font-size:10px;font-family:'JetBrains Mono',monospace;display:block;margin-top:3px">${it.itemsMatched}/${it.itemsTotal} piezas con costo (${pct}%)</span>`;
+    }
+    return `<div class="rank-item" style="min-height:44px;cursor:default">
+      <div class="n">${String(i+1).padStart(2,'0')}</div>
+      <div class="name" title="${escHtml(it.surtido)}">
+        <span class="surtido-name-btn" data-value="${escHtml(it.surtido)}" style="cursor:pointer">${escHtml(it.surtido)}${subtitle}</span>
+        <br>${detallePiezas}
+      </div>
+      <div class="val">${it.cant} ventas</div>
+      <div class="bar"><div class="fill" style="width:${it.cant/spMax*100}%;background:var(--info)"></div></div>
+    </div>`;
+  }).join('') : '<div class="empty">Nada por acá ✓</div>';
+  // Click en nombre del surtido → drawer
+  document.querySelectorAll('#sinPrecioList .surtido-name-btn').forEach(el => {
+    el.onclick = (e) => { e.stopPropagation(); openDrawer('surtido', el.dataset.value); };
+  });
+  // Click en bloque de piezas faltantes → modal de piezas
+  document.querySelectorAll('#sinPrecioList .piezas-btn').forEach(el => {
+    el.onclick = (e) => { e.stopPropagation(); openPiezas(el.dataset.surtido); };
+  });
+
+  const obs = agruparSimple(observacion);
+  const obsMax = Math.max(...obs.map(x=>x.cant), 1);
+  document.getElementById('observacionList').innerHTML = obs.length ? obs.slice(0,20).map((it,i) => {
+    return `<div class="rank-item clickable" data-type="surtido" data-value="${escHtml(it.key)}">
+      <div class="n">${String(i+1).padStart(2,'0')}</div>
+      <div class="name" title="${escHtml(it.key)}">${escHtml(it.key)}</div>
+      <div class="val">${it.cant} ventas</div>
+      <div class="bar"><div class="fill" style="width:${it.cant/obsMax*100}%;background:var(--warn)"></div></div>
+    </div>`;
+  }).join('') : '<div class="empty">Nada por acá ✓</div>';
+  document.querySelectorAll('#observacionList .rank-item.clickable').forEach(item => {
+    item.onclick = () => openDrawer(item.dataset.type, item.dataset.value);
+  });
+}
+
+function renderTags(){
+  const c = document.getElementById('activeTags');
+  const tags = [];
+  const f = state.filters;
+  const periodoLabels = {
+    today: 'Hoy', yesterday: 'Ayer', tomorrow: 'Mañana',
+    thisWeek: 'Esta semana', lastWeek: 'Semana pasada',
+    thisMonth: 'Este mes', lastMonth: 'Mes pasado', last3Months: 'Últ. 3 meses',
+    thisYear: 'Este año', all: 'Todo el histórico',
+    custom: (f.from||'...') + ' → ' + (f.to||'...')
+  };
+  if(f.periodo && f.periodo !== 'all') tags.push({ label: periodoLabels[f.periodo] || f.periodo, clear: () => { state.filters.periodo = 'all'; state.filters.from = ''; state.filters.to = ''; document.getElementById('filterPeriodo').value = 'all'; toggleDateCustom(false); }});
+  if(f.vendedor) tags.push({ label:f.vendedor, clear: () => { f.vendedor=''; document.getElementById('filterVendedor').value=''; } });
+  if(f.cliente) tags.push({ label:f.cliente, clear: () => { f.cliente=''; document.getElementById('filterCliente').value=''; } });
+  if(f.surtido) tags.push({ label:f.surtido, clear: () => { f.surtido=''; document.getElementById('filterSurtido').value=''; } });
+  if(f.etiqueta) tags.push({ label: '🏷 ' + f.etiqueta, clear: () => { f.etiqueta=''; document.getElementById('filterEtiqueta').value=''; } });
+  if(f.status) {
+    const statusLabels = { ok: 'Con ganancia', sinPrecio: 'Sin precio', observacion: 'En observación', sinClasif: 'Sin clasificar' };
+    tags.push({ label: statusLabels[f.status] || f.status, clear: () => { f.status=''; document.getElementById('filterStatus').value=''; } });
+  }
+  c.innerHTML = tags.map((t,i) => `<span class="tag">${escHtml(t.label)} <span class="x" data-i="${i}">×</span></span>`).join('');
+  c.querySelectorAll('.x').forEach((el) => {
+    el.onclick = () => { tags[+el.dataset.i].clear(); renderAll(); };
+  });
+}
+
+// ========== COMISIONES UI ==========
+function renderComisionesUI(){
+  const vendedores = [...new Set(VENTAS.map(v => v.vendedor))].sort();
+  const cont = document.getElementById('comisionMini');
+  cont.innerHTML = vendedores.map(v => {
+    const short = escHtml(v.split(' ')[0].substring(0,10));
+    if (VENDEDORES_PERDIDA.has(v)) {
+      // Víctor: chip distinto, no editable, indica pérdida pura
+      return `<label class="comision-chip" style="background:var(--bad-dim);border-color:var(--bad);color:var(--bad)" title="Las ventas de ${escHtml(v)} son pérdida pura: mercadería que sale sin retorno para la empresa.">
+        ${short} <span style="color:var(--bad);font-weight:600;font-size:10px;letter-spacing:0.04em">PÉRDIDA</span>
+      </label>`;
+    }
+    const val = state.comisiones[v] ?? 0;
+    return `<label class="comision-chip">${short} <input type="number" min="0" max="100" step="0.5" value="${val}" data-vendedor="${escHtml(v)}"></label>`;
+  }).join('');
+  cont.querySelectorAll('input').forEach(inp => {
+    inp.oninput = (e) => {
+      state.comisiones[e.target.dataset.vendedor] = +e.target.value || 0;
+      renderAll();
+    };
+  });
+}
+
+// ========== DRAWER ==========
+function openDrawer(type, value){
+  const enriched = VENTAS.map(calcRow);
+  const filtered = applyFilters(enriched); // contexto de filtros actuales
+  const relevant = filtered.filter(r => {
+    if(type === 'surtido') return r.surtido === value;
+    if(type === 'cliente') return r.cliente === value;
+    if(type === 'vendedor') return r.vendedor === value;
+    return false;
+  });
+
+  const cant = relevant.length;
+  const totalVendido = relevant.reduce((s,r) => s + (r.precioNeto || 0), 0);
+  const totalGanancia = relevant.reduce((s,r) => s + (r.ganancia || 0), 0);
+  const totalCosto = relevant.reduce((s,r) => s + (r.costo || 0), 0);
+  const margenProm = totalVendido ? (totalGanancia/totalVendido*100) : 0;
+
+  const typeLabels = { surtido: 'Surtido', cliente: 'Cliente', vendedor: 'Vendedor' };
+  document.getElementById('drawerType').textContent = typeLabels[type];
+  document.getElementById('drawerTitle').textContent = value;
+
+  // KPIs base
+  let kpisHTML = `
+    <div class="drawer-kpis">
+      <div class="drawer-kpi">
+        <div class="l">Ventas / pedidos</div>
+        <div class="v">${cant}</div>
+        <div class="h">${new Set(relevant.map(r=>r.fecha)).size} fechas distintas</div>
+      </div>
+      <div class="drawer-kpi">
+        <div class="l">Facturado neto</div>
+        <div class="v">${fmt(totalVendido)}</div>
+        <div class="h">con ${state.dto}% de descuento</div>
+      </div>
+      <div class="drawer-kpi">
+        <div class="l">Ganancia neta</div>
+        <div class="v teal">${fmt(totalGanancia)}</div>
+        <div class="h">${margenProm.toFixed(1)}% margen prom.</div>
+      </div>
+      <div class="drawer-kpi">
+        <div class="l">Costo total</div>
+        <div class="v">${fmt(totalCosto)}</div>
+        <div class="h">costo de mercadería</div>
+      </div>
+    </div>`;
+
+  // Secciones específicas por tipo
+  let sectionsHTML = '';
+  if(type === 'surtido'){
+    // Mejores clientes que compran este surtido
+    const byCliente = groupRank(relevant.filter(r => r.ganancia != null), 'cliente', 15, 'ganancia');
+    // Vendedores que más venden este surtido
+    const byVend = groupRank(relevant, 'vendedor', 10, 'cant');
+    sectionsHTML += `
+      <div class="drawer-section-title">Clientes que lo compran (top 15)</div>
+      <div class="drawer-list">
+        ${byCliente.length ? byCliente.map(c => `
+          <div class="drawer-row">
+            <div class="name">${escHtml(c.key)}<span class="s">${c.cant} pedido${c.cant>1?'s':''}</span></div>
+            <div class="v emph">${fmt(c.ganancia)}</div>
+          </div>
+        `).join('') : '<div class="empty">Sin datos</div>'}
+      </div>
+      <div class="drawer-section-title">Vendedores que lo mueven</div>
+      <div class="drawer-list">
+        ${byVend.map(v => `
+          <div class="drawer-row">
+            <div class="name">${escHtml(v.key)}<span class="s">${v.cant} pedido${v.cant>1?'s':''}</span></div>
+            <div class="v ${v.ganancia>0?'positive':''}">${fmt(v.ganancia)}</div>
+          </div>
+        `).join('')}
+      </div>`;
+  } else if(type === 'cliente'){
+    // Qué compra este cliente
+    const bySurtido = groupRank(relevant, 'surtido', 20, 'cant');
+    const byVend = groupRank(relevant, 'vendedor', 5, 'cant');
+    sectionsHTML += `
+      <div class="drawer-section-title">Qué compra (top 20)</div>
+      <div class="drawer-list">
+        ${bySurtido.map(s => `
+          <div class="drawer-row">
+            <div class="name">${escHtml(s.key)}<span class="s">${s.cant} pedido${s.cant>1?'s':''} · ${fmt(s.vendido)}</span></div>
+            <div class="v ${s.ganancia>0?'positive':''}">${fmt(s.ganancia)}</div>
+          </div>
+        `).join('')}
+      </div>
+      <div class="drawer-section-title">Lo atiende</div>
+      <div class="drawer-list">
+        ${byVend.map(v => `
+          <div class="drawer-row">
+            <div class="name">${escHtml(v.key)}<span class="s">${v.cant} pedido${v.cant>1?'s':''}</span></div>
+            <div class="v emph">${fmt(v.ganancia)}</div>
+          </div>
+        `).join('')}
+      </div>`;
+  } else if(type === 'vendedor'){
+    // Qué vende este vendedor
+    const bySurtido = groupRank(relevant, 'surtido', 15, 'ganancia');
+    const byCliente = groupRank(relevant.filter(r => r.ganancia != null), 'cliente', 15, 'ganancia');
+    const esPerdida = VENDEDORES_PERDIDA.has(value);
+    const comisionPct = state.comisiones[value] ?? 0;
+    const gananciaBruta = relevant.reduce((s,r) => s + (r.gananciaBruta || 0), 0);
+    const comisionTotal = relevant.reduce((s,r) => s + (r.comisionMonto || 0), 0);
+    const perdidaTotal = relevant.reduce((s,r) => s + (r.costo || 0), 0);
+
+    if(esPerdida){
+      sectionsHTML += `
+      <div style="background:var(--bad-dim);border:1px solid var(--bad);border-radius:8px;padding:14px;margin-bottom:16px">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--bad);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:6px">⚠ Pérdida pura · Mercadería que sale sin retorno</div>
+        <div style="font-size:14px;color:var(--text);line-height:1.5">Todo lo que vende este vendedor es <b style="color:var(--bad)">pérdida total para la empresa</b>: la mercadería sale, no hay facturación real, y el costo completo se descuenta del resultado global.</div>
+      </div>
+      <div class="drawer-kpis">
+        <div class="drawer-kpi" style="border-color:var(--bad)">
+          <div class="l">Pérdida total</div>
+          <div class="v" style="color:var(--bad)">-${fmt(perdidaTotal)}</div>
+          <div class="h">costo de mercadería entregada</div>
+        </div>
+        <div class="drawer-kpi">
+          <div class="l">Pedidos</div>
+          <div class="v">${cant}</div>
+          <div class="h">en el período filtrado</div>
+        </div>
+      </div>`;
+    } else {
+      sectionsHTML += `
+      <div class="drawer-kpis">
+        <div class="drawer-kpi">
+          <div class="l">Comisión aplicada</div>
+          <div class="v">${comisionPct}%</div>
+          <div class="h">sobre ganancia bruta</div>
+        </div>
+        <div class="drawer-kpi">
+          <div class="l">Comisión a pagar</div>
+          <div class="v good">${fmt(comisionTotal)}</div>
+          <div class="h">sobre ${fmt(gananciaBruta)} bruto</div>
+        </div>
+      </div>`;
+    }
+
+    sectionsHTML += `
+      <div class="drawer-section-title">Clientes que atiende (top 15)</div>
+      <div class="drawer-list">
+        ${byCliente.map(c => `
+          <div class="drawer-row">
+            <div class="name">${escHtml(c.key)}<span class="s">${c.cant} pedido${c.cant>1?'s':''} · ${fmt(c.vendido)}</span></div>
+            <div class="v ${c.ganancia < 0 ? '' : 'emph'}" style="${c.ganancia < 0 ? 'color:var(--bad);font-weight:600' : ''}">${fmt(c.ganancia)}</div>
+          </div>
+        `).join('')}
+      </div>
+      <div class="drawer-section-title">Surtidos que vende (top 15)</div>
+      <div class="drawer-list">
+        ${bySurtido.map(s => `
+          <div class="drawer-row">
+            <div class="name">${escHtml(s.key)}<span class="s">${s.cant} pedido${s.cant>1?'s':''}</span></div>
+            <div class="v ${s.ganancia>0?'positive':''}" style="${s.ganancia < 0 ? 'color:var(--bad);font-weight:600' : ''}">${fmt(s.ganancia)}</div>
+          </div>
+        `).join('')}
+      </div>`;
+  }
+
+  // Acciones
+  const actionsHTML = `
+    <div class="drawer-actions">
+      <button onclick="filterBy('${type}', '${escHtml(value).replace(/'/g, "\\'")}'); closeDrawer();">Filtrar por ${typeLabels[type].toLowerCase()}</button>
+    </div>`;
+
+  document.getElementById('drawerBody').innerHTML = kpisHTML + sectionsHTML + actionsHTML;
+  document.getElementById('drawerBg').classList.add('show');
+  document.getElementById('drawer').classList.add('show');
+}
+
+function closeDrawer(){
+  document.getElementById('drawerBg').classList.remove('show');
+  document.getElementById('drawer').classList.remove('show');
+}
+
+function filterBy(type, value){
+  if(type === 'surtido') { state.filters.surtido = value; document.getElementById('filterSurtido').value = value; }
+  if(type === 'cliente') { state.filters.cliente = value; document.getElementById('filterCliente').value = value; }
+  if(type === 'vendedor') { state.filters.vendedor = value; document.getElementById('filterVendedor').value = value; }
+  renderAll();
+  // Scroll a la tabla
+  document.querySelector('.table-wrap').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// ========== EVENTS ==========
+function toggleDateCustom(show){
+  document.querySelectorAll('.date-custom').forEach(el => el.style.display = show ? 'flex' : 'none');
+}
+
+function applyPeriodo(p){
+  state.filters.periodo = p;
+  if(p === 'custom'){
+    toggleDateCustom(true);
+    // no tocar from/to, los setea el user
+  } else if(p === 'all'){
+    toggleDateCustom(false);
+    state.filters.from = ''; state.filters.to = '';
+  } else {
+    toggleDateCustom(false);
+    const r = getPeriodRange(p);
+    state.filters.from = r.from;
+    state.filters.to = r.to;
+  }
+  renderAll();
+}
+
+function clearFilters(){
+  state.filters = { periodo: 'all', from:'', to:'', vendedor:'', cliente:'', surtido:'', etiqueta:'', status:'' };
+  document.getElementById('filterPeriodo').value = 'all';
+  ['dateFrom','dateTo','filterVendedor','filterCliente','filterSurtido','filterEtiqueta','filterStatus'].forEach(id => document.getElementById(id).value = '');
+  toggleDateCustom(false);
+  renderAll();
+}
+
+function openRefresh(){ document.getElementById('refreshModal').classList.add('show'); }
+function closeRefresh(){ document.getElementById('refreshModal').classList.remove('show'); }
+
+// ============================================================
+// Integración Monday: bajar ventas y descargar JSON
+// ============================================================
+const MONDAY_BOARD_ID = 7212937829;
+const MONDAY_TOKEN_KEY = 'maxifer_monday_token';
+const MONDAY_QUERY = `query($boardId: [ID!], $cursor: String, $limit: Int!) {
+  boards(ids: $boardId) {
+    items_page(limit: $limit, cursor: $cursor) {
+      cursor
+      items {
+        id name
+        column_values(ids: ["date","lookup_mkpz5epk","lookup_mkpzg5rd"]) {
+          id
+          ... on MirrorValue { display_value }
+          ... on DateValue { date }
+        }
+        subitems {
+          id
+          column_values(ids: ["men__desplegable__1"]) { id text }
+        }
+      }
+    }
+  }
+}`;
+
+function getColMonday(item, colId){
+  for (const c of (item.column_values || [])) {
+    if (c.id === colId) return c.display_value || c.date || c.text || '';
+  }
+  return '';
+}
+
+async function mondayFetch(token, query, variables){
+  const r = await fetch('https://api.monday.com/v2', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': token,
+      'API-Version': '2024-10'
+    },
+    body: JSON.stringify({ query, variables })
+  });
+  if (!r.ok) throw new Error('HTTP ' + r.status);
+  const j = await r.json();
+  if (j.errors) throw new Error(j.errors[0].message || 'API error');
+  return j.data;
+}
+
+function cambiarTokenMonday(){
+  const actual = localStorage.getItem(MONDAY_TOKEN_KEY) || '';
+  const nuevo = prompt('Pegá tu token de Monday (lo encontrás en monday.com → tu avatar → Developers → My access tokens). Se guarda solo en este navegador.', actual);
+  if (nuevo === null) return;
+  if (nuevo.trim()) {
+    localStorage.setItem(MONDAY_TOKEN_KEY, nuevo.trim());
+    alert('Token guardado.');
+  } else {
+    localStorage.removeItem(MONDAY_TOKEN_KEY);
+    alert('Token borrado.');
+  }
+}
+
+async function actualizarVentasMonday(){
+  const btn = document.getElementById('btnBajarMonday');
+  const prog = document.getElementById('mondayProgress');
+  let token = localStorage.getItem(MONDAY_TOKEN_KEY);
+  if (!token) {
+    token = prompt('Necesito tu token de Monday. Lo guardo solo en este navegador (no se sube a ningún servidor).');
+    if (!token) return;
+    token = token.trim();
+    if (!token) return;
+    localStorage.setItem(MONDAY_TOKEN_KEY, token);
+  }
+
+  btn.disabled = true;
+  const labelOrig = btn.textContent;
+  btn.textContent = 'Bajando…';
+  prog.style.display = '';
+  prog.textContent = 'Conectando con Monday…';
+
+  try {
+    const ventas = [];
+    const seen = new Set();
+    let cursor = null;
+    let pagina = 0;
+    let totalItems = 0;
+    let excluidos = 0;
+    do {
+      pagina++;
+      prog.textContent = `Página ${pagina} (≈500 items por pág, 7 páginas en total)…`;
+      const data = await mondayFetch(token, MONDAY_QUERY, { boardId: [String(MONDAY_BOARD_ID)], cursor, limit: 500 });
+      const page = data.boards[0].items_page;
+      cursor = page.cursor;
+      for (const item of page.items) {
+        if (seen.has(item.id)) continue;
+        seen.add(item.id);
+        totalItems++;
+        const fecha = getColMonday(item, 'date');
+        const vendedor = getColMonday(item, 'lookup_mkpzg5rd');
+        const etiqueta = getColMonday(item, 'lookup_mkpz5epk');
+        const cliente = (item.name || '').trim();
+        for (const sub of (item.subitems || [])) {
+          let tipo = '';
+          for (const c of (sub.column_values || [])) {
+            if (c.id === 'men__desplegable__1') { tipo = (c.text || '').trim(); break; }
+          }
+          if (!tipo) continue;
+          const tipoUp = tipo.toUpperCase();
+          if (tipoUp.includes('REPOSI')) { excluidos++; continue; }
+          if (tipoUp.startsWith('MUEBLE')) { excluidos++; continue; }
+          ventas.push({
+            fecha,
+            cliente,
+            vendedor: vendedor || 'Sin asignar',
+            etiqueta: etiqueta || '',
+            surtido: tipo
+          });
+        }
+      }
+    } while (cursor);
+
+    ventas.sort((a, b) => (a.fecha || '').localeCompare(b.fecha || '') || a.cliente.localeCompare(b.cliente));
+
+    prog.textContent = `✓ ${ventas.length} ventas bajadas (${totalItems} pedidos, ${excluidos} subitems REPOSI/MUEBLE excluidos). Generando archivo…`;
+
+    const json = JSON.stringify(ventas, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'ventas_monday.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+
+    prog.innerHTML = `✓ <b style="color:var(--good)">${ventas.length} ventas</b> descargadas como <code>ventas_monday.json</code>.<br>Ahora subí ese archivo al repo (pestaña 📂 Archivos del Admin) y recargá la página para ver los nuevos datos.`;
+  } catch (e) {
+    console.error(e);
+    if (String(e.message).match(/401|invalid|unauth/i)) {
+      prog.innerHTML = `<span style="color:var(--bad)">✗ Token inválido o expirado.</span> Tocá <b>🔑 Cambiar token</b> y pegá uno nuevo.`;
+    } else {
+      prog.innerHTML = `<span style="color:var(--bad)">✗ Error: ${e.message}</span>`;
+    }
+  } finally {
+    btn.disabled = false;
+    btn.textContent = labelOrig;
+  }
+}
+
+// Modal de piezas faltantes
+function openPiezas(surtido){
+  const data = window._piezasMap && window._piezasMap[surtido];
+  if (!data) return;
+
+  document.getElementById('piezasTitle').textContent = surtido + (data.match && data.match !== surtido ? ' → ' + data.match : '');
+
+  let subtitleText;
+  if (data.sinPrecio) {
+    subtitleText = `Surtido sin precio de lista · ${data.itemsTotal} piezas totales`;
+  } else {
+    const faltan = data.itemsTotal - data.itemsMatched;
+    subtitleText = `${data.itemsMatched}/${data.itemsTotal} piezas con costo · faltan ${faltan} (${Math.round(data.itemsMatched/data.itemsTotal*100)}%)`;
+  }
+  document.getElementById('piezasSubtitle').textContent = subtitleText;
+
+  // Si el surtido no tiene precio de lista, necesitamos listar TODOS sus items (no hay sinCosto porque nunca se calculó)
+  // En ese caso los items vienen en 0 — muestro un mensaje alternativo
+  let items = data.itemsSinCosto || [];
+
+  const body = document.getElementById('piezasBody');
+  if (!items.length) {
+    body.innerHTML = '<tr><td colspan="3" class="empty">No hay datos de piezas disponibles para este surtido.</td></tr>';
+  } else {
+    body.innerHTML = items.map(p => `
+      <tr>
+        <td class="mono emph" style="color:var(--teal)">${escHtml(p.claveCostos)}</td>
+        <td>${escHtml(p.desc || '—')}</td>
+        <td class="right">${p.cant}</td>
+      </tr>`).join('');
+  }
+
+  document.getElementById('piezasModal').classList.add('show');
+}
+
+function closePiezas(){
+  document.getElementById('piezasModal').classList.remove('show');
+}
+
+function copiarPiezas(){
+  const rows = document.querySelectorAll('#piezasBody tr');
+  const txt = ['Producto+N°\tDescripción\tCantidad'];
+  rows.forEach(tr => {
+    const cells = tr.querySelectorAll('td');
+    if (cells.length === 3) {
+      txt.push(`${cells[0].textContent}\t${cells[1].textContent}\t${cells[2].textContent}`);
+    }
+  });
+  const text = txt.join('\n');
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(text).then(() => {
+      const btn = document.getElementById('btnCopiarPiezas');
+      const oldTxt = btn.textContent;
+      btn.textContent = '✓ Copiado';
+      setTimeout(() => btn.textContent = oldTxt, 1500);
+    });
+  }
+}
+
+function init(){
+  renderComisionesUI();
+
+  // Aplicar período inicial (thisYear)
+  const r = getPeriodRange('thisYear');
+  state.filters.from = r.from;
+  state.filters.to = r.to;
+
+  // Bind período
+  document.getElementById('filterPeriodo').onchange = (e) => applyPeriodo(e.target.value);
+  document.getElementById('dateFrom').oninput = (e) => { state.filters.from = e.target.value; renderAll(); };
+  document.getElementById('dateTo').oninput = (e) => { state.filters.to = e.target.value; renderAll(); };
+
+  // Bind otros filtros
+  document.getElementById('filterVendedor').onchange = (e) => { state.filters.vendedor = e.target.value; renderAll(); };
+  document.getElementById('filterCliente').onchange = (e) => { state.filters.cliente = e.target.value; renderAll(); };
+  document.getElementById('filterSurtido').onchange = (e) => { state.filters.surtido = e.target.value; renderAll(); };
+  document.getElementById('filterEtiqueta').onchange = (e) => { state.filters.etiqueta = e.target.value; renderAll(); };
+  document.getElementById('filterStatus').onchange = (e) => { state.filters.status = e.target.value; renderAll(); };
+
+  // Descuento
+  document.querySelectorAll('[data-dto]').forEach(btn => {
+    btn.onclick = () => {
+      state.dto = +btn.dataset.dto;
+      document.getElementById('dtoCustom').value = state.dto;
+      document.querySelectorAll('[data-dto]').forEach(b => b.classList.toggle('active', b === btn));
+      renderAll();
+    };
+  });
+  document.getElementById('dtoCustom').oninput = (e) => {
+    state.dto = +e.target.value || 0;
+    document.querySelectorAll('[data-dto]').forEach(b => b.classList.toggle('active', +b.dataset.dto === state.dto));
+    renderAll();
+  };
+
+  // Sort tabla
+  document.querySelectorAll('th[data-sort]').forEach(th => {
+    th.onclick = () => {
+      const k = th.dataset.sort;
+      if(state.sort.key === k) state.sort.dir = state.sort.dir === 'asc' ? 'desc' : 'asc';
+      else { state.sort.key = k; state.sort.dir = 'desc'; }
+      renderAll();
+    };
+  });
+
+  // Keyboard: ESC cierra drawer/modal
+  document.addEventListener('keydown', (e) => {
+    if(e.key === 'Escape'){
+      closeDrawer();
+      closeRefresh();
+      closePiezas();
+    }
+  });
+
+  // Default descuento
+  document.querySelector('[data-dto="46"]').classList.add('active');
+  renderAll();
+}
+
+// ============================================================
+// PESTAÑA CATÁLOGO: tabla expandible con composición + drilldown
+// ============================================================
+let CAT_SURT = [];           // Lista de surtidos para la tabla del catálogo
+let CAT_READY = false;
+const catState = { descuento: 46, comision: 0, expanded: null, sort: 'g', sortDir: -1 };
+const PRESU_BASE = 'https://maxifercotizador.github.io/Presupuestador/';
+
+function _catFetchJson(url) {
+  return fetch(url + '?v=' + Date.now(), { cache: 'no-cache' }).then(r => {
+    if (!r.ok) throw new Error(url + ': HTTP ' + r.status);
+    return r.json();
+  });
+}
+
+function _catBuildSurt(productos, surtidosRaw, costos) {
+  function norm(s){ return String(s||'').trim().toLowerCase().replace(/\s+/g,' '); }
+  const idxProd = new Map();
+  for (const p of productos) {
+    idxProd.set(norm(p.p)+'|'+norm(p.n), { pl: p.pl||0, pc: p.pc||0, prov: p.prov||'' });
+  }
+  function getCosto(prod, num) {
+    const P = String(prod||'').trim().toUpperCase();
+    const N = String(num||'').trim().toUpperCase();
+    const k1 = P + N;
+    const k2 = N + P;
+    if (costos[k1] != null && costos[k1] > 0) return costos[k1];
+    if (costos[k2] != null && costos[k2] > 0) return costos[k2];
+    const f = idxProd.get(norm(prod)+'|'+norm(num));
+    return (f && f.pc > 0) ? f.pc : 0;
+  }
+  const out = [];
+  for (const code in surtidosRaw) {
+    const s = surtidosRaw[code];
+    let it=0, itC=0, gv=0, vr=0, pS=0, pR=0, vL=0, coI=0, coG=0, coV=0;
+    let pMaxiferItems=0;
+    const items = [];
+    for (const i of (s.i||[])) {
+      const cs = i.cs||0, cr = i.cr||0, pl = i.pl||0;
+      const fProd = idxProd.get(norm(i.p)+'|'+norm(i.n)) || {};
+      const pc = getCosto(i.p, i.n);
+      const prov = fProd.prov || '';
+      const isMaxifer = prov.toUpperCase().includes('MAXIFER');
+      const numLow = String(i.n||'').toLowerCase();
+      const isGav = numLow.includes('gaveta');
+      const isVar = numLow.includes('varios');
+      const isExtra = isGav || isVar;
+      const extraTag = isGav ? 'gaveta' : (isVar ? 'varios' : null);
+      if (isGav) gv++;
+      else if (isVar) vr++;
+      else { it++; if (pc>0) itC++; if (isMaxifer) pMaxiferItems++; }
+      if (!isExtra) { pS += cs; pR += cr; }
+      vL += pl * cs;
+      const itemCost = pc * cs;
+      if (isGav) coG += itemCost;
+      else if (isVar) coV += itemCost;
+      else coI += itemCost;
+      items.push({ n: i.n, d: i.d || '', c: cs, pU: pl, cU: pc > 0 ? pc : null, f: prov, e: extraTag, ok: pc > 0 ? 1 : 0 });
+    }
+    const co = coI + coG + coV;
+    const pct = it > 0 ? Math.round((itC/it)*100) : 0;
+    const pM = it > 0 ? Math.round((pMaxiferItems/it)*100) : 0;
+    let cat;
+    if (it === 0) cat = 'sin_datos';
+    else if (pM >= 50) cat = 'victor';
+    else if (itC === it) cat = 'ok';
+    else if (pct >= 80) cat = 'cuasi';
+    else cat = 'parcial';
+    out.push({ n: s.n||code, c: code, cat, it, itC, pct, pM, gv, vr, pS, pR, vL,
+               co: (cat==='sin_datos' || cat==='victor') ? null : co,
+               coI, coG, coV, items });
+  }
+  return out;
+}
+
+async function loadCatalogData(costos) {
+  try {
+    const [productos, surtidosRaw] = await Promise.all([
+      _catFetchJson(PRESU_BASE + 'productos.json'),
+      _catFetchJson(PRESU_BASE + 'surtidos.json'),
+    ]);
+    CAT_SURT = _catBuildSurt(productos, surtidosRaw, costos || {});
+    CAT_READY = true;
+    renderCat();
+  } catch (e) {
+    console.warn('Catálogo: no se pudieron cargar productos.json/surtidos.json:', e);
+    document.getElementById('cat-no-results').style.display = 'block';
+    document.getElementById('cat-no-results').innerHTML = '<div style="font-size:24px;margin-bottom:8px">⚠️</div>No se pudo cargar el catálogo.<br><span style="color:var(--text-mute);font-size:11px">' + e.message + '</span>';
+  }
+}
+
+function calcCat(s) {
+  const descFactor = 1 - (catState.descuento / 100);
+  const comFactor = 1 - (catState.comision / 100);
   const venta = s.vL * descFactor * comFactor;
   const ganancia = s.co != null ? venta - s.co : null;
   const margen = (ganancia != null && venta > 0) ? (ganancia / venta * 100) : null;
   return { venta, ganancia, margen };
 }
 
-function fmt$(n) {
+function fmtCat$(n) {
   if (n == null || isNaN(n)) return '—';
   const sign = n < 0 ? '-' : '';
   return sign + '$' + Math.round(Math.abs(n)).toLocaleString('es-AR');
 }
-function fmt$full(n) {
-  if (n == null || isNaN(n)) return '—';
-  const sign = n < 0 ? '-' : '';
-  return sign + '$' + Math.round(Math.abs(n)).toLocaleString('es-AR');
-}
-
-function margenClass(pct) {
+function margenClassCat(pct) {
   if (pct == null) return '';
   if (pct < 0) return 'neg';
   if (pct >= 50) return 'pos-alto';
   if (pct >= 30) return 'pos-medio';
   return 'pos-bajo';
 }
-
-function catLabel(cat) {
+function catLabelCat(cat) {
   return { ok: 'OK', cuasi: 'Cuasi', parcial: 'Parcial', sin_datos: 'Sin datos', victor: 'Victor' }[cat] || '—';
 }
 
-function updateKPIs() {
-  // Compatibilidad: ya no hay chips KPI superiores. Esta función ahora actualiza totales Monday.
-  updateTotalesMonday();
-  refreshMondayDropdowns();
-}
-
-// Suma facturado y ganancia de las ventas filtradas, usando el descuento + comisión global.
-function _calcVentas(ventasFiltradas) {
-  let cant = 0, fact = 0, gan = 0;
-  const surtidosUnicos = new Set();
-  for (const v of ventasFiltradas) {
-    if (!v._match) continue;
-    const s = SURT.find(x => x.n === v._match);
-    if (!s) continue;
-    const c = calc(s);
-    if (c.venta == null) continue;
-    cant++;
-    surtidosUnicos.add(v._match);
-    fact += c.venta;
-    if (c.ganancia != null) gan += c.ganancia;
-  }
-  return { cant, fact, gan, surtidos: surtidosUnicos.size, ticket: cant > 0 ? fact/cant : 0 };
-}
-
-function updateTotalesMonday() {
-  const card = document.getElementById('totalesCard');
-  if (!card) return;
-  if (!_mondayActivo() || VENTAS.length === 0) {
-    card.style.display = 'none';
-    return;
-  }
-  const ventasF = getVentasFiltradas();
-  const r = _calcVentas(ventasF);
-  card.style.display = '';
-  document.getElementById('tot-ventas').textContent = r.cant.toLocaleString('es-AR');
-  document.getElementById('tot-surtidos').textContent = r.surtidos;
-  document.getElementById('tot-facturado').textContent = fmt$(r.fact);
-  document.getElementById('tot-ganancia').textContent = fmt$(r.gan);
-  document.getElementById('tot-ticket').textContent = fmt$(r.ticket);
-}
-
-function refreshMondayDropdowns() {
-  // Llenar selects con valores únicos del JSON (la primera vez se filtra por filtros activos para "dinámico")
-  const m = state.monday;
-  // Set actual de valores que aparecen en ventas filtradas (excluyendo el propio filtro)
-  function valoresSi(excluir) {
-    const r = new Set();
+function getFilteredSortedCat() {
+  let list = CAT_SURT.slice();
+  // Si hay filtros Monday activos, restringir a surtidos vendidos en ese filtro
+  const f = state.filters;
+  const tieneFiltro = f.from || f.to || f.vendedor || f.cliente || f.surtido || f.etiqueta;
+  if (tieneFiltro && Array.isArray(VENTAS) && VENTAS.length) {
+    const vendidos = new Set();
     for (const v of VENTAS) {
-      if (excluir !== 'date' && m.from && (v.fecha || '') < m.from) continue;
-      if (excluir !== 'date' && m.to && (v.fecha || '') > m.to) continue;
-      if (excluir !== 'vendedor' && m.vendedor && v.vendedor !== m.vendedor) continue;
-      if (excluir !== 'etiqueta' && m.etiqueta && (v.etiqueta || '') !== m.etiqueta) continue;
-      if (excluir !== 'surtido' && m.surtido && v.surtido !== m.surtido) continue;
-      r.add(v[excluir === 'etiqueta' ? 'etiqueta' : excluir === 'surtido' ? 'surtido' : 'vendedor']);
+      if (f.from && v.fecha < f.from) continue;
+      if (f.to && v.fecha > f.to) continue;
+      if (f.vendedor && v.vendedor !== f.vendedor) continue;
+      if (f.cliente && v.cliente !== f.cliente) continue;
+      if (f.surtido && v.surtido !== f.surtido) continue;
+      if (f.etiqueta && (v.etiqueta || '') !== f.etiqueta) continue;
+      if (v.match) vendidos.add(v.match);
     }
-    return r;
+    list = list.filter(s => vendidos.has(s.n));
   }
-  function fill(id, set, current, label) {
-    const sel = document.getElementById(id);
-    if (!sel) return;
-    const opts = [...set].filter(x => x).sort();
-    if (current && !opts.includes(current)) opts.unshift(current);
-    sel.innerHTML = '<option value="">' + label + ' (' + opts.length + ')</option>' +
-      opts.map(v => `<option value="${escapeHtmlAttr(v)}" ${v===current?'selected':''}>${escapeHtmlAttr(v)}</option>`).join('');
-  }
-  fill('mVendedor', valoresSi('vendedor'), m.vendedor, 'Todos');
-  fill('mEtiqueta', valoresSi('etiqueta'), m.etiqueta, 'Todas');
-  fill('mSurtido',  valoresSi('surtido'),  m.surtido,  'Todos');
-  // Tags de filtros activos (texto compacto)
-  const tags = [];
-  const periodoLabels = {
-    today: 'Hoy', yesterday: 'Ayer', tomorrow: 'Mañana',
-    thisWeek: 'Esta semana', lastWeek: 'Semana pasada',
-    thisMonth: 'Este mes', lastMonth: 'Mes pasado', last3Months: 'Últ. 3 meses',
-    thisYear: 'Este año', custom: (m.from||'...')+' → '+(m.to||'...'),
-  };
-  if (m.periodo && m.periodo !== 'all') tags.push(periodoLabels[m.periodo] || m.periodo);
-  if (m.vendedor) tags.push(m.vendedor);
-  if (m.etiqueta) tags.push('🏷 ' + m.etiqueta);
-  if (m.surtido)  tags.push(m.surtido);
-  document.getElementById('mTags').textContent = tags.length ? '· ' + tags.join(' · ') : '';
-}
-
-function escapeHtmlAttr(s) {
-  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
-}
-
-function getFilteredSorted() {
-  let list = SURT.slice();
-
-  // Filtros Monday: si hay alguno activo, restringimos a los surtidos del Excel
-  // que aparecen como matches en las ventas filtradas.
-  if (_mondayActivo()) {
-    const ventasF = getVentasFiltradas();
-    const matchSet = new Set(ventasF.map(v => v._match).filter(x => x));
-    list = list.filter(s => matchSet.has(s.n));
-  }
-
-  // Búsqueda
-  if (state.search) {
-    const q = state.search.toLowerCase();
-    list = list.filter(s => {
-      if (s.n.toLowerCase().includes(q)) return true;
-      if (s.items) {
-        return s.items.some(i => (i.d || '').toLowerCase().includes(q));
-      }
-      return false;
-    });
-  }
-
-  // Checkboxes (usan los valores DINÁMICOS según descuento/comisión actual)
-  if (state.chkPerdida) list = list.filter(s => {
-    const c = calc(s);
-    return c.ganancia != null && c.ganancia < 0;
-  });
-  if (state.chkBajoMargen) list = list.filter(s => {
-    const c = calc(s);
-    return c.margen != null && c.margen < 30;
-  });
-  if (state.chkAltoIngreso) list = list.filter(s => {
-    const c = calc(s);
-    return c.venta > 500000;
-  });
-
-  // Ordenar
   list.sort((a, b) => {
-    if (state.sort === 'n') {
-      return state.sortDir === 1 ? a.n.localeCompare(b.n) : b.n.localeCompare(a.n);
-    }
-    if (state.sort === 'cat') {
+    if (catState.sort === 'n')   return catState.sortDir === 1 ? a.n.localeCompare(b.n) : b.n.localeCompare(a.n);
+    if (catState.sort === 'cat') {
       const order = { ok: 1, cuasi: 2, parcial: 3, sin_datos: 4, victor: 5 };
-      return state.sortDir === 1 ? order[a.cat] - order[b.cat] : order[b.cat] - order[a.cat];
+      return catState.sortDir === 1 ? order[a.cat] - order[b.cat] : order[b.cat] - order[a.cat];
     }
-    // Sort dinámico: 'g' (ganancia), 'm' (margen), 'v' (venta)
     let av, bv;
-    if (state.sort === 'g') { av = calc(a).ganancia; bv = calc(b).ganancia; }
-    else if (state.sort === 'm') { av = calc(a).margen; bv = calc(b).margen; }
-    else if (state.sort === 'v') { av = calc(a).venta; bv = calc(b).venta; }
-    else { av = a[state.sort]; bv = b[state.sort]; }
+    if (catState.sort === 'g')      { av = calcCat(a).ganancia; bv = calcCat(b).ganancia; }
+    else if (catState.sort === 'm') { av = calcCat(a).margen;   bv = calcCat(b).margen; }
+    else if (catState.sort === 'v') { av = calcCat(a).venta;    bv = calcCat(b).venta; }
+    else { av = a[catState.sort]; bv = b[catState.sort]; }
     if (av == null && bv == null) return 0;
     if (av == null) return 1;
     if (bv == null) return -1;
-    return state.sortDir === 1 ? av - bv : bv - av;
+    return catState.sortDir === 1 ? av - bv : bv - av;
   });
-
   return list;
 }
 
-function render() {
-  const list = getFilteredSorted();
-  const tbody = document.getElementById('tbody');
-  const noResults = document.getElementById('no-results');
+function renderCat() {
+  if (!CAT_READY) return;
+  const list = getFilteredSortedCat();
+  const tbody = document.getElementById('catTbody');
+  const noRes = document.getElementById('cat-no-results');
+  document.getElementById('catCount').textContent = list.length + ' / ' + CAT_SURT.length + ' surtidos';
+  document.getElementById('cat-th-venta-pct').textContent = catState.descuento + '%';
+  if (list.length === 0) { tbody.innerHTML = ''; noRes.style.display = 'block'; return; }
+  noRes.style.display = 'none';
 
-  if (list.length === 0) {
-    tbody.innerHTML = '';
-    noResults.style.display = 'block';
-    return;
-  }
-  noResults.style.display = 'none';
+  const descFactor = 1 - (catState.descuento / 100);
+  const comFactor  = 1 - (catState.comision / 100);
 
-  tbody.innerHTML = list.map((s, i) => renderRow(s, i)).join('');
+  tbody.innerHTML = list.map(s => {
+    const c = calcCat(s);
+    const isExp = catState.expanded === s.n;
+    const arrow = isExp ? '▼' : '▶';
+    const margenHtml = c.margen != null
+      ? `<span class="margen-chip ${margenClassCat(c.margen)}">${c.margen.toFixed(0)}%</span>`
+      : '—';
+    const gColor = c.ganancia != null && c.ganancia > 0 ? 'color:var(--good);font-weight:600'
+                 : c.ganancia != null && c.ganancia < 0 ? 'color:var(--bad);font-weight:600' : '';
+    const itemsLabel = `${s.it} ${s.gv ? '+' + s.gv + 'g ' : ''}${s.vr ? '+' + s.vr + 'v' : ''}`.trim();
+    let row = `<tr class="row-surtido" data-nombre="${s.n.replace(/"/g,'&quot;')}">
+      <td style="text-align:center;color:var(--text-mute)">${arrow}</td>
+      <td><b>${s.n}</b><div style="font-size:10px;color:var(--text-mute)">${s.c}</div></td>
+      <td><span class="cat-pill ${s.cat}">${catLabelCat(s.cat)}</span>${s.cat !== 'ok' ? '<div style="font-size:10px;color:var(--text-mute);margin-top:2px">' + s.itC + '/' + s.it + ' (' + s.pct + '%)</div>' : ''}</td>
+      <td class="num">${itemsLabel}</td>
+      <td class="num">${fmtCat$(c.venta)}</td>
+      <td class="num">${fmtCat$(s.co)}</td>
+      <td class="num" style="${gColor}">${c.ganancia != null ? fmtCat$(c.ganancia) : '—'}</td>
+      <td class="num">${margenHtml}</td>
+    </tr>`;
+    if (isExp) row += `<tr class="detalle"><td colspan="8">${renderCatDetalle(s, descFactor, comFactor)}</td></tr>`;
+    return row;
+  }).join('');
 }
 
-function renderRow(s, idx) {
-  const expanded = state.expanded === s.n;
-  const c = calc(s);
-  const alertMk = c.ganancia != null && c.ganancia < 0 ? ' <span title="Vende a pérdida con este escenario">⚠️</span>' : '';
-  const comp = s.gv || s.vr ? ' <span style="font-size:10px;color:var(--text-mute)">+' + (s.gv ? s.gv + ' gav' : '') + (s.gv && s.vr ? ' ' : '') + (s.vr ? s.vr + ' var' : '') + '</span>' : '';
+function renderCatDetalle(s, descFactor, comFactor) {
+  const c = calcCat(s);
+  let resumenHTML = `<div class="detalle-resumen">
+    <div class="detalle-box"><h5>Valor lista</h5><div class="v">${fmtCat$(s.vL)}</div></div>
+    <div class="detalle-box"><h5>Venta (${catState.descuento}%)</h5><div class="v">${fmtCat$(c.venta)}</div></div>
+    <div class="detalle-box"><h5>Costo</h5><div class="v">${fmtCat$(s.co)}</div></div>
+    <div class="detalle-box" style="border-left: 3px solid ${c.ganancia >= 0 ? 'var(--good)' : 'var(--bad)'}">
+      <h5>Ganancia</h5>
+      <div class="v" style="color:${c.ganancia >= 0 ? 'var(--good)' : 'var(--bad)'}">${fmtCat$(c.ganancia)}</div>
+    </div>
+    <div class="detalle-box"><h5>Margen</h5><div class="v">${c.margen != null ? c.margen.toFixed(1) + '%' : '—'}</div></div>
+    <div class="detalle-box"><h5>Cobertura</h5><div class="v">${s.itC}/${s.it} (${s.pct}%)</div></div>
+  </div>`;
 
-  const gColor = c.ganancia != null && c.ganancia > 0 ? 'color:var(--good);font-weight:600' : c.ganancia != null && c.ganancia < 0 ? 'color:var(--bad);font-weight:600' : '';
-
-  // Mini info para mobile (se oculta en desktop): cantidad items + pill estado
-  const mobileInfo = `<span class="mobile-only" style="display:none;font-size:9px;color:var(--text-mute);margin-left:4px">· ${s.it} items</span>`;
-
-  const mainRow = `
-    <tr class="row-surtido ${expanded ? 'expanded' : ''}" data-nombre="${s.n.replace(/"/g, '&quot;')}">
-      <td><span class="expand-icon">▶</span></td>
-      <td><strong>${s.n}</strong>${alertMk}${mobileInfo}${comp}</td>
-      <td><span class="cat-pill ${s.cat}">${catLabel(s.cat)}</span>${s.cat !== 'ok' ? '<div style="font-size:10px;color:var(--text-mute);margin-top:2px">' + s.itC + '/' + s.it + ' (' + s.pct + '%)</div>' : ''}</td>
-      <td class="num">${s.it}</td>
-      <td class="num">${fmt$(c.venta)}</td>
-      <td class="num">${s.co != null ? fmt$(s.co) : '<span style="color:var(--text-mute)">—</span>'}</td>
-      <td class="num" style="${gColor}">${c.ganancia != null ? fmt$(c.ganancia) : '—'}</td>
-      <td class="num">${c.margen != null ? '<span class="margen-chip ' + margenClass(c.margen) + '">' + c.margen.toFixed(1) + '%</span>' : '—'}</td>
-    </tr>`;
-
-  if (!expanded) return mainRow;
-
-  return mainRow + `
-    <tr class="row-detalle">
-      <td colspan="8">${renderDetalle(s)}</td>
-    </tr>`;
-}
-
-function renderDetalle(s) {
-  const c = calc(s);
-  const co = s.co;
-  const descFactor = 1 - (state.descuento / 100);
-  const comFactor = 1 - (state.comision / 100);
-
-  let resumenHTML = '';
-  if (s.cat === 'ok') {
-    const labelCom = state.comision > 0 ? ` · comisión ${state.comision}%` : '';
-    resumenHTML = `
-      <div class="detalle-header">
-        <div class="detalle-box" style="border-left: 3px solid var(--info)">
-          <h5>Precio de Lista</h5>
-          <div class="v" style="color:var(--text-dim)">${fmt$full(s.vL)}</div>
-          <div class="s">Base de cálculo</div>
-        </div>
-        <div class="detalle-box" style="border-left: 3px solid var(--accent)">
-          <h5>Venta (${state.descuento}%${labelCom})</h5>
-          <div class="v">${fmt$full(c.venta)}</div>
-          <div class="s">Lo que cobra el cliente final</div>
-        </div>
-        <div class="detalle-box" style="border-left: 3px solid ${c.ganancia >= 0 ? 'var(--good)' : 'var(--bad)'}">
-          <h5>Ganancia</h5>
-          <div class="v" style="color:${c.ganancia >= 0 ? 'var(--good)' : 'var(--bad)'}">${fmt$full(c.ganancia)}</div>
-          <div class="s">${c.margen.toFixed(1)}% margen sobre venta</div>
-        </div>
-        <div class="detalle-box" style="border-left: 3px solid var(--text-mute)">
-          <h5>Costo total</h5>
-          <div class="v">${fmt$full(co)}</div>
-          <div class="s">Items: ${fmt$(s.coI)} ${s.coG ? '· Gav: ' + fmt$(s.coG) : ''} ${s.coV ? '· Var: ' + fmt$(s.coV) : ''}</div>
-        </div>
-      </div>`;
-  } else if (s.cat === 'victor') {
-    resumenHTML = `
-      <div class="detalle-box" style="border-left: 3px solid var(--purple); margin-bottom: 12px">
-        <h5>Fabricado por Victor</h5>
-        <div class="v" style="color: var(--purple)">No calculable</div>
-        <div class="s">${s.pM}% del surtido son productos MAXIFER. Sin costo de materia prima cargado, no se puede calcular ganancia real.</div>
-      </div>
-      <div class="detalle-header">
-        <div class="detalle-box"><h5>Precio Lista</h5><div class="v">${fmt$full(s.vL)}</div></div>
-        <div class="detalle-box"><h5>Venta (${state.descuento}%)</h5><div class="v">${fmt$full(c.venta)}</div></div>
-        <div class="detalle-box"><h5>Items</h5><div class="v">${s.it}</div></div>
-        <div class="detalle-box"><h5>Gavetas + Varios</h5><div class="v">${s.gv || 0}g / ${s.vr || 0}v</div></div>
-      </div>`;
-  } else {
-    const itemsFaltan = s.it - s.itC;
-    resumenHTML = `
-      <div class="detalle-box" style="border-left: 3px solid var(--warn); margin-bottom: 12px">
-        <h5>Costo incompleto</h5>
-        <div class="v" style="color: var(--warn)">${s.itC} de ${s.it} items</div>
-        <div class="s">Faltan ${itemsFaltan} items por cargar. Ver en la tabla abajo las filas marcadas en rojo.</div>
-      </div>
-      <div class="detalle-header">
-        <div class="detalle-box"><h5>Precio Lista</h5><div class="v">${fmt$full(s.vL)}</div></div>
-        <div class="detalle-box"><h5>Venta (${state.descuento}%)</h5><div class="v">${fmt$full(c.venta)}</div></div>
-        <div class="detalle-box"><h5>Cargados</h5><div class="v">${s.itC}/${s.it}</div></div>
-        <div class="detalle-box"><h5>% completitud</h5><div class="v">${s.pct}%</div></div>
-      </div>`;
-  }
-
-  // Tabla de items
   let itemsHTML = '';
   if (s.items && s.items.length > 0) {
     const rows = s.items.map(i => {
       const cls = !i.ok ? 'falta' : i.e === 'gaveta' ? 'gav' : i.e === 'varios' ? 'var' : '';
       const fabLabel = i.e === 'gaveta' ? 'GAVETA' : i.e === 'varios' ? 'VARIOS' : (i.f || '—');
-      const pU = i.pU != null ? fmt$(i.pU) : '—';
-      const pT = fmt$(i.c * (i.pU || 0));
-      const cU = i.cU != null ? fmt$(i.cU) : '<span style="color:var(--bad)">FALTA</span>';
-      const cT = (i.cU != null && i.c) ? fmt$(i.cU * i.c) : '—';
-      // Ganancia dinámica: usa descuento + comisión del estado actual
+      const cU = i.cU != null ? fmtCat$(i.cU) : '<span style="color:var(--bad)">FALTA</span>';
+      const cT = (i.cU != null && i.c) ? fmtCat$(i.cU * i.c) : '—';
       const ventaUnit = (i.pU != null) ? i.pU * descFactor * comFactor : null;
       const gU = (ventaUnit != null && i.cU != null) ? Math.round(ventaUnit - i.cU) : null;
-      const gT = (gU != null && i.c) ? fmt$(gU * i.c) : '—';
+      const gT = (gU != null && i.c) ? fmtCat$(gU * i.c) : '—';
       const margen = (ventaUnit != null && i.cU != null && ventaUnit > 0) ? ((ventaUnit - i.cU) / ventaUnit * 100) : null;
-      const margenHtml = margen != null ? '<span class="margen-chip ' + margenClass(margen) + '">' + margen.toFixed(0) + '%</span>' : '—';
-
+      const margenHtml = margen != null ? '<span class="margen-chip ' + margenClassCat(margen) + '">' + margen.toFixed(0) + '%</span>' : '—';
       return `<tr class="${cls}">
         <td style="width:40px;text-align:center">${i.n}</td>
         <td class="desc-col">${i.d || '<em style="color:var(--text-mute)">sin descripción</em>'}</td>
         <td style="font-size:10px;color:var(--text-mute);white-space:nowrap">${fabLabel}</td>
-        <td class="num" style="font-weight:600">${i.c}</td>
-        <td class="num">${cU}</td>
-        <td class="num">${cT}</td>
-        <td class="num" style="font-weight:600;color:${gU != null && gU > 0 ? 'var(--good)' : gU != null && gU < 0 ? 'var(--bad)' : ''}">${gT}</td>
-        <td class="num">${margenHtml}</td>
+        <td style="text-align:right;font-weight:600">${i.c}</td>
+        <td style="text-align:right">${cU}</td>
+        <td style="text-align:right">${cT}</td>
+        <td style="text-align:right;font-weight:600;color:${gU != null && gU > 0 ? 'var(--good)' : gU != null && gU < 0 ? 'var(--bad)' : ''}">${gT}</td>
+        <td style="text-align:right">${margenHtml}</td>
       </tr>`;
     }).join('');
-
-    itemsHTML = `
-      <div class="section-title" style="margin-top: 12px">Detalle por producto (${s.items.length} filas)</div>
-      <div class="detalle-items">
-        <table>
-          <thead>
-            <tr>
-              <th style="text-align:center">N°</th>
-              <th>Descripción</th>
-              <th>Fábrica</th>
-              <th style="text-align:right">Cant</th>
-              <th style="text-align:right">C.Unit</th>
-              <th style="text-align:right">C.Total</th>
-              <th style="text-align:right">Ganancia</th>
-              <th style="text-align:right">Margen</th>
-            </tr>
-          </thead>
-          <tbody>${rows}</tbody>
-        </table>
-      </div>
-      <div class="hint" style="font-size: 11px; margin-top: 12px">
+    itemsHTML = `<div class="detalle-items" style="margin-top:12px">
+      <table>
+        <thead><tr>
+          <th style="text-align:center">N°</th><th>Descripción</th><th>Fábrica</th>
+          <th style="text-align:right">Cant</th><th style="text-align:right">C.Unit</th>
+          <th style="text-align:right">C.Total</th><th style="text-align:right">Ganancia</th>
+          <th style="text-align:right">Margen</th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table></div>
+      <div class="hint">
         <strong>Leyenda:</strong>
         <span style="color:var(--bad)">rojo</span> = falta costo ·
-        <span style="color:var(--invest)">verde</span> = gaveta física (costo estimado 10%) ·
-        <span style="color:var(--warn)">amarillo</span> = gastos varios exhibidor (costo estimado 10%) ·
-        Ganancia calculada sobre precio al 46% desc.
+        <span style="color:var(--good)">verde</span> = gaveta física ·
+        <span style="color:var(--warn)">amarillo</span> = gastos varios exhibidor.
       </div>`;
   }
-
   return '<div class="detalle-wrap">' + resumenHTML + itemsHTML + '</div>';
 }
 
-// === EVENTOS ===
-
-// Filtros Monday
-function applyMondayPeriodo(p) {
-  state.monday.periodo = p;
-  const customs = document.querySelectorAll('.m-date-custom');
-  if (p === 'custom') {
-    customs.forEach(c => c.style.display = '');
-  } else if (p === 'all') {
-    customs.forEach(c => c.style.display = 'none');
-    state.monday.from = ''; state.monday.to = '';
-    document.getElementById('mFrom').value = '';
-    document.getElementById('mTo').value = '';
-  } else {
-    customs.forEach(c => c.style.display = 'none');
-    const r = getPeriodRange(p);
-    state.monday.from = r.from; state.monday.to = r.to;
-    document.getElementById('mFrom').value = r.from;
-    document.getElementById('mTo').value = r.to;
-  }
-  state.expanded = null;
-  render();
-  updateTotalesMonday();
-  refreshMondayDropdowns();
+// ============================================================
+// PESTAÑAS: switching + persistencia
+// ============================================================
+const TAB_KEY_SURT = 'maxifer_surtidos_tab';
+function activarTabSurt(tab) {
+  if (tab !== 'analisis' && tab !== 'catalogo') tab = 'analisis';
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.toggle('active', p.dataset.tab === tab));
+  try { localStorage.setItem(TAB_KEY_SURT, tab); } catch(e) {}
+  if (tab === 'catalogo' && CAT_READY) renderCat();
 }
-
-document.getElementById('mPeriodo').addEventListener('change', e => applyMondayPeriodo(e.target.value));
-document.getElementById('mFrom').addEventListener('input', e => { state.monday.from = e.target.value; state.expanded=null; render(); updateTotalesMonday(); refreshMondayDropdowns(); });
-document.getElementById('mTo').addEventListener('input',   e => { state.monday.to   = e.target.value; state.expanded=null; render(); updateTotalesMonday(); refreshMondayDropdowns(); });
-document.getElementById('mVendedor').addEventListener('change', e => { state.monday.vendedor = e.target.value; state.expanded=null; render(); updateTotalesMonday(); refreshMondayDropdowns(); });
-document.getElementById('mEtiqueta').addEventListener('change', e => { state.monday.etiqueta = e.target.value; state.expanded=null; render(); updateTotalesMonday(); refreshMondayDropdowns(); });
-document.getElementById('mSurtido').addEventListener('change',  e => { state.monday.surtido  = e.target.value; state.expanded=null; render(); updateTotalesMonday(); refreshMondayDropdowns(); });
-document.getElementById('mClear').addEventListener('click', () => {
-  state.monday = { periodo: 'all', from: '', to: '', vendedor: '', etiqueta: '', surtido: '' };
-  document.getElementById('mPeriodo').value = 'all';
-  document.getElementById('mFrom').value = '';
-  document.getElementById('mTo').value = '';
-  document.querySelectorAll('.m-date-custom').forEach(c => c.style.display = 'none');
-  state.expanded = null;
-  render();
-  updateTotalesMonday();
-  refreshMondayDropdowns();
+document.querySelectorAll('.tab-btn').forEach(b => {
+  b.addEventListener('click', () => activarTabSurt(b.dataset.tab));
 });
 
-// Headers clickables
-document.querySelectorAll('#tbl thead th[data-sort]').forEach(th => {
-  th.addEventListener('click', () => {
-    const col = th.dataset.sort;
-    if (state.sort === col) state.sortDir *= -1;
-    else { state.sort = col; state.sortDir = col === 'n' ? 1 : -1; }
-    state.expanded = null;
-    render();
+// Restaurar tab guardada al inicio
+try {
+  const saved = localStorage.getItem(TAB_KEY_SURT);
+  if (saved === 'catalogo') activarTabSurt('catalogo');
+} catch(e) {}
+
+// Handlers Catálogo: descuento + comisión + sort + click filas
+document.querySelectorAll('#cat-desc-buttons button[data-desc]').forEach(b => {
+  b.addEventListener('click', () => {
+    catState.descuento = parseInt(b.dataset.desc, 10);
+    document.querySelectorAll('#cat-desc-buttons button').forEach(x => x.classList.remove('active'));
+    b.classList.add('active');
+    document.getElementById('cat-desc-custom').value = '';
+    catState.expanded = null;
+    renderCat();
   });
 });
-
-// Clicks en filas (expandir detalle)
-document.getElementById('tbody').addEventListener('click', e => {
+document.getElementById('cat-desc-custom').addEventListener('input', e => {
+  const v = parseFloat(e.target.value);
+  if (!isNaN(v) && v >= 0 && v <= 90) {
+    catState.descuento = v;
+    document.querySelectorAll('#cat-desc-buttons button').forEach(x => x.classList.remove('active'));
+    catState.expanded = null;
+    renderCat();
+  }
+});
+document.querySelectorAll('#cat-com-buttons button[data-com]').forEach(b => {
+  b.addEventListener('click', () => {
+    catState.comision = parseInt(b.dataset.com, 10);
+    document.querySelectorAll('#cat-com-buttons button').forEach(x => x.classList.remove('active'));
+    b.classList.add('active');
+    document.getElementById('cat-com-custom').value = '';
+    catState.expanded = null;
+    renderCat();
+  });
+});
+document.getElementById('cat-com-custom').addEventListener('input', e => {
+  const v = parseFloat(e.target.value);
+  if (!isNaN(v) && v >= 0 && v <= 90) {
+    catState.comision = v;
+    document.querySelectorAll('#cat-com-buttons button').forEach(x => x.classList.remove('active'));
+    catState.expanded = null;
+    renderCat();
+  }
+});
+document.querySelectorAll('#catTbl thead th[data-sort]').forEach(th => {
+  th.addEventListener('click', () => {
+    const col = th.dataset.sort;
+    if (catState.sort === col) catState.sortDir *= -1;
+    else { catState.sort = col; catState.sortDir = col === 'n' ? 1 : -1; }
+    catState.expanded = null;
+    renderCat();
+  });
+});
+document.getElementById('catTbody').addEventListener('click', e => {
   const row = e.target.closest('tr.row-surtido');
   if (!row) return;
   const nombre = row.dataset.nombre;
-  state.expanded = state.expanded === nombre ? null : nombre;
-  render();
-  // Scroll suave si se expandió
-  if (state.expanded) {
-    setTimeout(() => {
-      const expandedRow = document.querySelector('tr.row-surtido.expanded');
-      if (expandedRow) expandedRow.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }, 50);
-  }
+  catState.expanded = catState.expanded === nombre ? null : nombre;
+  renderCat();
 });
 
-// Control descuento
-function setDescuento(val) {
-  state.descuento = val;
-  // actualizar UI de botones
-  document.querySelectorAll('#desc-buttons .btn-opt').forEach(b => {
-    b.classList.toggle('active', +b.dataset.desc === val);
-  });
-  // actualizar header
-  updateVentaHeader();
-  render();
-}
-function setComision(val) {
-  state.comision = val;
-  document.querySelectorAll('#com-buttons .btn-opt').forEach(b => {
-    b.classList.toggle('active', +b.dataset.com === val);
-  });
-  updateVentaHeader();
-  render();
-}
-function updateVentaHeader() {
-  const span = document.getElementById('th-venta-pct');
-  if (span) {
-    let txt = state.descuento + '%';
-    if (state.comision > 0) txt += ' -' + state.comision + '%';
-    span.textContent = txt;
-  }
-}
+// Hook: cuando renderAll se llame por filtros Monday, también re-rendear catálogo
+const _origRenderAll = renderAll;
+renderAll = function() {
+  _origRenderAll.apply(this, arguments);
+  if (CAT_READY) renderCat();
+};
 
-// Botones de descuento
-document.querySelectorAll('#desc-buttons .btn-opt').forEach(btn => {
-  btn.addEventListener('click', () => {
-    setDescuento(+btn.dataset.desc);
-    document.getElementById('desc-custom').value = '';
-  });
-});
-// Input custom descuento
-document.getElementById('desc-custom').addEventListener('input', e => {
-  const val = parseFloat(e.target.value);
-  if (!isNaN(val) && val >= 0 && val <= 90) {
-    state.descuento = val;
-    document.querySelectorAll('#desc-buttons .btn-opt').forEach(b => b.classList.remove('active'));
-    updateVentaHeader();
-    render();
+// Cargar datos del repo y después inicializar la UI
+loadData().then(ok => {
+  if (ok) {
+    init();
+    // Cargar catálogo en paralelo (no bloqueante para análisis)
+    loadCatalogData(window._lastCostos || {});
+  } else {
+    // Fallback: mostrar loading con errores pero permitir interacción mínima
+    document.getElementById('loadingOv').classList.add('hide');
   }
+}).catch(err => {
+  console.error('Error fatal cargando datos:', err);
+  document.getElementById('loadingOv').classList.add('hide');
+  document.getElementById('errorContainer').innerHTML = `
+    <div class="error-banner">
+      <b>✕ Error fatal.</b> No se pudieron cargar los datos. ${err.message}
+    </div>`;
 });
-
-// Botones de comisión
-document.querySelectorAll('#com-buttons .btn-opt').forEach(btn => {
-  btn.addEventListener('click', () => {
-    setComision(+btn.dataset.com);
-    document.getElementById('com-custom').value = '';
-  });
-});
-// Input custom comisión
-document.getElementById('com-custom').addEventListener('input', e => {
-  const val = parseFloat(e.target.value);
-  if (!isNaN(val) && val >= 0 && val <= 90) {
-    state.comision = val;
-    document.querySelectorAll('#com-buttons .btn-opt').forEach(b => b.classList.remove('active'));
-    updateVentaHeader();
-    render();
-  }
-});
-
-// Inicializar
-updateKPIs();
-updateVentaHeader();
-render();
 </script>
 <script id="maxifer-back-handler">
 // Maxifer: el boton "atras" del browser cierra modales en lugar de salir de la app.
