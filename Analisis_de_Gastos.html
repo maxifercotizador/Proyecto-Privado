@@ -736,7 +736,7 @@
 
   .cal-weekdays {
     display: grid;
-    grid-template-columns: repeat(7, minmax(0, 1fr));
+    grid-template-columns: repeat(7, minmax(0, 1fr)) minmax(0, 0.7fr);
     border-bottom: 1px solid var(--border);
     background: var(--panel-2);
   }
@@ -751,13 +751,53 @@
     border-right: 1px solid var(--border);
   }
   .cal-weekday:last-child { border-right: none; }
+  .cal-weekday.resumen-head {
+    background: rgba(245,180,0,0.08);
+    color: var(--warn);
+    border-left: 2px solid var(--warn);
+  }
 
   .cal-grid {
     display: grid;
-    grid-template-columns: repeat(7, minmax(0, 1fr));
+    grid-template-columns: repeat(7, minmax(0, 1fr)) minmax(0, 0.7fr);
   }
   .cal-grid.mode-week { grid-auto-rows: minmax(280px, auto); }
   .cal-grid.mode-month { grid-auto-rows: minmax(160px, auto); }
+
+  /* Columna mini-resumen al final de cada semana */
+  .cal-week-resumen {
+    background: rgba(245,180,0,0.06);
+    border-left: 2px solid var(--warn);
+    border-bottom: 1px solid var(--border);
+    padding: 8px 8px;
+    display: flex; flex-direction: column; gap: 6px;
+    cursor: default;
+  }
+  .cal-week-resumen-head {
+    font-family: 'JetBrains Mono', monospace; font-size: 9px;
+    color: var(--warn); text-transform: uppercase; letter-spacing: 0.12em;
+    border-bottom: 1px dashed rgba(245,180,0,0.3); padding-bottom: 4px;
+    text-align: center;
+  }
+  .cal-week-resumen-row {
+    display: flex; justify-content: space-between; align-items: baseline;
+    font-family: 'JetBrains Mono', monospace; font-size: 10px;
+  }
+  .cal-week-resumen-row .lbl { color: var(--text-mute); }
+  .cal-week-resumen-row .val { color: var(--text); font-weight: 600; }
+  .cal-week-resumen-row.sueldos    .lbl { color: var(--cat-sueldos); }
+  .cal-week-resumen-row.gfijos     .lbl { color: var(--cat-gfijos); }
+  .cal-week-resumen-row.mercaderia .lbl { color: var(--cat-merca); }
+  .cal-week-resumen-row.gvarios    .lbl { color: var(--cat-gvarios); }
+  .cal-week-resumen-total {
+    margin-top: auto; padding-top: 6px; border-top: 1px solid rgba(245,180,0,0.3);
+    display: flex; justify-content: space-between; align-items: baseline;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .cal-week-resumen-total .lbl {
+    font-size: 9px; color: var(--warn); text-transform: uppercase; letter-spacing: 0.1em;
+  }
+  .cal-week-resumen-total .val { font-size: 13px; font-weight: 700; color: var(--warn); }
 
   .cal-day {
     border-right: 1px solid var(--border);
@@ -769,7 +809,7 @@
     min-width: 0;
     background: var(--panel);
   }
-  .cal-day:nth-child(7n) { border-right: none; }
+  /* (antes había :nth-child(7n) sin border-right; ahora cada semana termina con un .cal-week-resumen, así que el día sábado mantiene su borde derecho) */
   .cal-day.other-month { background: #0d0d0d; opacity: 0.5; }
   .cal-day.today { background: var(--warn-dim); }
   .cal-day.weekend { background: #111; }
@@ -1183,11 +1223,15 @@
     /* Scroll horizontal: cada día tiene ancho mínimo para que no se corten importes.
        El ancho escala con el zoom: al alejar (--cal-z < 1), los días se achican y entran más en pantalla. */
     .cal-scroll-inner {
-      min-width: calc(1050px * var(--cal-z, 1));  /* 7 días * 150px base */
+      min-width: calc(1155px * var(--cal-z, 1));  /* 7 días * 150px + 1 resumen * 105px */
     }
     .cal-grid.mode-week .cal-day,
     .cal-grid.mode-month .cal-day {
       min-width: calc(150px * var(--cal-z, 1));
+    }
+    .cal-grid.mode-week .cal-week-resumen,
+    .cal-grid.mode-month .cal-week-resumen {
+      min-width: calc(105px * var(--cal-z, 1));
     }
     .cal-filters { flex-direction: column; gap: 10px; }
     .cal-modal { padding: 18px; }
@@ -2354,7 +2398,8 @@ function renderCalendario() {
 
   // Pintar header de días de la semana (solo una vez pero es barato)
   const wd = document.getElementById('cal-weekdays');
-  wd.innerHTML = DOW_LABELS.map(d => `<div class="cal-weekday">${d}</div>`).join('');
+  wd.innerHTML = DOW_LABELS.map(d => `<div class="cal-weekday">${d}</div>`).join('') +
+    '<div class="cal-weekday resumen-head">Total</div>';
 
   // Obtener fechas según modo
   const fechas = modo === 'week' ? getWeekDates(fecha) : getMonthDates(fecha);
@@ -2395,7 +2440,47 @@ function renderCalendario() {
   const maxItemsWeek = 12;   // en modo semana podés scrollear, pero limitamos visibles
   const maxItemsMonth = 4;   // en modo mes hacemos "X más"
 
-  grid.innerHTML = fechas.map(f => {
+  // Helper: HTML del mini-resumen de una semana (7 días)
+  function htmlResumenSemana(diasSemana) {
+    const tot = { Sueldos: 0, GFijos: 0, Mercaderia: 0, GVarios: 0 };
+    for (const d of diasSemana) {
+      for (const m of calMovDelDia(d, movsF)) {
+        if (tot[m.categoria] != null) tot[m.categoria] += m.importe;
+      }
+    }
+    const total = tot.Sueldos + tot.GFijos + tot.Mercaderia + tot.GVarios;
+    if (total === 0) {
+      return `<div class="cal-week-resumen">
+        <div class="cal-week-resumen-head">Semana</div>
+        <div style="margin:auto;color:var(--text-mute);font-size:11px">—</div>
+      </div>`;
+    }
+    function row(cls, lbl, v) {
+      return `<div class="cal-week-resumen-row ${cls}"><span class="lbl">${lbl}</span><span class="val">${v > 0 ? fmtCompact(v) : '—'}</span></div>`;
+    }
+    return `<div class="cal-week-resumen">
+      <div class="cal-week-resumen-head">Semana</div>
+      ${row('gfijos', 'GFijos', tot.GFijos)}
+      ${row('mercaderia', 'Merc.', tot.Mercaderia)}
+      ${row('gvarios', 'GVarios', tot.GVarios)}
+      ${row('sueldos', 'Sueldos', tot.Sueldos)}
+      <div class="cal-week-resumen-total"><span class="lbl">Total</span><span class="val">${fmtCompact(total)}</span></div>
+    </div>`;
+  }
+
+  // Construir HTML día-por-día e insertar resumen cada 7 días
+  const piezas = [];
+  fechas.forEach((f, idx) => {
+    piezas.push(htmlDia(f));
+    if ((idx + 1) % 7 === 0) {
+      // cierre de semana: insertar resumen
+      const inicio = idx - 6;
+      piezas.push(htmlResumenSemana(fechas.slice(inicio, idx + 1)));
+    }
+  });
+  grid.innerHTML = piezas.join('');
+
+  function htmlDia(f) {
     const isToday = sameDay(f, hoy);
     const isWeekend = f.getDay() === 0 || f.getDay() === 6;
     const isOtherMonth = modo === 'month' && f.getMonth() !== mesFoco;
@@ -2480,7 +2565,7 @@ function renderCalendario() {
       </div>
       ${totalsHtml}
     </div>`;
-  }).join('');
+  }
 
   // Reaplicar el zoom actual después de re-renderizar
   calAplicarZoom();
