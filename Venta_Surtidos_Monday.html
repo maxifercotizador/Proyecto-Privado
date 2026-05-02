@@ -664,10 +664,14 @@
       <div class="field">
         <label>Período</label>
         <select id="filterPeriodo">
+          <option value="today">Hoy</option>
+          <option value="yesterday">Ayer</option>
+          <option value="tomorrow">Mañana</option>
+          <option value="thisWeek">Esta semana</option>
+          <option value="lastWeek">Semana pasada</option>
           <option value="thisMonth">Este mes</option>
           <option value="lastMonth">Mes pasado</option>
           <option value="last3Months">Últimos 3 meses</option>
-          <option value="thisWeek">Esta semana</option>
           <option value="thisYear" selected>Este año</option>
           <option value="custom">Desde – Hasta…</option>
           <option value="all">Todo el histórico</option>
@@ -692,6 +696,10 @@
       <div class="field">
         <label>Surtido</label>
         <select id="filterSurtido"><option value="">Todos</option></select>
+      </div>
+      <div class="field">
+        <label>Etiqueta</label>
+        <select id="filterEtiqueta"><option value="">Todas</option></select>
       </div>
       <div class="field">
         <label>Estado</label>
@@ -782,16 +790,26 @@
 
 <!-- MODAL actualizar -->
 <div class="modal-bg" id="refreshModal" onclick="if(event.target===this)closeRefresh()">
-  <div class="modal">
+  <div class="modal" style="max-width:560px">
     <h3>Actualizar datos</h3>
-    <p>Este módulo lee <b style="color:var(--text)">en vivo</b> 3 archivos del repo cada vez que lo abrís:</p>
+
+    <div style="background:rgba(0,217,126,0.06);border:1px solid rgba(0,217,126,0.3);border-radius:8px;padding:14px;margin:12px 0">
+      <div style="font-weight:700;color:var(--good);margin-bottom:6px">📥 Bajar ventas frescas desde Monday</div>
+      <p style="font-size:13px;margin:6px 0">Conecta directo con el board <b>"Equipo MAXIFER"</b>, baja todos los pedidos con sus subelementos (excluye REPOSICIÓN y MUEBLE) y te descarga el archivo <code>ventas_monday.json</code> listo para subir al repo.</p>
+      <div id="mondayProgress" style="display:none;font-size:12px;color:var(--text-mute);font-family:'JetBrains Mono',monospace;background:var(--bg);padding:8px 10px;border-radius:6px;margin:8px 0"></div>
+      <div class="btn-row" style="margin-top:8px">
+        <button class="btn-header primary" id="btnBajarMonday" onclick="actualizarVentasMonday()">↓ Bajar ventas de Monday</button>
+        <button class="btn-header" onclick="cambiarTokenMonday()">🔑 Cambiar token</button>
+      </div>
+      <p style="font-size:11px;color:var(--text-mute);margin-top:6px">Después subí el archivo descargado al repo: pestaña <b>📂 Archivos</b> del Admin → <code>ventas_monday.json</code> → <b>↑ Actualizar</b>. O directo en GitHub.</p>
+    </div>
+
+    <p style="margin-top:16px"><b style="color:var(--text)">Otras fuentes (Excel)</b>:</p>
     <ul>
       <li><code>Precio Surtidos.xlsx</code> — composición de cada surtido</li>
       <li><code>01 COMPRAS - COSTOS - FABRICAS.xlsm</code> — costo por producto/número</li>
-      <li><code>ventas_monday.json</code> — ventas bajadas del Monday</li>
     </ul>
-    <p><b style="color:var(--text)">Para actualizar precios o costos:</b> reemplazá el Excel correspondiente en el repo y recargá la página.</p>
-    <p><b style="color:var(--text)">Para actualizar ventas del Monday:</b> pedime <code>Mia, actualizá ventas_monday.json</code>. Te paso el archivo nuevo para reemplazar en el repo (mucho más liviano que regenerar todo el HTML).</p>
+    <p style="font-size:12px">Reemplazá el Excel correspondiente en el repo y recargá la página.</p>
     <p style="color:var(--text-mute);font-size:12px;margin-top:14px">El HTML cachea los archivos por unos minutos. Si cambiaste algo y no lo ves, forzá recarga con <code>Ctrl+Shift+R</code>.</p>
     <div class="btn-row">
       <button class="btn-header" onclick="window.location.reload()">↻ Recargar datos</button>
@@ -1189,6 +1207,18 @@ function getPeriodRange(periodo){
   const y = hoy.getFullYear(), m = hoy.getMonth(), d = hoy.getDate();
   const iso = (dt) => dt.toISOString().slice(0,10);
   switch(periodo){
+    case 'today': {
+      const t = iso(new Date(y, m, d));
+      return { from: t, to: t };
+    }
+    case 'yesterday': {
+      const t = iso(new Date(y, m, d - 1));
+      return { from: t, to: t };
+    }
+    case 'tomorrow': {
+      const t = iso(new Date(y, m, d + 1));
+      return { from: t, to: t };
+    }
     case 'thisMonth': {
       return { from: iso(new Date(y, m, 1)), to: iso(new Date(y, m+1, 0)) };
     }
@@ -1205,6 +1235,13 @@ function getPeriodRange(periodo){
       const domingo = new Date(lunes); domingo.setDate(lunes.getDate() + 6);
       return { from: iso(lunes), to: iso(domingo) };
     }
+    case 'lastWeek': {
+      const dow = hoy.getDay() || 7;
+      const lunesEsta = new Date(hoy); lunesEsta.setDate(d - (dow - 1));
+      const lunesPas = new Date(lunesEsta); lunesPas.setDate(lunesEsta.getDate() - 7);
+      const domingoPas = new Date(lunesPas); domingoPas.setDate(lunesPas.getDate() + 6);
+      return { from: iso(lunesPas), to: iso(domingoPas) };
+    }
     case 'thisYear': {
       return { from: iso(new Date(y, 0, 1)), to: iso(new Date(y, 11, 31)) };
     }
@@ -1219,7 +1256,7 @@ const state = {
   filters: {
     periodo: 'thisYear',  // desde el select
     from: '', to: '',     // calculados o custom
-    vendedor: '', cliente: '', surtido: '', status: ''
+    vendedor: '', cliente: '', surtido: '', etiqueta: '', status: ''
   },
   dto: 46,
   comisiones: { ...COMISIONES_DEFAULT },
@@ -1282,6 +1319,7 @@ function applyFilters(rows, exclude){
     if(exclude !== 'vendedor' && f.vendedor && r.vendedor !== f.vendedor) return false;
     if(exclude !== 'cliente' && f.cliente && r.cliente !== f.cliente) return false;
     if(exclude !== 'surtido' && f.surtido && r.surtido !== f.surtido) return false;
+    if(exclude !== 'etiqueta' && f.etiqueta && (r.etiqueta || '') !== f.etiqueta) return false;
     if(exclude !== 'status' && f.status && r.status !== f.status) return false;
     return true;
   });
@@ -1324,6 +1362,7 @@ function refreshDropdowns(enriched){
   const vendedoresDisp = new Set(applyFilters(enriched, 'vendedor').map(r => r.vendedor));
   const clientesDisp = new Set(applyFilters(enriched, 'cliente').map(r => r.cliente));
   const surtidosDisp = new Set(applyFilters(enriched, 'surtido').map(r => r.surtido));
+  const etiquetasDisp = new Set(applyFilters(enriched, 'etiqueta').map(r => r.etiqueta || '').filter(x => x));
 
   const updateSelect = (id, values, current, labelAll) => {
     const sel = document.getElementById(id);
@@ -1337,6 +1376,7 @@ function refreshDropdowns(enriched){
   updateSelect('filterVendedor', vendedoresDisp, state.filters.vendedor, 'Todos');
   updateSelect('filterCliente', clientesDisp, state.filters.cliente, 'Todos');
   updateSelect('filterSurtido', surtidosDisp, state.filters.surtido, 'Todos');
+  updateSelect('filterEtiqueta', etiquetasDisp, state.filters.etiqueta, 'Todas');
 }
 
 function renderKPIs(rows){
@@ -1590,14 +1630,17 @@ function renderTags(){
   const tags = [];
   const f = state.filters;
   const periodoLabels = {
+    today: 'Hoy', yesterday: 'Ayer', tomorrow: 'Mañana',
+    thisWeek: 'Esta semana', lastWeek: 'Semana pasada',
     thisMonth: 'Este mes', lastMonth: 'Mes pasado', last3Months: 'Últ. 3 meses',
-    thisWeek: 'Esta semana', thisYear: 'Este año', all: 'Todo el histórico',
+    thisYear: 'Este año', all: 'Todo el histórico',
     custom: (f.from||'...') + ' → ' + (f.to||'...')
   };
   if(f.periodo && f.periodo !== 'all') tags.push({ label: periodoLabels[f.periodo] || f.periodo, clear: () => { state.filters.periodo = 'all'; state.filters.from = ''; state.filters.to = ''; document.getElementById('filterPeriodo').value = 'all'; toggleDateCustom(false); }});
   if(f.vendedor) tags.push({ label:f.vendedor, clear: () => { f.vendedor=''; document.getElementById('filterVendedor').value=''; } });
   if(f.cliente) tags.push({ label:f.cliente, clear: () => { f.cliente=''; document.getElementById('filterCliente').value=''; } });
   if(f.surtido) tags.push({ label:f.surtido, clear: () => { f.surtido=''; document.getElementById('filterSurtido').value=''; } });
+  if(f.etiqueta) tags.push({ label: '🏷 ' + f.etiqueta, clear: () => { f.etiqueta=''; document.getElementById('filterEtiqueta').value=''; } });
   if(f.status) {
     const statusLabels = { ok: 'Con ganancia', sinPrecio: 'Sin precio', observacion: 'En observación', sinClasif: 'Sin clasificar' };
     tags.push({ label: statusLabels[f.status] || f.status, clear: () => { f.status=''; document.getElementById('filterStatus').value=''; } });
@@ -1839,15 +1882,164 @@ function applyPeriodo(p){
 }
 
 function clearFilters(){
-  state.filters = { periodo: 'all', from:'', to:'', vendedor:'', cliente:'', surtido:'', status:'' };
+  state.filters = { periodo: 'all', from:'', to:'', vendedor:'', cliente:'', surtido:'', etiqueta:'', status:'' };
   document.getElementById('filterPeriodo').value = 'all';
-  ['dateFrom','dateTo','filterVendedor','filterCliente','filterSurtido','filterStatus'].forEach(id => document.getElementById(id).value = '');
+  ['dateFrom','dateTo','filterVendedor','filterCliente','filterSurtido','filterEtiqueta','filterStatus'].forEach(id => document.getElementById(id).value = '');
   toggleDateCustom(false);
   renderAll();
 }
 
 function openRefresh(){ document.getElementById('refreshModal').classList.add('show'); }
 function closeRefresh(){ document.getElementById('refreshModal').classList.remove('show'); }
+
+// ============================================================
+// Integración Monday: bajar ventas y descargar JSON
+// ============================================================
+const MONDAY_BOARD_ID = 7212937829;
+const MONDAY_TOKEN_KEY = 'maxifer_monday_token';
+const MONDAY_QUERY = `query($boardId: [ID!], $cursor: String, $limit: Int!) {
+  boards(ids: $boardId) {
+    items_page(limit: $limit, cursor: $cursor) {
+      cursor
+      items {
+        id name
+        column_values(ids: ["date","lookup_mkpz5epk","lookup_mkpzg5rd"]) {
+          id
+          ... on MirrorValue { display_value }
+          ... on DateValue { date }
+        }
+        subitems {
+          id
+          column_values(ids: ["men__desplegable__1"]) { id text }
+        }
+      }
+    }
+  }
+}`;
+
+function getColMonday(item, colId){
+  for (const c of (item.column_values || [])) {
+    if (c.id === colId) return c.display_value || c.date || c.text || '';
+  }
+  return '';
+}
+
+async function mondayFetch(token, query, variables){
+  const r = await fetch('https://api.monday.com/v2', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': token,
+      'API-Version': '2024-10'
+    },
+    body: JSON.stringify({ query, variables })
+  });
+  if (!r.ok) throw new Error('HTTP ' + r.status);
+  const j = await r.json();
+  if (j.errors) throw new Error(j.errors[0].message || 'API error');
+  return j.data;
+}
+
+function cambiarTokenMonday(){
+  const actual = localStorage.getItem(MONDAY_TOKEN_KEY) || '';
+  const nuevo = prompt('Pegá tu token de Monday (lo encontrás en monday.com → tu avatar → Developers → My access tokens). Se guarda solo en este navegador.', actual);
+  if (nuevo === null) return;
+  if (nuevo.trim()) {
+    localStorage.setItem(MONDAY_TOKEN_KEY, nuevo.trim());
+    alert('Token guardado.');
+  } else {
+    localStorage.removeItem(MONDAY_TOKEN_KEY);
+    alert('Token borrado.');
+  }
+}
+
+async function actualizarVentasMonday(){
+  const btn = document.getElementById('btnBajarMonday');
+  const prog = document.getElementById('mondayProgress');
+  let token = localStorage.getItem(MONDAY_TOKEN_KEY);
+  if (!token) {
+    token = prompt('Necesito tu token de Monday. Lo guardo solo en este navegador (no se sube a ningún servidor).');
+    if (!token) return;
+    token = token.trim();
+    if (!token) return;
+    localStorage.setItem(MONDAY_TOKEN_KEY, token);
+  }
+
+  btn.disabled = true;
+  const labelOrig = btn.textContent;
+  btn.textContent = 'Bajando…';
+  prog.style.display = '';
+  prog.textContent = 'Conectando con Monday…';
+
+  try {
+    const ventas = [];
+    const seen = new Set();
+    let cursor = null;
+    let pagina = 0;
+    let totalItems = 0;
+    let excluidos = 0;
+    do {
+      pagina++;
+      prog.textContent = `Página ${pagina} (≈500 items por pág, 7 páginas en total)…`;
+      const data = await mondayFetch(token, MONDAY_QUERY, { boardId: [String(MONDAY_BOARD_ID)], cursor, limit: 500 });
+      const page = data.boards[0].items_page;
+      cursor = page.cursor;
+      for (const item of page.items) {
+        if (seen.has(item.id)) continue;
+        seen.add(item.id);
+        totalItems++;
+        const fecha = getColMonday(item, 'date');
+        const vendedor = getColMonday(item, 'lookup_mkpzg5rd');
+        const etiqueta = getColMonday(item, 'lookup_mkpz5epk');
+        const cliente = (item.name || '').trim();
+        for (const sub of (item.subitems || [])) {
+          let tipo = '';
+          for (const c of (sub.column_values || [])) {
+            if (c.id === 'men__desplegable__1') { tipo = (c.text || '').trim(); break; }
+          }
+          if (!tipo) continue;
+          const tipoUp = tipo.toUpperCase();
+          if (tipoUp.includes('REPOSI')) { excluidos++; continue; }
+          if (tipoUp.startsWith('MUEBLE')) { excluidos++; continue; }
+          ventas.push({
+            fecha,
+            cliente,
+            vendedor: vendedor || 'Sin asignar',
+            etiqueta: etiqueta || '',
+            surtido: tipo
+          });
+        }
+      }
+    } while (cursor);
+
+    ventas.sort((a, b) => (a.fecha || '').localeCompare(b.fecha || '') || a.cliente.localeCompare(b.cliente));
+
+    prog.textContent = `✓ ${ventas.length} ventas bajadas (${totalItems} pedidos, ${excluidos} subitems REPOSI/MUEBLE excluidos). Generando archivo…`;
+
+    const json = JSON.stringify(ventas, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'ventas_monday.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+
+    prog.innerHTML = `✓ <b style="color:var(--good)">${ventas.length} ventas</b> descargadas como <code>ventas_monday.json</code>.<br>Ahora subí ese archivo al repo (pestaña 📂 Archivos del Admin) y recargá la página para ver los nuevos datos.`;
+  } catch (e) {
+    console.error(e);
+    if (String(e.message).match(/401|invalid|unauth/i)) {
+      prog.innerHTML = `<span style="color:var(--bad)">✗ Token inválido o expirado.</span> Tocá <b>🔑 Cambiar token</b> y pegá uno nuevo.`;
+    } else {
+      prog.innerHTML = `<span style="color:var(--bad)">✗ Error: ${e.message}</span>`;
+    }
+  } finally {
+    btn.disabled = false;
+    btn.textContent = labelOrig;
+  }
+}
 
 // Modal de piezas faltantes
 function openPiezas(surtido){
@@ -1925,6 +2117,7 @@ function init(){
   document.getElementById('filterVendedor').onchange = (e) => { state.filters.vendedor = e.target.value; renderAll(); };
   document.getElementById('filterCliente').onchange = (e) => { state.filters.cliente = e.target.value; renderAll(); };
   document.getElementById('filterSurtido').onchange = (e) => { state.filters.surtido = e.target.value; renderAll(); };
+  document.getElementById('filterEtiqueta').onchange = (e) => { state.filters.etiqueta = e.target.value; renderAll(); };
   document.getElementById('filterStatus').onchange = (e) => { state.filters.status = e.target.value; renderAll(); };
 
   // Descuento
