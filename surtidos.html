@@ -486,31 +486,8 @@
 
   <!-- Filtros -->
   <div class="card" style="padding: 12px;">
-    <div class="filters">
-      <input type="text" id="search" class="search-input" placeholder="Buscar surtido o producto...">
-      <select id="sort-by">
-        <option value="g">Ordenar: Ganancia ↓</option>
-        <option value="m">Margen ↓</option>
-        <option value="v">Venta ↓</option>
-        <option value="it">Cant. items ↓</option>
-        <option value="n">Nombre A-Z</option>
-        <option value="pct">% Completitud ↓</option>
-      </select>
-      <div class="chk-group">
-        <label class="chk" data-chk="perdida">
-          <input type="checkbox" id="f-perdida" style="display: none;">⚠️ Venta a pérdida
-        </label>
-        <label class="chk" data-chk="bajomargen">
-          <input type="checkbox" id="f-bajomargen" style="display: none;">Margen &lt; 30%
-        </label>
-        <label class="chk" data-chk="altoingreso">
-          <input type="checkbox" id="f-altoingreso" style="display: none;">Ingreso &gt; $500k
-        </label>
-      </div>
-      <span class="stats-label" id="stats">—</span>
-    </div>
     <!-- Controles globales de descuento y comisión -->
-    <div class="filters" style="margin-top: 10px;">
+    <div class="filters">
       <div class="control-group">
         <label class="control-label">Descuento:</label>
         <div class="btn-group" id="desc-buttons">
@@ -1005,10 +982,7 @@ function getFilteredSorted() {
 function render() {
   const list = getFilteredSorted();
   const tbody = document.getElementById('tbody');
-  const stats = document.getElementById('stats');
   const noResults = document.getElementById('no-results');
-
-  stats.textContent = list.length + ' / ' + SURT.length + ' surtidos';
 
   if (list.length === 0) {
     tbody.innerHTML = '';
@@ -1216,42 +1190,12 @@ document.getElementById('mClear').addEventListener('click', () => {
   refreshMondayDropdowns();
 });
 
-// Búsqueda
-document.getElementById('search').addEventListener('input', e => {
-  state.search = e.target.value;
-  state.expanded = null;
-  render();
-});
-
-// Sort
-document.getElementById('sort-by').addEventListener('change', e => {
-  state.sort = e.target.value;
-  state.sortDir = ['n'].includes(state.sort) ? 1 : -1;
-  state.expanded = null;
-  render();
-});
-
 // Headers clickables
 document.querySelectorAll('#tbl thead th[data-sort]').forEach(th => {
   th.addEventListener('click', () => {
     const col = th.dataset.sort;
     if (state.sort === col) state.sortDir *= -1;
     else { state.sort = col; state.sortDir = col === 'n' ? 1 : -1; }
-    document.getElementById('sort-by').value = ['g','m','v','it','n','pct'].includes(col) ? col : 'g';
-    state.expanded = null;
-    render();
-  });
-});
-
-// Checkboxes
-document.querySelectorAll('.chk').forEach(el => {
-  el.addEventListener('click', (e) => {
-    e.preventDefault();
-    const key = el.dataset.chk;
-    if (key === 'perdida') state.chkPerdida = !state.chkPerdida;
-    else if (key === 'bajomargen') state.chkBajoMargen = !state.chkBajoMargen;
-    else if (key === 'altoingreso') state.chkAltoIngreso = !state.chkAltoIngreso;
-    el.classList.toggle('active');
     state.expanded = null;
     render();
   });
