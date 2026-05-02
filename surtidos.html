@@ -526,13 +526,6 @@ async function _fetchXlsx(url) {
   return XLSX.read(ab, { type: 'array' });
 }
 
-// Costos hardcoded para items "VARIOS" (gastos administrativos por exhibidor)
-// Mismos valores que usa analisis_ventas.html
-const _OVERRIDE_COSTOS = {
-  'VARIOS CHVARIOS': 4536,
-  'VARIOS GRVARIOS': 8100,
-};
-
 function _parseCostosWB(wb) {
   // Hoja 'CODIGOS Y COSTOS': key = (Producto + N°).toUpperCase() -> costo unitario
   const ws = wb.Sheets['CODIGOS Y COSTOS'];
@@ -546,7 +539,6 @@ function _parseCostosWB(wb) {
     const v = parseFloat(costo);
     if (!isNaN(v)) costos[key] = v;
   }
-  for (const [k, v] of Object.entries(_OVERRIDE_COSTOS)) costos[k] = v;
   return costos;
 }
 
@@ -559,8 +551,14 @@ function _buildSurt(productos, surtidos, costos) {
     idxProd.set(norm(p.p)+'|'+norm(p.n), { pl: p.pl||0, pc: p.pc||0, prov: p.prov||'' });
   }
   function getCosto(prod, num) {
-    const key = String(prod||'').trim().toUpperCase() + String(num||'').trim().toUpperCase();
-    if (costos[key] != null && costos[key] > 0) return costos[key];
+    const P = String(prod||'').trim().toUpperCase();
+    const N = String(num||'').trim().toUpperCase();
+    // Probamos las dos concatenaciones posibles porque algunas filas del Excel
+    // tienen "Producto y N°" cargado al revés (ej: "Varios ChVarios" en vez de "VariosVarios Ch").
+    const k1 = P + N;
+    const k2 = N + P;
+    if (costos[k1] != null && costos[k1] > 0) return costos[k1];
+    if (costos[k2] != null && costos[k2] > 0) return costos[k2];
     // fallback a productos.json
     const f = idxProd.get(norm(prod)+'|'+norm(num));
     return (f && f.pc > 0) ? f.pc : 0;
