@@ -2750,9 +2750,12 @@ inicializar();
     }
     return null;
   }
-  if (history.state && history.state.maxiferBack) return;
-  history.replaceState({maxiferBack:1, base:1}, "");
+  // Garantizar que el state base tenga la marca maxiferBack (sin pisarlo si ya está)
+  if (!history.state || !history.state.maxiferBack) {
+    history.replaceState({maxiferBack:1, base:1}, "");
+  }
   var seen = false;
+  var closingByPopstate = false;
   var obs = new MutationObserver(function(){
     var m = findOpenModal();
     if (m && !seen) {
@@ -2760,12 +2763,20 @@ inicializar();
       seen = true;
     } else if (!m && seen) {
       seen = false;
+      // El modal se cerró. Si fue por back del browser (popstate), no tocamos nada.
+      // Si fue manual (X / backdrop / Esc), consumimos el state pushed para que el próximo back navegue normal.
+      if (closingByPopstate) {
+        closingByPopstate = false;
+      } else if (history.state && history.state.modal) {
+        history.back();
+      }
     }
   });
   obs.observe(document.body, {attributes:true, attributeFilter:["class","style"], subtree:true});
   window.addEventListener("popstate", function(){
     var m = findOpenModal();
     if (m) {
+      closingByPopstate = true;
       // Esc cierra la mayoria de los modales
       document.dispatchEvent(new KeyboardEvent("keydown",{key:"Escape",code:"Escape",keyCode:27,which:27,bubbles:true,cancelable:true}));
       // Si Esc no cerro, removemos active/show y/o ocultamos
@@ -2776,8 +2787,11 @@ inicializar();
           still.classList.remove("show");
           if (still.style.display === "block" || still.style.display === "flex") still.style.display = "none";
         }
-        // Re-push para que el siguiente back tambien cierre modales nuevos
-        if (findOpenModal()) history.pushState({maxiferBack:1, modal:1}, "");
+        // Si quedó otro modal abierto, re-pusheamos para que el siguiente back también lo cierre
+        if (findOpenModal()) {
+          history.pushState({maxiferBack:1, modal:1}, "");
+          closingByPopstate = false;
+        }
       }, 30);
       seen = false;
     }
