@@ -8,6 +8,15 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Instrument+Serif&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script>
+  // Aplicar tema lo antes posible (sin flash). Persistido en localStorage.
+  (function(){
+    try {
+      var t = localStorage.getItem('maxifer_gastos_theme');
+      if (t === 'light') document.documentElement.setAttribute('data-theme', 'light');
+    } catch(e) {}
+  })();
+</script>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
@@ -37,6 +46,33 @@
     --cat-merca: #ff6a00;
     --cat-gvarios: #b58aff;
   }
+  /* Tema claro: override de las variables principales (los colores de marca quedan iguales) */
+  html[data-theme="light"] {
+    --bg: #f6f6f4;
+    --panel: #ffffff;
+    --panel-2: #f0eeea;
+    --border: #d8d4cc;
+    --border-strong: #b9b3a8;
+    --text: #1d1d1b;
+    --text-dim: #5a5651;
+    --text-mute: #8c867d;
+    --accent: #d2541a;
+    --accent-dim: rgba(210,84,26,0.14);
+    --good: #1f9d57;
+    --good-dim: rgba(31,157,87,0.12);
+    --warn: #b8860b;
+    --warn-dim: rgba(184,134,11,0.16);
+    --bad: #c63131;
+    --bad-dim: rgba(198,49,49,0.12);
+    --info: #2563eb;
+    --info-dim: rgba(37,99,235,0.10);
+    --purple: #6b3fa0;
+    --purple-dim: rgba(107,63,160,0.10);
+    --cat-sueldos: #2563eb;
+    --cat-gfijos: #b8860b;
+    --cat-merca: #d2541a;
+    --cat-gvarios: #6b3fa0;
+  }
   html, body {
     background: var(--bg);
     color: var(--text);
@@ -48,6 +84,7 @@
       radial-gradient(circle at 20% 10%, rgba(245,180,0,0.04) 0%, transparent 50%),
       radial-gradient(circle at 80% 90%, rgba(255,106,0,0.03) 0%, transparent 50%);
   }
+  html[data-theme="light"] body { background-image: none; }
   .mono { font-family: 'JetBrains Mono', monospace; }
   .serif { font-family: 'Instrument Serif', serif; font-style: italic; }
 
@@ -830,9 +867,9 @@
     background: var(--panel);
   }
   /* (antes había :nth-child(7n) sin border-right; ahora cada semana termina con un .cal-week-resumen, así que el día sábado mantiene su borde derecho) */
-  .cal-day.other-month { background: #0d0d0d; opacity: 0.5; }
+  .cal-day.other-month { background: var(--bg); opacity: 0.5; }
   .cal-day.today { background: var(--warn-dim); }
-  .cal-day.weekend { background: #111; }
+  .cal-day.weekend { background: var(--panel-2); }
   .cal-day.today.weekend { background: var(--warn-dim); }
 
   .cal-day-head {
@@ -880,7 +917,7 @@
     cursor: pointer;
     transition: background 0.1s;
   }
-  .cal-item:hover { background: #252525; }
+  .cal-item:hover { background: var(--border); }
   .cal-item.cat-sueldos { border-left-color: var(--cat-sueldos); }
   .cal-item.cat-gfijos { border-left-color: var(--cat-gfijos); }
   .cal-item.cat-mercaderia { border-left-color: var(--cat-merca); }
@@ -1350,6 +1387,7 @@
     <div class="subtitle">Gastos · Proyección</div>
   </div>
   <div class="header-right">
+    <button class="btn-header" id="btn-theme" title="Cambiar tema (claro / oscuro)">🌙 Tema</button>
     <a href="./index.html" class="btn-header" style="text-decoration:none;" title="Volver al panel">← Panel</a>
     <button class="btn-header" id="btn-refresh">↻ Actualizar</button>
   </div>
@@ -2899,6 +2937,26 @@ function setupEvents() {
   });
 
   document.getElementById('btn-refresh').addEventListener('click', () => inicializar(true));
+
+  // Toggle de tema (claro / oscuro)
+  function actualizarBotonTema() {
+    const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+    const btn = document.getElementById('btn-theme');
+    if (btn) btn.textContent = isLight ? '☀️ Tema' : '🌙 Tema';
+  }
+  actualizarBotonTema();
+  document.getElementById('btn-theme').addEventListener('click', () => {
+    const html = document.documentElement;
+    const isLight = html.getAttribute('data-theme') === 'light';
+    if (isLight) {
+      html.removeAttribute('data-theme');
+      try { localStorage.setItem('maxifer_gastos_theme', 'dark'); } catch(e) {}
+    } else {
+      html.setAttribute('data-theme', 'light');
+      try { localStorage.setItem('maxifer_gastos_theme', 'light'); } catch(e) {}
+    }
+    actualizarBotonTema();
+  });
 
   document.getElementById('mes-dash').addEventListener('change', e => {
     state.mesSeleccionado = e.target.value;
