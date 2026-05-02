@@ -923,17 +923,8 @@ async function calcularKPIsGastos(url) {
     }
   }
 
-  // Sueldos
-  const su = wb.Sheets['SUEL'];
-  if (su) {
-    for (let r = 3; r <= 400; r++) {
-      const f = pd(cellv(su, r, 1));
-      const v = cellv(su, r, 3);
-      if (!f || typeof v !== 'number' || v === 0) continue;
-      const k = `${f.getFullYear()}-${String(f.getMonth()+1).padStart(2,'0')}`;
-      if (k === esteMes) gastoMes += v;
-    }
-  }
+  // Sueldos: ahora se leen del Excel `Control_de_ingresos_y_gastos.xlsm`
+  // (al final, en bloque aparte). La hoja SUEL del Excel viejo quedó deprecada.
 
   // Mercadería y GVarios
   const gr = wb.Sheets['Gastos Reales'];
@@ -952,6 +943,35 @@ async function calcularKPIsGastos(url) {
         if (k === esteMes) gastoMes += iv;
       }
     }
+  }
+
+  // Sueldos (Excel nuevo, hoja Movimientos, Subcategoria='Sueldos'/'AGUINALDO')
+  // Si falla la descarga, ignora y sigue. Pagados (col F) → suman al mes;
+  // pendientes futuros (F vacío + col H estimado) → suman al pendiente futuro.
+  try {
+    const bufSu = await descargarArchivo('./Control_de_ingresos_y_gastos.xlsm', false);
+    const wbSu = XLSX.read(new Uint8Array(bufSu), { type: 'array', cellDates: true });
+    const ws = wbSu.Sheets['Movimientos'];
+    if (ws) {
+      for (let r = 6; r <= 1000; r++) {
+        const sub = cellv(ws, r, 3);
+        if (!sub) continue;
+        const subStr = String(sub).trim().toUpperCase();
+        if (subStr !== 'SUELDOS' && subStr !== 'AGUINALDO') continue;
+        const f = pd(cellv(ws, r, 2));
+        if (!f) continue;
+        const pagado = cellv(ws, r, 6);
+        const estim  = cellv(ws, r, 8);
+        const k = `${f.getFullYear()}-${String(f.getMonth()+1).padStart(2,'0')}`;
+        if (typeof pagado === 'number' && pagado !== 0) {
+          if (k === esteMes) gastoMes += pagado;
+        } else if (typeof estim === 'number' && estim !== 0) {
+          if (f >= hoy) pendienteFuturo += estim;
+        }
+      }
+    }
+  } catch (e) {
+    console.warn('hub: no se pudo cargar sueldos del Excel nuevo:', e.message);
   }
 
   return { gasto_mes: gastoMes, pendiente: pendienteFuturo };
