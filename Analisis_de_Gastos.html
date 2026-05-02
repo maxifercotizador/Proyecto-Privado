@@ -631,6 +631,14 @@
     background: var(--panel-2);
     border-color: var(--border-strong);
   }
+  .cal-btn.cal-deudas {
+    background: var(--bad-dim);
+    border-color: var(--bad);
+    color: var(--bad);
+    font-weight: 600;
+  }
+  .cal-btn.cal-deudas:hover { background: rgba(255,71,71,0.18); }
+  .cal-btn.cal-deudas #cal-deudas-total { font-family: 'JetBrains Mono', monospace; }
 
   .cal-zoom-group {
     display: inline-flex;
@@ -1401,6 +1409,7 @@
         </div>
         <button class="cal-btn cal-toggle" id="cal-toggle-mode">Ver mes completo</button>
         <button class="cal-btn cal-today" id="cal-today">Hoy</button>
+        <button class="cal-btn cal-deudas" id="cal-deudas" style="display:none;margin-left:auto" title="Proveedores con deuda sin fecha de pago">💸 Deudas: <span id="cal-deudas-total">$0</span></button>
       </div>
       <div class="cal-filters">
         <div class="cal-filter-group">
@@ -1504,6 +1513,27 @@
   </div>
 </div>
 
+<!-- Modal de proveedores con deuda (sin fecha) -->
+<div class="cal-day-modal-bg" id="cal-deudas-modal-bg">
+  <div class="cal-day-modal">
+    <div class="cal-day-modal-head">
+      <div class="cal-day-modal-title">Proveedores con deuda</div>
+      <button class="cal-day-modal-close" id="cal-deudas-modal-close">×</button>
+    </div>
+    <div class="cal-day-modal-totals">
+      <div class="cal-day-modal-total day">
+        <span class="k">Cantidad</span>
+        <span class="v" id="cal-deudas-cant">0</span>
+      </div>
+      <div class="cal-day-modal-total acum">
+        <span class="k">Total adeudado</span>
+        <span class="v" id="cal-deudas-monto">$0</span>
+      </div>
+    </div>
+    <div class="cal-day-modal-list" id="cal-deudas-list"></div>
+  </div>
+</div>
+
 <!-- Modal de detalle de gasto del calendario -->
 <div class="cal-modal-bg" id="cal-modal-bg">
   <div class="cal-modal">
@@ -1540,11 +1570,13 @@
 // ============================= CONFIG =============================
 const HARDCODED_URL = './Gastos%20Fijos.xlsx';
 const SUELDOS_URL = './Control_de_ingresos_y_gastos.xlsm';
+const PEDIDOS_URL = './03%20Pedidos%20Fabricas.xlsm';
 const STORAGE_KEY_CACHE = 'maxifer_gastos_cache';
 const STORAGE_KEY_TS = 'maxifer_gastos_ts';
 
 const state = {
   movimientos: [],      // [{fecha: Date, categoria, descripcion, importe, estado, extra}]
+  deudasProveedores: [], // [{proveedor, medio, importe}] sin fecha (de 03 Pedidos Fabricas)
   mesSeleccionado: null, // 'YYYY-MM'
   sortKey: 'fecha',
   sortDir: 'desc',
@@ -1777,6 +1809,55 @@ function parsearSueldos(wb) {
   }
 
   return movs;
+}
+
+// Parsea E-cheques propios desde 03 Pedidos Fabricas.xlsm hoja INDICE, K47:N65.
+// K=fecha, L=importe, M=a nombre de, N=detalle.
+// Solo trae los que el "a nombre de" contiene Maxi/Maximiliano/Gordillo (los emitidos por mí).
+function parsearECheques(wb) {
+  const movs = [];
+  const ws = wb.Sheets['INDICE'];
+  if (!ws) return movs;
+  for (let r = 48; r <= 65; r++) {
+    const fecha = parseDate(cell(ws, r, 11));
+    const importe = cell(ws, r, 12);
+    const aNombre = cell(ws, r, 13);
+    const detalle = cell(ws, r, 14);
+    if (!fecha || typeof importe !== 'number' || importe === 0) continue;
+    const nombre = String(aNombre || '').trim();
+    const nlow = nombre.toLowerCase();
+    const esMio = nlow.includes('maxi') || nlow.includes('maximiliano') || nlow.includes('gordillo');
+    if (!esMio) continue;
+    const detTxt = String(detalle || '').trim();
+    const desc = `E-cheq · ${nombre}` + (detTxt ? ` · ${detTxt}` : '');
+    movs.push({
+      fecha,
+      categoria: 'GFijos',
+      descripcion: desc,
+      importe,
+      estado: 'pendiente',
+      extra: { tipo: 'echeq', medio: 'E-cheq' },
+    });
+  }
+  return movs;
+}
+
+// Parsea proveedores con deuda (sin fecha) desde hoja INDICE, C22:F44.
+// C=proveedor, E=forma de pago (puede vacío), F=importe.
+// Devuelve array { proveedor, medio, importe }. NO se mete a state.movimientos (no tienen fecha).
+function parsearDeudasProveedores(wb) {
+  const out = [];
+  const ws = wb.Sheets['INDICE'];
+  if (!ws) return out;
+  for (let r = 23; r <= 44; r++) {
+    const proveedor = String(cell(ws, r, 3) || '').trim();
+    const medio = String(cell(ws, r, 5) || '').trim();
+    const importe = cell(ws, r, 6);
+    if (!proveedor) continue;
+    if (typeof importe !== 'number' || importe === 0) continue;
+    out.push({ proveedor, medio, importe });
+  }
+  return out;
 }
 
 // ============================= CÁLCULOS =============================
@@ -2545,6 +2626,52 @@ function calCloseDayModal() {
   document.getElementById('cal-day-modal-bg').classList.remove('show');
 }
 
+// ===== Botón "Proveedores con deuda" + modal flotante =====
+function actualizarBotonDeudas() {
+  const btn = document.getElementById('cal-deudas');
+  const totEl = document.getElementById('cal-deudas-total');
+  if (!btn) return;
+  const lista = state.deudasProveedores || [];
+  if (lista.length === 0) {
+    btn.style.display = 'none';
+    return;
+  }
+  const total = lista.reduce((s, d) => s + (d.importe || 0), 0);
+  totEl.textContent = fmtCompact(total);
+  btn.style.display = '';
+}
+
+function abrirModalDeudas() {
+  const lista = (state.deudasProveedores || []).slice().sort((a, b) => b.importe - a.importe);
+  const total = lista.reduce((s, d) => s + (d.importe || 0), 0);
+  document.getElementById('cal-deudas-cant').textContent = lista.length;
+  document.getElementById('cal-deudas-monto').textContent = fmt$(total);
+  const cont = document.getElementById('cal-deudas-list');
+  if (lista.length === 0) {
+    cont.innerHTML = '<div class="cal-day-modal-empty">Sin deudas registradas.</div>';
+  } else {
+    cont.innerHTML = lista.map(d => {
+      const medio = d.medio ? `<div class="cal-day-modal-item-extra">Forma: ${escapeHtml(d.medio)}</div>` : '';
+      return `<div class="cal-day-modal-item cat-gvarios pendiente">
+        <div class="cal-day-modal-item-top">
+          <span class="cal-day-modal-item-amt">${fmt$(d.importe)}</span>
+          <div class="cal-day-modal-item-tags">
+            <span class="cal-modal-tag estado-pendiente">⏳ Sin fecha</span>
+          </div>
+        </div>
+        <div class="cal-day-modal-item-desc">${escapeHtml(d.proveedor)}</div>
+        ${medio}
+      </div>`;
+    }).join('');
+    cont.scrollTop = 0;
+  }
+  document.getElementById('cal-deudas-modal-bg').classList.add('show');
+}
+
+function cerrarModalDeudas() {
+  document.getElementById('cal-deudas-modal-bg').classList.remove('show');
+}
+
 // ============================ FIN CALENDARIO ============================
 
 function switchTab(view) {
@@ -2575,9 +2702,10 @@ function popularFiltroMes() {
 async function inicializar(forzar = false) {
   try {
     mostrarStatus('Descargando archivos…', 'loading');
-    const [bufGastos, sueldosRes] = await Promise.all([
+    const [bufGastos, sueldosRes, pedidosRes] = await Promise.all([
       descargarArchivo(HARDCODED_URL, forzar),
       descargarArchivo(SUELDOS_URL, forzar).catch(e => ({ _err: e })),
+      descargarArchivo(PEDIDOS_URL, forzar).catch(e => ({ _err: e })),
     ]);
 
     mostrarStatus('Parseando Excel…', 'loading');
@@ -2593,14 +2721,29 @@ async function inicializar(forzar = false) {
       console.warn('⚠️ No se pudo cargar Control_de_ingresos_y_gastos.xlsm:', sueldosRes && sueldosRes._err);
     }
 
-    state.movimientos = movs.concat(sueldos);
+    let echeques = [];
+    state.deudasProveedores = [];
+    if (pedidosRes && !pedidosRes._err) {
+      const wbPedidos = XLSX.read(new Uint8Array(pedidosRes), { type: 'array', cellDates: true });
+      echeques = parsearECheques(wbPedidos);
+      state.deudasProveedores = parsearDeudasProveedores(wbPedidos);
+      console.log(`✓ Parseados ${echeques.length} e-cheques propios + ${state.deudasProveedores.length} deudas a proveedores`);
+    } else {
+      console.warn('⚠️ No se pudo cargar 03 Pedidos Fabricas.xlsm:', pedidosRes && pedidosRes._err);
+    }
+
+    state.movimientos = movs.concat(sueldos).concat(echeques);
     console.log(`✓ Parseados ${state.movimientos.length} movimientos en total`);
 
     popularFiltroMes();
     renderDashboard();  // la vista inicial
+    actualizarBotonDeudas();
 
-    const aviso = (sueldosRes && sueldosRes._err) ? ' (sueldos no disponibles)' : '';
-    mostrarStatus(`✓ ${state.movimientos.length} movimientos cargados${aviso}`, sueldosRes._err ? 'error' : 'ok');
+    const errores = [];
+    if (sueldosRes && sueldosRes._err) errores.push('sueldos');
+    if (pedidosRes && pedidosRes._err) errores.push('pedidos');
+    const aviso = errores.length ? ' (' + errores.join('+') + ' no disponible)' : '';
+    mostrarStatus(`✓ ${state.movimientos.length} movimientos cargados${aviso}`, errores.length ? 'error' : 'ok');
   } catch (e) {
     console.error(e);
     mostrarStatus('✗ Error: ' + e.message, 'error');
@@ -2666,6 +2809,11 @@ function setupEvents() {
   document.getElementById('cal-toggle-mode').addEventListener('click', calToggleModo);
   document.getElementById('cal-zoom-out').addEventListener('click', () => calZoom(-0.1));
   document.getElementById('cal-zoom-in').addEventListener('click', () => calZoom(0.1));
+  document.getElementById('cal-deudas').addEventListener('click', abrirModalDeudas);
+  document.getElementById('cal-deudas-modal-close').addEventListener('click', cerrarModalDeudas);
+  document.getElementById('cal-deudas-modal-bg').addEventListener('click', e => {
+    if (e.target.id === 'cal-deudas-modal-bg') cerrarModalDeudas();
+  });
 
   // Filtros por categoría (checkboxes)
   document.querySelectorAll('#view-calendario input[type="checkbox"][data-cat]').forEach(cb => {
@@ -2722,6 +2870,7 @@ function setupEvents() {
     if (e.key === 'Escape') {
       calCloseModal();
       calCloseDayModal();
+      cerrarModalDeudas();
     }
   });
 }
