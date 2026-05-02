@@ -129,31 +129,31 @@
   }
 
   .kpi-grid {
-    display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 10px; margin-bottom: 24px;
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 6px; margin-bottom: 14px;
   }
   .kpi-card {
-    background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
-    padding: 16px; position: relative; overflow: hidden; transition: all 0.15s;
+    background: var(--panel); border: 1px solid var(--border); border-radius: 8px;
+    padding: 8px 10px; position: relative; overflow: hidden; transition: all 0.15s;
   }
   .kpi-card:hover { border-color: var(--border-strong); }
   .kpi-card.primary::before {
     content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
-    background: var(--teal); box-shadow: 0 0 10px var(--teal);
+    background: var(--teal); box-shadow: 0 0 8px var(--teal);
   }
   .kpi-label {
-    font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--text-mute);
-    text-transform: uppercase; letter-spacing: 0.12em; margin-bottom: 8px;
+    font-family: 'JetBrains Mono', monospace; font-size: 8.5px; color: var(--text-mute);
+    text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 3px; line-height: 1.1;
   }
   .kpi-value {
-    font-size: 26px; font-weight: 700; letter-spacing: -0.02em;
+    font-size: 16px; font-weight: 700; letter-spacing: -0.02em;
     color: var(--text); line-height: 1.1;
   }
-  .kpi-value.small { font-size: 15px; font-weight: 600; letter-spacing: -0.01em; }
+  .kpi-value.small { font-size: 11px; font-weight: 600; letter-spacing: -0.01em; }
   .kpi-value.teal { color: var(--teal); }
   .kpi-hint {
-    font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--text-mute);
-    margin-top: 6px; text-transform: uppercase; letter-spacing: 0.05em;
+    font-family: 'JetBrains Mono', monospace; font-size: 8.5px; color: var(--text-mute);
+    margin-top: 3px; text-transform: uppercase; letter-spacing: 0.04em; line-height: 1.2;
   }
 
   .section { margin-bottom: 28px; }
@@ -514,13 +514,24 @@
   .modal .btn-row { display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px; }
 
   @media (max-width: 640px) {
-    main { padding: 16px 12px; }
+    main { padding: 12px 10px; }
     header { padding: 12px 14px; }
-    .kpi-value { font-size: 22px; }
+    .kpi-grid { grid-template-columns: repeat(3, 1fr); gap: 5px; margin-bottom: 10px; }
+    .kpi-value { font-size: 13px; }
+    .kpi-value.small { font-size: 10px; }
+    .kpi-card { padding: 7px 8px; border-radius: 6px; }
+    .kpi-label { font-size: 8px; margin-bottom: 2px; letter-spacing: 0.06em; }
+    .kpi-hint { font-size: 8px; margin-top: 2px; }
     .rank-item { grid-template-columns: 22px 1fr auto; gap: 8px; }
-    .config-strip { gap: 14px; padding: 12px; }
+    .config-strip { gap: 10px; padding: 8px 10px; margin-bottom: 12px; }
+    .config-strip label { font-size: 9px; }
     .drawer { width: 100vw; }
     .drawer-kpis { grid-template-columns: 1fr; }
+    .filters-card { padding: 10px; margin-bottom: 12px; }
+    .hero { padding: 12px 14px; margin-bottom: 12px; }
+    .hero h1 { font-size: 20px; }
+    .hero p { font-size: 11px; }
+    .hero-meta { font-size: 10px; gap: 10px; }
   }
 
   /* Pestañas internas (Análisis / Catálogo) */
@@ -744,21 +755,6 @@
 
   <div id="errorContainer"></div>
 
-  <div class="config-strip">
-    <div class="config-item">
-      <label>Descuento aplicado</label>
-      <div class="controls">
-        <button class="btn-toggle" data-dto="46">46%</button>
-        <button class="btn-toggle" data-dto="42">42%</button>
-        <button class="btn-toggle" data-dto="15">15%</button>
-        <input type="number" class="input-num" id="dtoCustom" min="0" max="100" step="1" value="46">
-      </div>
-    </div>
-    <div class="config-coverage" id="coverageBadge">—</div>
-  </div>
-
-  <div class="kpi-grid" id="kpiGrid"></div>
-
   <div class="filters-card">
     <div class="filters-head">
       <span class="tit">Filtros</span>
@@ -817,6 +813,21 @@
       <button class="btn-clear" onclick="clearFilters()">× LIMPIAR</button>
     </div>
   </div>
+
+  <div class="config-strip">
+    <div class="config-item">
+      <label>Descuento aplicado</label>
+      <div class="controls">
+        <button class="btn-toggle" data-dto="46">46%</button>
+        <button class="btn-toggle" data-dto="42">42%</button>
+        <button class="btn-toggle" data-dto="15">15%</button>
+        <input type="number" class="input-num" id="dtoCustom" min="0" max="100" step="1" value="46">
+      </div>
+    </div>
+    <div class="config-coverage" id="coverageBadge">—</div>
+  </div>
+
+  <div class="kpi-grid" id="kpiGrid"></div>
 
   <!-- ===== TAB: ANÁLISIS (ventas Monday) ===== -->
   <div class="tab-pane active" data-tab="analisis">
