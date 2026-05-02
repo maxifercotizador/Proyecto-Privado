@@ -725,6 +725,7 @@
 
 <div class="tabs-bar">
   <button class="tab-btn active" data-tab="analisis">📊 Análisis (ventas Monday)</button>
+  <button class="tab-btn" data-tab="vendidos">🧾 Por surtido (vendidos)</button>
   <button class="tab-btn" data-tab="catalogo">📦 Catálogo (composición)</button>
 </div>
 
@@ -876,6 +877,41 @@
   </div>
 
   </div><!-- /tab-pane analisis -->
+
+  <!-- ===== TAB: POR SURTIDO (resumen de vendidos según filtro) ===== -->
+  <div class="tab-pane" data-tab="vendidos">
+    <div class="section">
+      <div class="section-title">
+        <h2>Por surtido (resumen)</h2>
+        <span class="caption" id="vendidosCount">—</span>
+      </div>
+      <div class="cat-card">
+        <div class="cat-controls">
+          <span class="caption" style="color:var(--text-mute);font-size:11px">Resumen agrupado por surtido de las ventas del filtro Monday actual (período, vendedor, cliente, etiqueta, surtido). Cada fila suma las ventas individuales.</span>
+        </div>
+        <div style="overflow-x: auto;">
+          <table class="cat-tbl" id="vendidosTbl">
+            <thead>
+              <tr>
+                <th data-sort="surtido">Surtido</th>
+                <th data-sort="cant" class="num">Ventas</th>
+                <th data-sort="vendido" class="num">Facturado</th>
+                <th data-sort="costo" class="num">Costo</th>
+                <th data-sort="ganancia" class="num">Ganancia</th>
+                <th data-sort="margen" class="num">% Margen</th>
+              </tr>
+            </thead>
+            <tbody id="vendidosTbody"></tbody>
+            <tfoot id="vendidosTfoot"></tfoot>
+          </table>
+        </div>
+        <div class="empty" id="vendidos-no-results" style="display:none">
+          <div style="font-size: 32px; margin-bottom: 8px;">⋯</div>
+          Sin ventas con esos filtros
+        </div>
+      </div>
+    </div>
+  </div><!-- /tab-pane vendidos -->
 
   <!-- ===== TAB: CATÁLOGO (composición y rentabilidad de cada surtido) ===== -->
   <div class="tab-pane" data-tab="catalogo">
@@ -2560,15 +2596,115 @@ function renderCatDetalle(s, descFactor, comFactor) {
 }
 
 // ============================================================
+// PESTAÑA "POR SURTIDO": resumen agrupado del filtro Monday
+// ============================================================
+const vendState = { sort: 'ganancia', sortDir: -1 };
+
+function fmtVend$(n) {
+  if (n == null || isNaN(n)) return '—';
+  const s = n < 0 ? '-' : '';
+  return s + '$' + Math.round(Math.abs(n)).toLocaleString('es-AR');
+}
+
+function renderVendidos() {
+  const tbody = document.getElementById('vendidosTbody');
+  const tfoot = document.getElementById('vendidosTfoot');
+  const empty = document.getElementById('vendidos-no-results');
+  const countEl = document.getElementById('vendidosCount');
+  if (!tbody || !Array.isArray(VENTAS)) return;
+
+  // Aplicar filtros Monday actuales (mismo applyFilters del Análisis)
+  const enriched = VENTAS.map(calcRow);
+  const filtered = applyFilters(enriched);
+
+  // Agrupar por surtido (usa el nombre crudo de Monday, no el match)
+  const grupos = {};
+  for (const r of filtered) {
+    const key = r.surtido || '(sin surtido)';
+    if (!grupos[key]) grupos[key] = { surtido: key, cant: 0, vendido: 0, costo: 0, ganancia: 0 };
+    grupos[key].cant += 1;
+    if (r.precioNeto != null) grupos[key].vendido += r.precioNeto;
+    if (r.costo != null) grupos[key].costo += r.costo;
+    if (r.ganancia != null) grupos[key].ganancia += r.ganancia;
+  }
+
+  let rows = Object.values(grupos);
+  rows.forEach(g => { g.margen = g.vendido > 0 ? (g.ganancia / g.vendido * 100) : null; });
+
+  // Ordenar
+  const k = vendState.sort, dir = vendState.sortDir;
+  rows.sort((a, b) => {
+    let av = a[k], bv = b[k];
+    if (k === 'surtido') return dir === 1 ? String(av).localeCompare(String(bv)) : String(bv).localeCompare(String(av));
+    if (av == null && bv == null) return 0;
+    if (av == null) return 1;
+    if (bv == null) return -1;
+    return dir === 1 ? av - bv : bv - av;
+  });
+
+  countEl.textContent = rows.length + ' surtidos · ' + filtered.length + ' ventas';
+
+  if (rows.length === 0) {
+    tbody.innerHTML = '';
+    tfoot.innerHTML = '';
+    empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none';
+
+  tbody.innerHTML = rows.map(g => {
+    const margenHtml = g.margen != null
+      ? `<span class="margen-chip ${margenClassCat(g.margen)}">${g.margen.toFixed(0)}%</span>`
+      : '—';
+    const gColor = g.ganancia > 0 ? 'color:var(--good);font-weight:600'
+                 : g.ganancia < 0 ? 'color:var(--bad);font-weight:600' : '';
+    return `<tr>
+      <td><b>${g.surtido}</b></td>
+      <td class="num">${g.cant}</td>
+      <td class="num">${fmtVend$(g.vendido)}</td>
+      <td class="num">${fmtVend$(g.costo)}</td>
+      <td class="num" style="${gColor}">${fmtVend$(g.ganancia)}</td>
+      <td class="num">${margenHtml}</td>
+    </tr>`;
+  }).join('');
+
+  // Totales
+  const tot = rows.reduce((acc, g) => {
+    acc.cant += g.cant; acc.vendido += g.vendido; acc.costo += g.costo; acc.ganancia += g.ganancia;
+    return acc;
+  }, { cant: 0, vendido: 0, costo: 0, ganancia: 0 });
+  tot.margen = tot.vendido > 0 ? (tot.ganancia / tot.vendido * 100) : null;
+  tfoot.innerHTML = `<tr style="background:var(--panel-2);font-weight:700">
+    <td><b>TOTAL</b></td>
+    <td class="num">${tot.cant}</td>
+    <td class="num">${fmtVend$(tot.vendido)}</td>
+    <td class="num">${fmtVend$(tot.costo)}</td>
+    <td class="num" style="color:${tot.ganancia >= 0 ? 'var(--good)' : 'var(--bad)'}">${fmtVend$(tot.ganancia)}</td>
+    <td class="num">${tot.margen != null ? '<span class="margen-chip ' + margenClassCat(tot.margen) + '">' + tot.margen.toFixed(1) + '%</span>' : '—'}</td>
+  </tr>`;
+}
+
+document.querySelectorAll('#vendidosTbl thead th[data-sort]').forEach(th => {
+  th.addEventListener('click', () => {
+    const col = th.dataset.sort;
+    if (vendState.sort === col) vendState.sortDir *= -1;
+    else { vendState.sort = col; vendState.sortDir = col === 'surtido' ? 1 : -1; }
+    renderVendidos();
+  });
+});
+
+// ============================================================
 // PESTAÑAS: switching + persistencia
 // ============================================================
 const TAB_KEY_SURT = 'maxifer_surtidos_tab';
+const TABS_VALIDAS = ['analisis', 'vendidos', 'catalogo'];
 function activarTabSurt(tab) {
-  if (tab !== 'analisis' && tab !== 'catalogo') tab = 'analisis';
+  if (!TABS_VALIDAS.includes(tab)) tab = 'analisis';
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
   document.querySelectorAll('.tab-pane').forEach(p => p.classList.toggle('active', p.dataset.tab === tab));
   try { localStorage.setItem(TAB_KEY_SURT, tab); } catch(e) {}
   if (tab === 'catalogo' && CAT_READY) renderCat();
+  if (tab === 'vendidos') renderVendidos();
 }
 document.querySelectorAll('.tab-btn').forEach(b => {
   b.addEventListener('click', () => activarTabSurt(b.dataset.tab));
@@ -2577,7 +2713,7 @@ document.querySelectorAll('.tab-btn').forEach(b => {
 // Restaurar tab guardada al inicio
 try {
   const saved = localStorage.getItem(TAB_KEY_SURT);
-  if (saved === 'catalogo') activarTabSurt('catalogo');
+  if (saved && saved !== 'analisis' && TABS_VALIDAS.includes(saved)) activarTabSurt(saved);
 } catch(e) {}
 
 // Handlers Catálogo: descuento + comisión + sort + click filas
@@ -2636,11 +2772,12 @@ document.getElementById('catTbody').addEventListener('click', e => {
   renderCat();
 });
 
-// Hook: cuando renderAll se llame por filtros Monday, también re-rendear catálogo
+// Hook: cuando renderAll se llame por filtros Monday, también re-rendear catálogo y vendidos
 const _origRenderAll = renderAll;
 renderAll = function() {
   _origRenderAll.apply(this, arguments);
   if (CAT_READY) renderCat();
+  renderVendidos();
 };
 
 // Cargar datos del repo y después inicializar la UI
